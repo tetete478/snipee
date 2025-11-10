@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Snipee - スニペット</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: transparent;
+      color: #333;
+      overflow: hidden;
+      user-select: none;
+      font-size: 14px;
+    }
+
+    .container {
+        width: 210px;  /* 300px → 320px */
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        -webkit-app-region: drag;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #ffffff;
+      -webkit-app-region: drag;
+    }
+
+    .menu-item {
+        padding: 6px 10px;          /* 8px 12px → 6px 10px */
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #ffffff;
+        transition: background 0.1s;
+    }
+
+    .menu-item:hover {
+      background: #f0f0f0;
+    }
+
+    .menu-item.selected {
+      background: #007aff;
+      color: #ffffff;
+    }
+
+    .menu-item.selected .menu-item-text {
+      color: #ffffff;
+    }
+
+    .menu-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .menu-item-icon {
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+    }
+
+    .menu-item-text {
+      font-size: 10px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-item-arrow {
+      color: #999;
+      font-size: 12px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f8f8f8;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d0d0d0;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #b0b0b0;
+    }
+
+    .empty-state {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+      opacity: 0.3;
+    }
+
+    .empty-state-text {
+      font-size: 12px;
+    }
+
+    .submenu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .submenu-container {
+        position: absolute;
+        width: 160px;
+        max-height: none;           /* 400px → none (スクロール無効) */
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        overflow-y: visible;        /* auto → visible */
+        pointer-events: auto;
+        display: none;
+        -webkit-app-region: drag;
+    }
+
+    .submenu-container.visible {
+      display: block;
+    }
+
+    .submenu-item {
+        padding: 4px 10px;          /* 8px 12px → 4px 10px */
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.1s;
+    }
+
+    .submenu-item:hover {
+      background: #f0f0f0;
+    }
+
+    .submenu-item.selected {
+      background: #007aff;
+      color: #ffffff;
+    }
+
+    .submenu-item.selected .submenu-item-title,
+    .submenu-item.selected .submenu-item-preview {
+      color: #ffffff;
+    }
+
+    .submenu-item:last-child {
+      border-bottom: none;
+    }
+
+    .submenu-item-title {
+        font-size: 11px;            /* 13px → 11px */
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 0;           /* 2px → 0px */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="content" id="main-content">
+      <div id="snippet-section"></div>
+    </div>
+  </div>
+
+  <div class="submenu-overlay">
+    <div class="submenu-container" id="inline-submenu"></div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let allItems = {
+      master: []
+    };
+    
+    let selectedIndex = 0;
+    let hasPermission = true;
+    let selectableItems = [];
+    let isSubmenuOpen = false;
+    let submenuSelectedIndex = 0;
+    let submenuItems = [];
+
+    async function init() {
+      await loadAllItems();
+      setupEventListeners();
+    }
+
+    async function loadAllItems() {
+        const data = await ipcRenderer.invoke('get-all-items');
+        
+        allItems.master = (data.masterSnippets || []).map(s => ({ ...s, type: 'master' }));
+        hasPermission = data.hasPermission !== false;
+
+        render();
+    }
+
+    function setupEventListeners() {
+      document.addEventListener('keydown', handleKeyboard);
+
+      ipcRenderer.on('clipboard-updated', () => {
+        loadAllItems();
+      });
+    }
+
+    function render() {
+      renderSnippets();
+      updateSelectableItems();
+      updateSelection();
+    }
+
+    function updateSelectableItems() {
+      const menuItems = Array.from(document.querySelectorAll('.menu-item[data-folder]'));
+      selectableItems = menuItems;
+    }
+
+    function updateSelection() {
+      selectableItems.forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      if (selectableItems[selectedIndex]) {
+        const item = selectableItems[selectedIndex];
+        item.classList.add('selected');
+        item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
+
+    function renderSnippets() {
+      const container = document.getElementById('snippet-section');
+      let items = [...allItems.master];
+
+      // 非表示フォルダをフィルタリング
+      const Store = require('electron-store');
+      const store = new Store();
+      const hiddenFolders = store.get('hiddenFolders', []);
+      items = items.filter(item => !hiddenFolders.includes(item.folder || '未分類'));
+
+      if (items.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-text">スニペットがありません</div></div>';
+        return;
+      }
+
+      const folders = groupByFolder(items);
+      
+      container.innerHTML = Object.entries(folders).map(([folder, snippets]) => `
+        <div class="menu-item" 
+            data-group-id="folder-${folder}"
+            data-folder="${folder}" 
+            data-snippets='${JSON.stringify(snippets).replace(/'/g, "&apos;")}'>
+          <div class="menu-item-left">
+            <span class="menu-item-icon">☑</span>
+            <span class="menu-item-text">${escapeHtml(folder)}</span>
+          </div>
+          <span class="menu-item-arrow">›</span>
+        </div>
+      `).join('');
+    }
+
+    function groupByFolder(items) {
+      const folders = {};
+      items.forEach(item => {
+        const folder = item.folder || '未分類';
+        if (!folders[folder]) {
+          folders[folder] = [];
+        }
+        folders[folder].push(item);
+      });
+      return folders;
+    }
+
+    async function handleKeyboard(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        hideInlineSubmenu();
+        await ipcRenderer.invoke('hide-snippet-window');
+        return;
+      }
+
+      if (isSubmenuOpen) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          submenuSelectedIndex = Math.min(submenuSelectedIndex + 1, submenuItems.length - 1);
+          updateSubmenuSelection();
+          return;
+        }
+
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          submenuSelectedIndex = Math.max(submenuSelectedIndex - 1, 0);
+          updateSubmenuSelection();
+          return;
+        }
+
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const selectedItem = submenuItems[submenuSelectedIndex];
+          if (selectedItem) {
+            await pasteSubmenuItem(selectedItem.content);
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          hideInlineSubmenu();
+          return;
+        }
+      }
+
+      if (e.key >= '1' && e.key <= '9') {
+        e.preventDefault();
+        const index = parseInt(e.key) - 1;
+        if (selectableItems[index]) {
+          selectedIndex = index;
+          updateSelection();
+          await activateSelectedItem();
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedIndex = Math.min(selectedIndex + 1, selectableItems.length - 1);
+        updateSelection();
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedIndex = Math.max(selectedIndex - 1, 0);
+        updateSelection();
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        await activateSelectedItem();
+        return;
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        showSubmenuForSelectedItem();
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        hideInlineSubmenu();
+        return;
+      }
+    }
+
+    function showSubmenuForSelectedItem() {
+      const item = selectableItems[selectedIndex];
+      if (!item) return;
+      
+      if (item.classList.contains('menu-item')) {
+        let items = [];
+        
+        try {
+          if (item.hasAttribute('data-folder')) {
+            const rawData = item.getAttribute('data-snippets');
+            items = JSON.parse(rawData);
+          }
+          
+          if (items.length > 0) {
+            showInlineSubmenu(item, items);
+          }
+        } catch (error) {
+          // エラーは無視
+        }
+      }
+    }
+
+    function showInlineSubmenu(targetElement, items) {
+      const submenu = document.getElementById('inline-submenu');
+      const bounds = targetElement.getBoundingClientRect();
+      
+      submenu.style.left = (bounds.right - 5) + 'px';
+      submenu.style.top = bounds.top + 'px';
+      
+      submenuItems = items;
+      submenuSelectedIndex = 0;
+      isSubmenuOpen = true;
+      
+      submenu.innerHTML = items.map((item, index) => `
+        <div class="submenu-item ${index === 0 ? 'selected' : ''}" data-index="${index}">
+            <div class="submenu-item-title">☑ ${index + 1}. ${escapeHtml(item.title)}</div>
+        </div>
+        `).join('');
+      
+      submenu.classList.add('visible');
+      
+      submenu.querySelectorAll('.submenu-item').forEach((element, index) => {
+        element.addEventListener('click', async () => {
+          await pasteSubmenuItem(items[index].content);
+        });
+      });
+    }
+
+    function hideInlineSubmenu() {
+      const submenu = document.getElementById('inline-submenu');
+      submenu.classList.remove('visible');
+      isSubmenuOpen = false;
+      submenuSelectedIndex = 0;
+      submenuItems = [];
+    }
+
+    function updateSubmenuSelection() {
+      const submenuItemElements = document.querySelectorAll('.submenu-item');
+      submenuItemElements.forEach((item, index) => {
+        if (index === submenuSelectedIndex) {
+          item.classList.add('selected');
+          item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          item.classList.remove('selected');
+        }
+      });
+    }
+
+    async function pasteSubmenuItem(content) {
+      let decodedContent = content;
+      if (typeof content === 'string') {
+        decodedContent = content
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&apos;/g, "'")
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+      }
+      
+      hideInlineSubmenu();
+      await ipcRenderer.invoke('hide-snippet-window');
+      await ipcRenderer.invoke('paste-text', decodedContent);
+    }
+
+    async function activateSelectedItem() {
+      const item = selectableItems[selectedIndex];
+      if (!item) return;
+      
+      if (item.classList.contains('menu-item')) {
+        showSubmenuForSelectedItem();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    window.addEventListener('focus', () => {
+      loadAllItems();
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>アクセシビリティ権限の設定</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .icon {
+      text-align: center;
+      font-size: 64px;
+      margin-bottom: 20px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+
+    .steps {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-right: 16px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .step-description {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .code {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #e83e8c;
+      margin-top: 8px;
+      display: inline-block;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e5e5;
+    }
+
+    .note {
+      background: #fff9e6;
+      border-left: 4px solid #ffc107;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .note-title {
+      font-weight: 600;
+      color: #f57c00;
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .note-content {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .visual-guide {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .visual-guide img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .path {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 13px;
+      color: #555;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .arrow {
+      color: #999;
+      margin: 0 8px;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .status.checking {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .status.granted {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.denied {
+      background: #ffebee;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔐</div>
+    <h1>アクセシビリティ権限が必要です</h1>
+    <p class="subtitle">
+      自動ペースト機能を使用するには、macOSのアクセシビリティ権限が必要です。<br>
+      一度設定すれば、ずっと快適に使えます!
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">システム設定を開く</div>
+          <div class="step-description">
+            下の「システム設定を開く」ボタンをクリック
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">アクセシビリティに移動</div>
+          <div class="step-description">
+            プライバシーとセキュリティ → アクセシビリティ
+          </div>
+          <div class="path">
+            🔒 プライバシーとセキュリティ<span class="arrow">→</span>♿ アクセシビリティ
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">ClipyWindowsをONにする</div>
+          <div class="step-description">
+            一覧から<span class="code">ClipyWindows</span>または<span class="code">Electron</span>を探して、チェックを入れる
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <div class="step-title">アプリを再起動</div>
+          <div class="step-description">
+            設定後、このウィンドウを閉じて、アプリを再起動してください
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="btn btn-primary" onclick="openSystemPreferences()">
+        ⚙️ システム設定を開く
+      </button>
+      <button class="btn btn-secondary" onclick="skipForNow()">
+        後で設定する
+      </button>
+    </div>
+
+    <div class="note">
+      <div class="note-title">💡 権限なしでも使えます</div>
+      <div class="note-content">
+        権限を設定しなくても、クリップボード履歴の閲覧や検索はできます。<br>
+        ただし、Enterを押した後に手動で <strong>⌘+V</strong> でペーストする必要があります。
+      </div>
+    </div>
+
+    <div id="status" class="status" style="display: none;"></div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    async function openSystemPreferences() {
+      await ipcRenderer.invoke('open-system-preferences');
+      
+      // ステータス表示
+      const status = document.getElementById('status');
+      status.className = 'status checking';
+      status.textContent = '✓ システム設定を開きました。設定後、このウィンドウを閉じてください。';
+      status.style.display = 'block';
+
+      // 3秒ごとに権限チェック
+      const interval = setInterval(async () => {
+        const hasPermission = await ipcRenderer.invoke('check-permission');
+        if (hasPermission) {
+          clearInterval(interval);
+          status.className = 'status granted';
+          status.textContent = '✅ 権限が付与されました! ウィンドウを閉じてアプリを再起動してください。';
+          
+          // 自動的にウィンドウを閉じる
+          setTimeout(() => {
+            closeWindow();
+          }, 2000);
+        }
+      }, 3000);
+    }
+
+    function skipForNow() {
+      closeWindow();
+    }
+
+    function closeWindow() {
+      ipcRenderer.invoke('close-permission-window');
+    }
+
+    // ウィンドウが表示されたら権限チェック
+    window.addEventListener('load', async () => {
+      const hasPermission = await ipcRenderer.invoke('check-permission');
+      if (hasPermission) {
+        // すでに権限がある場合は自動的に閉じる
+        const status = document.getElementById('status');
+        status.className = 'status granted';
+        status.textContent = '✅ 権限は既に付与されています!';
+        status.style.display = 'block';
+        
+        setTimeout(() => {
+          closeWindow();
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>

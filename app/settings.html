@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Snipee 設定</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 420px;
+      height: 800px;  /* 600px → 800px */
+      max-height: 95vh;  /* 90vh → 95vh */
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* コンテンツ */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      min-height: 0;
+    }
+
+    /* セクション */
+    .section {
+      background: #fafafa;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #e8e8e8;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      cursor: move;
+    }
+
+    .section-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .section-description {
+      font-size: 11px;
+      color: #777;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      cursor: move;
+    }
+
+    /* フォーム */
+    .form-group {
+      margin-bottom: 10px;
+      -webkit-app-region: no-drag;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 4px;
+      color: #444;
+      font-size: 12px;
+      font-weight: 500;
+      -webkit-app-region: no-drag;
+    }
+
+    input[type="text"],
+    input[type="url"] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 0.2s;
+      background: #ffffff;
+      -webkit-app-region: no-drag;
+    }
+
+    input[type="text"]:focus,
+    input[type="url"]:focus {
+      outline: none;
+      border-color: #007aff;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+
+    input[readonly] {
+      background: #f5f5f5;
+      cursor: not-allowed;
+      color: #666;
+    }
+
+    .help-text {
+      font-size: 10px;
+      color: #888;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+
+    /* ボタン */
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      -webkit-app-region: no-drag;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: #007aff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #0051d5;
+    }
+
+    .btn-success {
+      background: #34c759;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #2da64a;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e5e5;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* アラート */
+    .alert {
+      padding: 8px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .alert.show {
+      display: flex;
+    }
+
+    .alert-success {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #2e7d32;
+    }
+
+    .alert-error {
+      background: #ffebee;
+      border: 1px solid #ef9a9a;
+      color: #c62828;
+    }
+
+    .alert-info {
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      color: #1565c0;
+    }
+
+    /* リンクリスト */
+    .link-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .link-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 12px;
+      transition: all 0.2s;
+      -webkit-app-region: no-drag;
+    }
+
+    .link-item:hover {
+      background: #f8f9fa;
+      border-color: #007aff;
+    }
+
+    .link-item a {
+      color: #007aff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+    }
+
+    .link-item a:hover {
+      text-decoration: underline;
+    }
+
+    /* ホットキー表示 */
+    .hotkey-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .hotkey-display label {
+      margin-bottom: 0;
+      min-width: 100px;
+    }
+
+    .hotkey-display input {
+      flex: 1;
+    }
+
+    .hotkey-display .btn {
+      flex-shrink: 0;
+    }
+
+    /* 同期ステータス */
+    .sync-status {
+      background: #ffffff;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    /* モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      margin-bottom: 12px;
+    }
+
+    .modal-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .modal-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* スクロールバー */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f5f5f5;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 Snipee 設定</h1>
+    </div>
+
+    <div class="content">
+      <!-- 1. マニュアルへのリンク -->
+      <div class="section">
+        <div class="section-header">
+          <h2>📖 マニュアル</h2>
+        </div>
+        <div class="section-description">
+          Snipeeの使い方や詳細情報はこちらをご覧ください。
+        </div>
+        
+        <div class="link-list">
+          <div class="link-item">
+            <a href="#" onclick="openExternal('https://github.com/yourusername/snipee'); return false;">
+              📚 使い方ガイド (GitHub README)
+            </a>
+          </div>
+          <div class="link-item">
+            <a href="#" onclick="openExternal('https://github.com/yourusername/snipee/issues'); return false;">
+              🐛 バグ報告・機能リクエスト
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. ホットキー設定 -->
+      <div class="section">
+        <div class="section-header">
+          <h2>⌨️ ホットキー設定</h2>
+        </div>
+        <div class="section-description">
+          クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。
+        </div>
+        
+        <!-- 簡易ホーム（クリップボード履歴） -->
+        <div class="form-group">
+          <div class="hotkey-display">
+            <label>簡易ホーム</label>
+            <input type="text" id="hotkey-main" readonly>
+            <button class="btn btn-secondary" onclick="showHotkeyModal('main')">変更</button>
+          </div>
+          <div class="help-text">
+            クリップボード履歴を開きます（デフォルト: <span id="default-main">Option+Shift+C</span>）
+          </div>
+        </div>
+
+        <!-- スニペット専用ホーム -->
+        <div class="form-group">
+          <div class="hotkey-display">
+            <label>スニペット専用</label>
+            <input type="text" id="hotkey-snippet" readonly>
+            <button class="btn btn-secondary" onclick="showHotkeyModal('snippet')">変更</button>
+          </div>
+          <div class="help-text">
+            スニペット一覧を開きます（デフォルト: <span id="default-snippet">Option+Shift+V</span>）
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="resetAllHotkeys()">🔄 すべてデフォルトに戻す</button>
+        </div>
+      </div>
+
+      <!-- 3. 共有スニペット同期 -->
+      <div class="section">
+        <div class="section-header">
+          <h2>🔄 共有スニペット同期</h2>
+        </div>
+        <div class="section-description">
+          Google Driveでチーム全体のスニペットを共有できます。JSON形式のファイルを作成し、共有リンクを設定してください。
+        </div>
+        
+        <div id="sync-alert" class="alert"></div>
+
+        <div class="form-group">
+          <label>Google Drive共有リンクURL</label>
+          <input type="url" id="master-url" placeholder="https://drive.google.com/file/d/...">
+          <div class="help-text">
+            ファイル → 共有 → リンクを知っている全員 → リンクをコピー
+          </div>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="saveMasterUrl()">💾 保存して同期</button>
+          <button class="btn btn-success" onclick="manualSync()">🔄 手動同期</button>
+        </div>
+
+        <div class="sync-status" id="sync-status">
+          最終同期: 未同期
+        </div>
+      </div>
+
+      <!-- 4. フォルダの表示設定 -->
+      <div class="section">
+        <div class="section-header">
+          <h2>👁️ フォルダの表示設定</h2>
+        </div>
+        <div class="section-description">
+          表示したくないフォルダのチェックを外してください。チェックを外したフォルダは簡易ホームとスニペット専用ウィンドウに表示されなくなります。
+        </div>
+        
+        <div id="folder-alert" class="alert"></div>
+
+        <div id="folder-list" style="max-height: 300px; overflow-y: auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
+          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+            フォルダを読み込んでいます...
+          </div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 8px;">
+          <button class="btn btn-primary" onclick="saveFolderSettings()">💾 設定を保存</button>
+          <button class="btn btn-secondary" onclick="selectAllFolders()">☑️ すべて表示</button>
+          <button class="btn btn-secondary" onclick="deselectAllFolders()">☐ すべて非表示</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ホットキー設定モーダル -->
+  <div class="modal" id="hotkey-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">ホットキーを変更</h3>
+      </div>
+      
+      <div class="form-group">
+        <label>新しいホットキーを押してください</label>
+        <input type="text" id="hotkey-input" readonly placeholder="キーを押してください..." 
+              style="font-size: 16px; text-align: center; padding: 16px; background: #f8f9fa;">
+        <div class="help-text">
+          Modifierキー（Command, Control, Alt, Shift）とキーの組み合わせを押してください
+        </div>
+      </div>
+
+      <div id="hotkey-error" style="display: none; color: #dc3545; font-size: 12px; margin-top: 8px; padding: 8px; background: #ffebee; border-radius: 4px;">
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeHotkeyModal()">キャンセル</button>
+        <button class="btn btn-primary" id="save-hotkey-btn" onclick="saveHotkey()" disabled>保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer, shell } = require('electron');
+    const Store = require('electron-store');
+    const store = new Store();
+    
+    let capturedHotkey = null;
+    let currentEditingType = null; // 'main' or 'snippet'
+
+    // プラットフォーム判定
+    const isMac = process.platform === 'darwin';
+
+    // 初期化
+    window.addEventListener('DOMContentLoaded', async () => {
+      // デフォルト表示を更新
+      if (!isMac) {
+        document.getElementById('default-main').textContent = 'Alt+Shift+C';
+        document.getElementById('default-snippet').textContent = 'Alt+Shift+V';
+      }
+
+      // 現在のホットキーを読み込み
+      await loadHotkeys();
+
+      // 同期ステータスを読み込み
+      await loadSyncStatus();
+
+      // マスターURLを読み込み
+      const masterUrl = store.get('masterSnippetUrl', '');
+      document.getElementById('master-url').value = masterUrl;
+
+      // フォルダ一覧を読み込み
+      await loadFolders();
+    });
+
+    // ホットキーを読み込み
+    async function loadHotkeys() {
+      const mainHotkey = await ipcRenderer.invoke('get-current-hotkey', 'main');
+      const snippetHotkey = await ipcRenderer.invoke('get-current-hotkey', 'snippet');
+      
+      document.getElementById('hotkey-main').value = mainHotkey || (isMac ? 'Option+Shift+C' : 'Alt+Shift+C');
+      document.getElementById('hotkey-snippet').value = snippetHotkey || (isMac ? 'Option+Shift+V' : 'Alt+Shift+V');
+    }
+
+    // 同期ステータスを読み込み
+    async function loadSyncStatus() {
+      const lastSync = store.get('lastSync');
+      const statusDiv = document.getElementById('sync-status');
+      
+      if (lastSync) {
+        const date = new Date(lastSync);
+        statusDiv.textContent = `最終同期: ${date.toLocaleString('ja-JP')}`;
+      } else {
+        statusDiv.textContent = '最終同期: 未同期';
+      }
+    }
+
+    // 外部リンクを開く
+    function openExternal(url) {
+      shell.openExternal(url);
+    }
+
+    // ホットキー変更モーダルを開く
+    function showHotkeyModal(type) {
+      currentEditingType = type;
+      capturedHotkey = null;
+      
+      const title = type === 'main' ? '簡易ホームのホットキーを変更' : 'スニペット専用のホットキーを変更';
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('hotkey-input').value = '';
+      document.getElementById('hotkey-error').style.display = 'none';
+      document.getElementById('save-hotkey-btn').disabled = true;
+      document.getElementById('hotkey-modal').classList.add('show');
+      
+      setTimeout(() => {
+        document.getElementById('hotkey-input').focus();
+      }, 100);
+    }
+
+    // ホットキーモーダルを閉じる
+    function closeHotkeyModal() {
+      document.getElementById('hotkey-modal').classList.remove('show');
+    }
+
+    // ホットキーをキャプチャ
+    document.getElementById('hotkey-input')?.addEventListener('keydown', (e) => {
+      if (!document.getElementById('hotkey-modal').classList.contains('show')) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // 物理キーを取得
+      let key = e.code;
+
+      // Modifier単体は無効
+      if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'].includes(key)) {
+        return;
+      }
+
+      // キーコードを変換
+      if (key.startsWith('Key')) {
+        key = key.replace('Key', '');
+      } else if (key.startsWith('Digit')) {
+        key = key.replace('Digit', '');
+      } else {
+        key = e.key;
+      }
+      
+      // Modifierキーをチェック
+      const modifiers = [];
+      if (e.metaKey) modifiers.push('Command');
+      if (e.ctrlKey && !e.metaKey) modifiers.push('Control');
+      if (e.altKey) modifiers.push('Alt');  
+      if (e.shiftKey) modifiers.push('Shift');
+      
+      // Modifierが必須
+      if (modifiers.length === 0) {
+        document.getElementById('hotkey-error').textContent = '⚠️ Modifierキー（Command, Control, Alt, Shift）と組み合わせてください';
+        document.getElementById('hotkey-error').style.display = 'block';
+        document.getElementById('save-hotkey-btn').disabled = true;
+        return;
+      }
+      
+      // ホットキー文字列を生成
+      const hotkeyStr = [...modifiers, key].join('+');
+      
+      // 表示
+      document.getElementById('hotkey-input').value = hotkeyStr;
+      capturedHotkey = hotkeyStr;
+      
+      document.getElementById('hotkey-error').style.display = 'none';
+      document.getElementById('save-hotkey-btn').disabled = false;
+    });
+
+    // ホットキーを保存
+    async function saveHotkey() {
+      if (!capturedHotkey || !currentEditingType) return;
+      
+      const result = await ipcRenderer.invoke('set-hotkey', currentEditingType, capturedHotkey);
+      
+      if (result.success) {
+        closeHotkeyModal();
+        await loadHotkeys();
+        showAlert('✅ ホットキーを変更しました。', 'success', 'sync-alert');
+      } else {
+        document.getElementById('hotkey-error').textContent = `❌ ${result.error}`;
+        document.getElementById('hotkey-error').style.display = 'block';
+      }
+    }
+
+    // すべてデフォルトに戻す
+    async function resetAllHotkeys() {
+      if (!confirm('すべてのホットキーをデフォルトに戻しますか?')) return;
+      
+      await ipcRenderer.invoke('reset-all-hotkeys');
+      await loadHotkeys();
+      showAlert('✅ すべてのホットキーをデフォルトに戻しました。', 'success', 'sync-alert');
+    }
+
+    // マスターURL保存
+    async function saveMasterUrl() {
+      const url = document.getElementById('master-url').value.trim();
+      if (!url) {
+        showAlert('URLを入力してください', 'error', 'sync-alert');
+        return;
+      }
+
+      const result = await ipcRenderer.invoke('set-master-url', url);
+      if (result) {
+        showAlert('✅ マスターURLを保存し、同期しました', 'success', 'sync-alert');
+        await loadSyncStatus();
+        await loadFolders();
+      } else {
+        showAlert('❌ 同期に失敗しました。URLを確認してください', 'error', 'sync-alert');
+      }
+    }
+
+    // 手動同期
+    async function manualSync() {
+      const result = await ipcRenderer.invoke('manual-sync');
+      if (result.success && result.lastSync) {
+        showAlert('✅ 同期完了しました', 'success', 'sync-alert');
+        await loadSyncStatus();
+        await loadFolders();
+      } else {
+        showAlert('❌ 同期に失敗しました。URLを確認してください', 'error', 'sync-alert');
+      }
+    }
+
+    // アラート表示
+    function showAlert(message, type = 'info', elementId = 'sync-alert') {
+      const alert = document.getElementById(elementId);
+      alert.className = `alert alert-${type} show`;
+      alert.textContent = message;
+      
+      setTimeout(() => {
+        alert.classList.remove('show');
+      }, 5000);
+    }
+
+    // モーダル外クリックで閉じる
+    document.getElementById('hotkey-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'hotkey-modal') {
+        closeHotkeyModal();
+      }
+    });
+
+    // フォルダ一覧を読み込み
+    async function loadFolders() {
+      console.log('🔵 loadFolders 開始');
+      
+      const data = await ipcRenderer.invoke('get-all-items');
+      console.log('🔵 取得したデータ:', data);
+      
+      const masterSnippets = data.masterSnippets || [];
+      console.log('🔵 masterSnippets 件数:', masterSnippets.length);
+      console.log('🔵 最初のスニペット:', masterSnippets[0]);
+      
+      // フォルダを抽出
+      const folders = [...new Set(masterSnippets.map(s => s.folder || '未分類'))];
+      console.log('🔵 抽出したフォルダ:', folders);
+      
+      // 非表示フォルダを取得
+      const hiddenFolders = store.get('hiddenFolders', []);
+      console.log('🔵 非表示フォルダ:', hiddenFolders);
+      
+      // フォルダリストを生成
+      const folderListDiv = document.getElementById('folder-list');
+      
+      if (folders.length === 0) {
+        console.log('🔵 フォルダが0件');
+        folderListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">フォルダがありません</div>';
+        return;
+      }
+      
+      console.log('🔵 フォルダリスト生成中...');
+      folderListDiv.innerHTML = folders.map(folder => `
+        <div style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" 
+                 id="folder-${escapeAttr(folder)}" 
+                 value="${escapeAttr(folder)}" 
+                 ${!hiddenFolders.includes(folder) ? 'checked' : ''}
+                 style="width: 16px; height: 16px; cursor: pointer;">
+          <label for="folder-${escapeAttr(folder)}" 
+                 style="flex: 1; cursor: pointer; font-size: 12px; color: #333; margin-bottom: 0;">
+            ${escapeHtml(folder)}
+          </label>
+        </div>
+      `).join('');
+      
+      console.log('🔵 フォルダリスト生成完了');
+    }
+
+    // フォルダ設定を保存
+    async function saveFolderSettings() {
+      const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
+      const hiddenFolders = [];
+      
+      checkboxes.forEach(checkbox => {
+        if (!checkbox.checked) {
+          hiddenFolders.push(checkbox.value);
+        }
+      });
+      
+      store.set('hiddenFolders', hiddenFolders);
+      showAlert(`✅ フォルダ設定を保存しました（${hiddenFolders.length}個のフォルダを非表示）`, 'success', 'folder-alert');
+    }
+
+    // すべて表示
+    function selectAllFolders() {
+      const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
+      checkboxes.forEach(checkbox => checkbox.checked = true);
+    }
+
+    // すべて非表示
+    function deselectAllFolders() {
+      const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
+      checkboxes.forEach(checkbox => checkbox.checked = false);
+    }
+
+    // HTMLエスケープ
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 属性値エスケープ
+    function escapeAttr(text) {
+      return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Escキーでモーダルまたはウィンドウを閉じる
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        // モーダルが開いている場合はモーダルを閉じる
+        if (document.getElementById('hotkey-modal').classList.contains('show')) {
+          closeHotkeyModal();
+        } else {
+          // モーダルが開いていない場合はウィンドウを閉じる
+          ipcRenderer.invoke('hide-settings-window');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
