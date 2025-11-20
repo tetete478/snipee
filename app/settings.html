@@ -21,36 +21,34 @@
 
     .container {
       width: 420px;
-      height: 800px;  /* 600px → 800px */
-      max-height: 95vh;  /* 90vh → 95vh */
+      height: 800px;
+      max-height: 95vh;
       background: #ffffff;
       display: flex;
       flex-direction: column;
     }
 
-    /* ヘッダー */
     .header {
       background: #ffffff;
+      padding: 20px;
       border-bottom: 1px solid #e0e0e0;
-      padding: 12px 16px;
-      flex-shrink: 0;
+      -webkit-app-region: drag;
     }
-
+    
     .header h1 {
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 600;
       color: #333;
+      margin: 0;
     }
 
-    /* コンテンツ */
     .content {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 16px;
-      min-height: 0;
+      padding: 20px;
+      -webkit-app-region: no-drag;
     }
 
-    /* セクション */
     .section {
       background: #fafafa;
       padding: 12px;
@@ -85,7 +83,6 @@
       cursor: move;
     }
 
-    /* フォーム */
     .form-group {
       margin-bottom: 10px;
       -webkit-app-region: no-drag;
@@ -137,7 +134,6 @@
       line-height: 1.3;
     }
 
-    /* ボタン */
     .btn {
       padding: 6px 12px;
       border: none;
@@ -190,7 +186,6 @@
       flex-wrap: wrap;
     }
 
-    /* アラート */
     .alert {
       padding: 8px 10px;
       border-radius: 4px;
@@ -223,7 +218,6 @@
       color: #1565c0;
     }
 
-    /* リンクリスト */
     .link-list {
       display: flex;
       flex-direction: column;
@@ -261,7 +255,6 @@
       text-decoration: underline;
     }
 
-    /* ホットキー表示 */
     .hotkey-display {
       display: flex;
       align-items: center;
@@ -282,7 +275,6 @@
       flex-shrink: 0;
     }
 
-    /* 同期ステータス */
     .sync-status {
       background: #ffffff;
       padding: 8px 10px;
@@ -293,7 +285,6 @@
       margin-top: 8px;
     }
 
-    /* モーダル */
     .modal {
       display: none;
       position: fixed;
@@ -305,6 +296,7 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      -webkit-app-region: no-drag;
     }
 
     .modal.show {
@@ -318,6 +310,7 @@
       width: 90%;
       max-width: 400px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      -webkit-app-region: no-drag;
     }
 
     .modal-header {
@@ -337,7 +330,6 @@
       gap: 8px;
     }
 
-    /* スクロールバー */
     ::-webkit-scrollbar {
       width: 8px;
     }
@@ -363,7 +355,6 @@
     </div>
 
     <div class="content">
-      <!-- 1. マニュアルへのリンク -->
       <div class="section">
         <div class="section-header">
           <h2>📖 マニュアル</h2>
@@ -374,8 +365,8 @@
         
         <div class="link-list">
           <div class="link-item">
-            <a href="#" onclick="openExternal('https://github.com/yourusername/snipee'); return false;">
-              📚 使い方ガイド (GitHub README)
+            <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/blob/main/MANUAL.md'); return false;">
+              📚 使い方マニュアル
             </a>
           </div>
           <div class="link-item">
@@ -386,7 +377,6 @@
         </div>
       </div>
 
-      <!-- 2. ホットキー設定 -->
       <div class="section">
         <div class="section-header">
           <h2>⌨️ ホットキー設定</h2>
@@ -395,7 +385,6 @@
           クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。
         </div>
         
-        <!-- 簡易ホーム（クリップボード履歴） -->
         <div class="form-group">
           <div class="hotkey-display">
             <label>簡易ホーム</label>
@@ -407,7 +396,6 @@
           </div>
         </div>
 
-        <!-- スニペット専用ホーム -->
         <div class="form-group">
           <div class="hotkey-display">
             <label>スニペット専用</label>
@@ -424,7 +412,6 @@
         </div>
       </div>
 
-      <!-- 3. 共有スニペット同期 -->
       <div class="section">
         <div class="section-header">
           <h2>🔄 共有スニペット同期</h2>
@@ -453,7 +440,6 @@
         </div>
       </div>
 
-      <!-- 4. フォルダの表示設定 -->
       <div class="section">
         <div class="section-header">
           <h2>👁️ フォルダの表示設定</h2>
@@ -476,10 +462,32 @@
           <button class="btn btn-secondary" onclick="deselectAllFolders()">☐ すべて非表示</button>
         </div>
       </div>
+
+      <div class="section">
+        <div class="section-header">
+          <h2>📍 ウィンドウ位置設定</h2>
+        </div>
+        <div class="section-description">
+          ウィンドウの表示位置を設定できます。
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="windowPosition" value="cursor" style="margin-right: 8px;">
+            <span>マウスカーソル位置に表示</span>
+          </label>
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input type="radio" name="windowPosition" value="previous" style="margin-right: 8px;">
+            <span>前回の位置に表示</span>
+          </label>
+        </div>
+        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">
+          「前回の位置」を選ぶと、ウィンドウを移動した位置を記憶します
+        </p>
+      </div>
     </div>
   </div>
 
-  <!-- ホットキー設定モーダル -->
   <div class="modal" id="hotkey-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -511,34 +519,88 @@
     const store = new Store();
     
     let capturedHotkey = null;
-    let currentEditingType = null; // 'main' or 'snippet'
+    let currentEditingType = null;
 
-    // プラットフォーム判定
     const isMac = process.platform === 'darwin';
 
-    // 初期化
     window.addEventListener('DOMContentLoaded', async () => {
-      // デフォルト表示を更新
       if (!isMac) {
         document.getElementById('default-main').textContent = 'Alt+Shift+C';
         document.getElementById('default-snippet').textContent = 'Alt+Shift+V';
       }
 
-      // 現在のホットキーを読み込み
       await loadHotkeys();
-
-      // 同期ステータスを読み込み
       await loadSyncStatus();
 
-      // マスターURLを読み込み
       const masterUrl = store.get('masterSnippetUrl', '');
       document.getElementById('master-url').value = masterUrl;
 
-      // フォルダ一覧を読み込み
       await loadFolders();
+      loadWindowPositionSetting();
+
+      // モーダル背景クリックで閉じる
+      document.getElementById('hotkey-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'hotkey-modal') {
+          closeHotkeyModal();
+        }
+      });
+
+      // ホットキー入力
+      document.getElementById('hotkey-input').addEventListener('keydown', (e) => {
+        if (!document.getElementById('hotkey-modal').classList.contains('show')) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let key = e.code;
+
+        if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'].includes(key)) {
+          return;
+        }
+
+        if (key.startsWith('Key')) {
+          key = key.replace('Key', '');
+        } else if (key.startsWith('Digit')) {
+          key = key.replace('Digit', '');
+        } else {
+          key = e.key;
+        }
+        
+        const modifiers = [];
+        if (e.metaKey) modifiers.push('Command');
+        if (e.ctrlKey && !e.metaKey) modifiers.push('Control');
+        if (e.altKey) modifiers.push('Alt');  
+        if (e.shiftKey) modifiers.push('Shift');
+        
+        if (modifiers.length === 0) {
+          document.getElementById('hotkey-error').textContent = '⚠️ Modifierキー（Command, Control, Alt, Shift）と組み合わせてください';
+          document.getElementById('hotkey-error').style.display = 'block';
+          document.getElementById('save-hotkey-btn').disabled = true;
+          return;
+        }
+        
+        const hotkeyStr = [...modifiers, key].join('+');
+        
+        document.getElementById('hotkey-input').value = hotkeyStr;
+        capturedHotkey = hotkeyStr;
+        
+        document.getElementById('hotkey-error').style.display = 'none';
+        document.getElementById('save-hotkey-btn').disabled = false;
+      });
+
+      // Escキー処理
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const modal = document.getElementById('hotkey-modal');
+          if (modal.classList.contains('show')) {
+            closeHotkeyModal();
+          } else {
+            ipcRenderer.invoke('hide-settings-window');
+          }
+        }
+      });
     });
 
-    // ホットキーを読み込み
     async function loadHotkeys() {
       const mainHotkey = await ipcRenderer.invoke('get-current-hotkey', 'main');
       const snippetHotkey = await ipcRenderer.invoke('get-current-hotkey', 'snippet');
@@ -547,7 +609,6 @@
       document.getElementById('hotkey-snippet').value = snippetHotkey || (isMac ? 'Option+Shift+V' : 'Alt+Shift+V');
     }
 
-    // 同期ステータスを読み込み
     async function loadSyncStatus() {
       const lastSync = store.get('lastSync');
       const statusDiv = document.getElementById('sync-status');
@@ -560,12 +621,10 @@
       }
     }
 
-    // 外部リンクを開く
     function openExternal(url) {
       shell.openExternal(url);
     }
 
-    // ホットキー変更モーダルを開く
     function showHotkeyModal(type) {
       currentEditingType = type;
       capturedHotkey = null;
@@ -582,62 +641,12 @@
       }, 100);
     }
 
-    // ホットキーモーダルを閉じる
     function closeHotkeyModal() {
       document.getElementById('hotkey-modal').classList.remove('show');
+      capturedHotkey = null;
+      currentEditingType = null;
     }
 
-    // ホットキーをキャプチャ
-    document.getElementById('hotkey-input')?.addEventListener('keydown', (e) => {
-      if (!document.getElementById('hotkey-modal').classList.contains('show')) return;
-      
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // 物理キーを取得
-      let key = e.code;
-
-      // Modifier単体は無効
-      if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'].includes(key)) {
-        return;
-      }
-
-      // キーコードを変換
-      if (key.startsWith('Key')) {
-        key = key.replace('Key', '');
-      } else if (key.startsWith('Digit')) {
-        key = key.replace('Digit', '');
-      } else {
-        key = e.key;
-      }
-      
-      // Modifierキーをチェック
-      const modifiers = [];
-      if (e.metaKey) modifiers.push('Command');
-      if (e.ctrlKey && !e.metaKey) modifiers.push('Control');
-      if (e.altKey) modifiers.push('Alt');  
-      if (e.shiftKey) modifiers.push('Shift');
-      
-      // Modifierが必須
-      if (modifiers.length === 0) {
-        document.getElementById('hotkey-error').textContent = '⚠️ Modifierキー（Command, Control, Alt, Shift）と組み合わせてください';
-        document.getElementById('hotkey-error').style.display = 'block';
-        document.getElementById('save-hotkey-btn').disabled = true;
-        return;
-      }
-      
-      // ホットキー文字列を生成
-      const hotkeyStr = [...modifiers, key].join('+');
-      
-      // 表示
-      document.getElementById('hotkey-input').value = hotkeyStr;
-      capturedHotkey = hotkeyStr;
-      
-      document.getElementById('hotkey-error').style.display = 'none';
-      document.getElementById('save-hotkey-btn').disabled = false;
-    });
-
-    // ホットキーを保存
     async function saveHotkey() {
       if (!capturedHotkey || !currentEditingType) return;
       
@@ -653,7 +662,6 @@
       }
     }
 
-    // すべてデフォルトに戻す
     async function resetAllHotkeys() {
       if (!confirm('すべてのホットキーをデフォルトに戻しますか?')) return;
       
@@ -662,7 +670,6 @@
       showAlert('✅ すべてのホットキーをデフォルトに戻しました。', 'success', 'sync-alert');
     }
 
-    // マスターURL保存
     async function saveMasterUrl() {
       const url = document.getElementById('master-url').value.trim();
       if (!url) {
@@ -680,7 +687,6 @@
       }
     }
 
-    // 手動同期
     async function manualSync() {
       const result = await ipcRenderer.invoke('manual-sync');
       if (result.success && result.lastSync) {
@@ -692,7 +698,6 @@
       }
     }
 
-    // アラート表示
     function showAlert(message, type = 'info', elementId = 'sync-alert') {
       const alert = document.getElementById(elementId);
       alert.className = `alert alert-${type} show`;
@@ -703,42 +708,19 @@
       }, 5000);
     }
 
-    // モーダル外クリックで閉じる
-    document.getElementById('hotkey-modal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'hotkey-modal') {
-        closeHotkeyModal();
-      }
-    });
-
-    // フォルダ一覧を読み込み
     async function loadFolders() {
-      console.log('🔵 loadFolders 開始');
-      
       const data = await ipcRenderer.invoke('get-all-items');
-      console.log('🔵 取得したデータ:', data);
-      
       const masterSnippets = data.masterSnippets || [];
-      console.log('🔵 masterSnippets 件数:', masterSnippets.length);
-      console.log('🔵 最初のスニペット:', masterSnippets[0]);
-      
-      // フォルダを抽出
       const folders = [...new Set(masterSnippets.map(s => s.folder || '未分類'))];
-      console.log('🔵 抽出したフォルダ:', folders);
-      
-      // 非表示フォルダを取得
       const hiddenFolders = store.get('hiddenFolders', []);
-      console.log('🔵 非表示フォルダ:', hiddenFolders);
       
-      // フォルダリストを生成
       const folderListDiv = document.getElementById('folder-list');
       
       if (folders.length === 0) {
-        console.log('🔵 フォルダが0件');
         folderListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">フォルダがありません</div>';
         return;
       }
       
-      console.log('🔵 フォルダリスト生成中...');
       folderListDiv.innerHTML = folders.map(folder => `
         <div style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" 
@@ -752,11 +734,19 @@
           </label>
         </div>
       `).join('');
-      
-      console.log('🔵 フォルダリスト生成完了');
     }
 
-    // フォルダ設定を保存
+    async function loadWindowPositionSetting() {
+      const positionMode = store.get('windowPositionMode', 'cursor');
+      
+      const radioButtons = document.querySelectorAll('input[name="windowPosition"]');
+      radioButtons.forEach(radio => {
+        if (radio.value === positionMode) {
+          radio.checked = true;
+        }
+      });
+    }
+
     async function saveFolderSettings() {
       const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
       const hiddenFolders = [];
@@ -769,44 +759,32 @@
       
       store.set('hiddenFolders', hiddenFolders);
       showAlert(`✅ フォルダ設定を保存しました（${hiddenFolders.length}個のフォルダを非表示）`, 'success', 'folder-alert');
+
+      const selectedPosition = document.querySelector('input[name="windowPosition"]:checked');
+      if (selectedPosition) {
+        store.set('windowPositionMode', selectedPosition.value);
+      }
     }
 
-    // すべて表示
     function selectAllFolders() {
       const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
       checkboxes.forEach(checkbox => checkbox.checked = true);
     }
 
-    // すべて非表示
     function deselectAllFolders() {
       const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
       checkboxes.forEach(checkbox => checkbox.checked = false);
     }
 
-    // HTMLエスケープ
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
 
-    // 属性値エスケープ
     function escapeAttr(text) {
       return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-
-    // Escキーでモーダルまたはウィンドウを閉じる
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        // モーダルが開いている場合はモーダルを閉じる
-        if (document.getElementById('hotkey-modal').classList.contains('show')) {
-          closeHotkeyModal();
-        } else {
-          // モーダルが開いていない場合はウィンドウを閉じる
-          ipcRenderer.invoke('hide-settings-window');
-        }
-      }
-    });
   </script>
 </body>
 </html>

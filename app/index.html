@@ -52,7 +52,7 @@
     }
 
     .menu-item {
-      padding: 6px 10px;          /* 8px 12px → 6px 10px */
+      padding: 3px 10px;
       cursor: pointer;
       border-bottom: 1px solid #f0f0f0;
       display: flex;
@@ -95,7 +95,7 @@
     }
 
     .menu-item-text {
-      font-size: 10px;
+      font-size: 11px;
       color: #333;
       white-space: nowrap;
       overflow: hidden;
@@ -118,7 +118,7 @@
     }
 
     .action-item {
-      padding: 10px 12px;
+      padding: 6px 11px;
       cursor: pointer;
       border-bottom: 1px solid #f0f0f0;
       display: flex;
@@ -126,7 +126,7 @@
       gap: 8px;
       background: #ffffff;
       transition: background 0.1s;
-      font-size: 13px;
+      font-size: 12px;
       color: #333;
     }
 
@@ -146,12 +146,18 @@
     .footer {
       background: #fafafa;
       border-top: 1px solid #e0e0e0;
-      padding: 4px 12px;
+      padding: 7px 12px;
       font-size: 10px;
       color: #999;
       display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .footer-row {
+      display: flex;
       justify-content: center;
-      gap: 12px;
+      gap: 20px;
     }
 
     .footer span {
@@ -186,6 +192,25 @@
       background: #b0b0b0;
     }
 
+    .submenu-container::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .submenu-container::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 8px 0;
+    }
+
+    .submenu-container::-webkit-scrollbar-thumb {
+      background: #ffd78c;
+      border-radius: 2px;
+      margin: 8px 0;
+    }
+
+    .submenu-container::-webkit-scrollbar-thumb:hover {
+      background: #ffcc66;
+    }
+
     .empty-state {
       padding: 40px 20px;
       text-align: center;
@@ -214,12 +239,12 @@
 
     .submenu-container {
       position: absolute;
-      width: 160px;
-      max-height: none;           /* 400px → none (スクロール無効) */
+      width: 250px;  /* ← 200pxから250pxに */
+      max-height: none;
       background: #ffffff;
       border-radius: 8px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-      overflow-y: visible;        /* auto → visible */
+      overflow-y: visible;
       pointer-events: auto;
       display: none;
       -webkit-app-region: drag;
@@ -230,7 +255,7 @@
     }
 
     .submenu-item {
-      padding: 4px 10px;          /* 8px 12px → 4px 10px */
+      padding: 2px 10px;
       cursor: pointer;
       border-bottom: 1px solid #f0f0f0;
       transition: background 0.1s;
@@ -255,10 +280,15 @@
     }
 
     .submenu-item-title {
-      font-size: 11px;            /* 13px → 11px */
-      color: #333;
-      font-weight: 500;
-      margin-bottom: 0;           /* 2px → 0px */
+        font-size: 11px;
+        color: #333;
+        font-weight: 500;
+        margin-bottom: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
     }
   </style>
 </head>
@@ -280,9 +310,13 @@
           <span>🗑️</span>
           <span>履歴をクリア</span>
         </div>
+        <div class="action-item" onclick="openSnippetEditor()">
+          <span>✏️</span>
+          <span>スニペット編集</span>
+        </div>
         <div class="action-item" onclick="openSettings()">
           <span>⚙️</span>
-          <span>環境設定...</span>
+          <span>環境設定</span>
         </div>
         <div class="action-item" onclick="quitApp()">
           <span>Snipeeを終了</span>
@@ -291,10 +325,14 @@
     </div>
 
     <div class="footer">
-      <span><span class="key">↑↓</span>選択</span>
-      <span><span class="key">→</span>展開</span>
-      <span><span class="key">←</span>閉じる</span>
-      <span><span class="key">Esc</span>終了</span>
+      <div class="footer-row">
+        <span><span class="key">↑↓</span>選択</span>
+        <span><span class="key">→</span>展開</span>
+      </div>
+      <div class="footer-row">
+        <span><span class="key">←</span>閉じる</span>
+        <span><span class="key">Esc</span>終了</span>
+      </div>
     </div>
   </div>
 
@@ -307,6 +345,7 @@
 
     let allItems = {
       history: [],
+      personal: [],
       master: []
     };
     
@@ -317,6 +356,7 @@
     let isSubmenuOpen = false;
     let submenuSelectedIndex = 0;
     let submenuItems = [];
+    let pinnedItems = [];
 
     async function init() {
       await loadAllItems();
@@ -327,8 +367,11 @@
       const data = await ipcRenderer.invoke('get-all-items');
       
       allItems.history = data.history || [];
+      allItems.personal = (data.personalSnippets || []).map(s => ({ ...s, type: 'personal' }));
       allItems.master = (data.masterSnippets || []).map(s => ({ ...s, type: 'master' }));
       hasPermission = data.hasPermission !== false;
+      const pinnedData = await ipcRenderer.invoke('get-pinned-items');
+      pinnedItems = pinnedData || [];
 
       render();
     }
@@ -337,6 +380,10 @@
       document.addEventListener('keydown', handleKeyboard);
 
       ipcRenderer.on('clipboard-updated', () => {
+        loadAllItems();
+      });
+
+      ipcRenderer.on('personal-snippets-updated', () => {
         loadAllItems();
       });
     }
@@ -351,7 +398,6 @@
     function updateSelectableItems() {
       const menuItems = Array.from(document.querySelectorAll('.menu-item[data-history-group], .menu-item[data-folder], .action-item'));
       selectableItems = menuItems;
-      console.log('🔵 selectableItems.length:', selectableItems.length);
     }
 
     function updateSelection() {
@@ -398,7 +444,7 @@
             data-group-id="history-${index}"
             data-history-group='${JSON.stringify(group.items).replace(/'/g, "&apos;")}'>
           <div class="menu-item-left">
-            <span class="menu-item-icon">☑</span>
+            <span class="menu-item-icon">📄</span>
             <span class="menu-item-text">${group.label}</span>
           </div>
           <span class="menu-item-arrow">›</span>
@@ -410,23 +456,30 @@
       if (items.length === 0) return [];
       
       const totalCount = allItems.history.length;
-      // ipcRenderer.send('debug-log', '📊 履歴総数: ' + totalCount);  // ← 削除
-      // ipcRenderer.send('debug-log', '📊 履歴内容: ' + JSON.stringify(allItems.history.slice(0, 50)));  // ← 削除
-      
       const groups = [];
+      
+      const pinned = allItems.history.filter(item => pinnedItems.includes(item.id));
+      if (pinned.length > 0) {
+        groups.push({
+          start: null,
+          end: null,
+          label: '● ピン留め',
+          items: pinned,
+          isPinned: true
+        });
+      }
       
       for (let i = 0; i < Math.min(totalCount, 45); i += 15) {
         const start = i + 1;
         const end = Math.min(i + 15, totalCount);
         const groupItems = allItems.history.slice(i, i + 15);
         
-        // ipcRenderer.send('debug-log', `📊 グループ ${start}-${end}: ${groupItems.length} 件`);  // ← 削除
-        
         groups.push({
           start,
           end,
           label: `${start} - ${end}`,
-          items: groupItems
+          items: groupItems,
+          isPinned: false
         });
       }
       
@@ -435,9 +488,8 @@
 
     function renderSnippets(query = '') {
       const container = document.getElementById('snippet-section');
-      let items = [...allItems.master];  // personal を削除
+      let items = [...allItems.master, ...allItems.personal];  // ← マスタを先に
 
-      // 非表示フォルダをフィルタリング
       const Store = require('electron-store');
       const store = new Store();
       const hiddenFolders = store.get('hiddenFolders', []);
@@ -468,7 +520,7 @@
             data-folder="${folder}" 
             data-snippets='${JSON.stringify(snippets).replace(/'/g, "&apos;")}'>
           <div class="menu-item-left">
-            <span class="menu-item-icon">☑</span>
+            <span class="menu-item-icon">📁</span>
             <span class="menu-item-text">${escapeHtml(folder)}</span>
           </div>
           <span class="menu-item-arrow">›</span>
@@ -486,6 +538,11 @@
         folders[folder].push(item);
       });
       return folders;
+    }
+
+    async function openSnippetEditor() {
+      await ipcRenderer.invoke('hide-window');
+      await ipcRenderer.invoke('open-snippet-editor');
     }
 
     async function clearHistory() {
@@ -507,8 +564,6 @@
     }
 
     async function handleKeyboard(e) {
-      console.log('⌨️ キー押下:', e.key, 'isSubmenuOpen:', isSubmenuOpen);
-      
       if (e.key === 'Escape') {
         e.preventDefault();
         hideInlineSubmenu();
@@ -592,7 +647,6 @@
     }
 
     function showSubmenuForSelectedItem() {
-      console.log('🔵 showSubmenuForSelectedItem 開始');
       const item = selectableItems[selectedIndex];
       if (!item) return;
       
@@ -609,6 +663,8 @@
             const rawData = item.getAttribute('data-history-group');
             const historyData = JSON.parse(rawData);
             items = historyData.map(h => ({
+              id: h.id,
+              type: 'history',
               title: h.content.substring(0, 30) + (h.content.length > 30 ? '...' : ''),
               content: h.content
             }));
@@ -627,40 +683,69 @@
     }
 
     function showInlineSubmenu(targetElement, items) {
-      console.log('🟢 showInlineSubmenu 開始', 'アイテム数:', items.length);
-
       const submenu = document.getElementById('inline-submenu');
       const bounds = targetElement.getBoundingClientRect();
       
-      submenu.style.left = (bounds.right - 5) + 'px';
-      submenu.style.top = bounds.top + 'px';
+      const itemHeight = 22;
+      const estimatedHeight = items.length * itemHeight;
+      const viewportHeight = window.innerHeight;
+      const margin = 10;
       
-      // グローバル変数に保存（重要！）
+      // サブメニューを上の方から表示（ウィンドウの上端から少し下）
+      let top = margin;
+      
+      // それでも収まらない場合はスクロール可能に
+      if (estimatedHeight > viewportHeight - margin * 2) {
+        submenu.style.maxHeight = (viewportHeight - margin * 2) + 'px';
+        submenu.style.overflowY = 'auto';
+      } else {
+        submenu.style.maxHeight = 'none';
+        submenu.style.overflowY = 'visible';
+      }
+      
+      submenu.style.left = (bounds.right - 5) + 'px';
+      submenu.style.top = top + 'px';
+      
       submenuItems = items;
       submenuSelectedIndex = 0;
       isSubmenuOpen = true;
       
-      // HTMLを生成（番号付き）
-      submenu.innerHTML = items.map((item, index) => `
-      <div class="submenu-item ${index === 0 ? 'selected' : ''}" data-index="${index}">
-        <div class="submenu-item-title">☑ ${index + 1}. ${escapeHtml(item.title)}</div>
-      </div>
-    `).join('');
+      submenu.innerHTML = items.map((item, index) => {
+        const isHistoryItem = item.id && item.type === 'history';
+        const isPinned = isHistoryItem && pinnedItems.includes(item.id);
+        const pinIcon = isPinned ? '●' : '○';
+        
+        const displayText = item.title || item.content || '';
+        const truncatedText = displayText.length > 25 ? displayText.substring(0, 25) + '...' : displayText;
+        
+        return `
+        <div class="submenu-item ${index === 0 ? 'selected' : ''}" data-index="${index}">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div class="submenu-item-title">📄 ${index + 1}. ${escapeHtml(truncatedText)}</div>
+            ${isHistoryItem ? `<span class="pin-button" data-item-id="${item.id}" style="cursor: pointer; font-size: 10px; flex-shrink: 0; color: #666; -webkit-app-region: no-drag;">${pinIcon}</span>` : ''}
+          </div>
+        </div>
+      `;
+      }).join('');
       
       submenu.classList.add('visible');
   
-      console.log('✅ サブメニュー表示完了', 'アイテム数:', submenuItems.length, 'isSubmenuOpen:', isSubmenuOpen);
-      
-      // クリックイベントを追加（マウス操作用）
       submenu.querySelectorAll('.submenu-item').forEach((element, index) => {
         element.addEventListener('click', async () => {
           await pasteSubmenuItem(items[index].content);
         });
       });
 
-      console.log('🟢 showInlineSubmenu 完了', 'isSubmenuOpen:', isSubmenuOpen);
+      submenu.querySelectorAll('.pin-button').forEach((button) => {
+        button.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const itemId = button.getAttribute('data-item-id');
+          const result = await ipcRenderer.invoke('toggle-pin-item', itemId);
+          pinnedItems = result.pinnedItems;
+          await loadAllItems();
+        });
+      });
     }
-
 
     function hideInlineSubmenu() {
       const submenu = document.getElementById('inline-submenu');
@@ -675,13 +760,12 @@
       submenuItemElements.forEach((item, index) => {
         if (index === submenuSelectedIndex) {
           item.classList.add('selected');
-          item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          item.scrollIntoView({ block: 'nearest', behavior: 'auto' });
         } else {
           item.classList.remove('selected');
         }
       });
     }
-
 
     async function pasteSubmenuItem(content) {
       let decodedContent = content;

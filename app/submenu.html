@@ -29,7 +29,6 @@
       border: 1px solid #e0e0e0;
     }
 
-    /* メニューアイテム */
     .menu-item {
       padding: 8px 12px;
       cursor: pointer;
@@ -47,6 +46,11 @@
 
     .menu-item:last-child {
       border-bottom: none;
+    }
+
+    .menu-item.selected {
+      background: #e7f3ff;
+      border-left: 3px solid #667eea;
     }
 
     .menu-item-content {
@@ -72,7 +76,6 @@
       text-overflow: ellipsis;
     }
 
-    /* スクロールバー */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -90,7 +93,6 @@
       background: #b0b0b0;
     }
 
-    /* 空の状態 */
     .empty-state {
       padding: 40px 20px;
       text-align: center;
@@ -108,21 +110,12 @@
     const { ipcRenderer } = require('electron');
 
     let items = [];
+    let currentIndex = 0;
 
     // 初期化
     ipcRenderer.on('show-items', (event, data) => {
       items = data.items || [];
       render();
-    });
-
-    // サブメニューにマウスが入ったら通知
-    document.addEventListener('mouseenter', () => {
-      ipcRenderer.send('submenu-mouse-enter');
-    });
-
-    // サブメニューからマウスが離れたら通知
-    document.addEventListener('mouseleave', () => {
-      ipcRenderer.send('submenu-mouse-leave');
     });
 
     // レンダリング
@@ -135,13 +128,30 @@
       }
 
       container.innerHTML = items.map((item, index) => `
-        <div class="menu-item" onclick="selectItem(${index})">
+        <div class="menu-item">
           <div class="menu-item-content">
             <div class="menu-item-title">${escapeHtml(item.title || 'Untitled')}</div>
             <div class="menu-item-preview">${escapeHtml((item.content || '').substring(0, 40))}${(item.content || '').length > 40 ? '...' : ''}</div>
           </div>
         </div>
       `).join('');
+
+      // 初期選択
+      currentIndex = 0;
+      updateSelection();
+    }
+
+    // 選択状態の更新
+    function updateSelection() {
+      const menuItems = document.querySelectorAll('.menu-item');
+      menuItems.forEach((item, index) => {
+        if (index === currentIndex) {
+          item.classList.add('selected');
+          item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else {
+          item.classList.remove('selected');
+        }
+      });
     }
 
     // アイテム選択
@@ -151,6 +161,29 @@
         await ipcRenderer.invoke('select-submenu-item', item);
       }
     }
+
+    // キーボード操作
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        ipcRenderer.invoke('hide-submenu');
+        ipcRenderer.send('submenu-closed-by-user');
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        currentIndex = Math.min(currentIndex + 1, items.length - 1);
+        updateSelection();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        currentIndex = Math.max(currentIndex - 1, 0);
+        updateSelection();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectItem(currentIndex);
+      }
+    });
 
     // HTMLエスケープ
     function escapeHtml(text) {

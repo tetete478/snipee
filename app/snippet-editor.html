@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>スニペット編集 - Snipee</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .toolbar {
+      background: linear-gradient(to bottom, #fafafa, #f0f0f0);
+      border-bottom: 1px solid #c0c0c0;
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: linear-gradient(to bottom, #ffffff, #f8f8f8);
+      border: 1px solid #c0c0c0;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #333;
+      transition: all 0.15s;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    }
+
+    .toolbar-btn:hover {
+      background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
+    }
+
+    .toolbar-btn:active {
+      background: linear-gradient(to bottom, #e8e8e8, #e0e0e0);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: #e8e8e8;
+      border-right: 1px solid #c0c0c0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .folder-group {
+      border-bottom: 1px solid #d0d0d0;
+    }
+
+    .folder-header {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      user-select: none;
+      transition: background 0.1s;
+    }
+
+    .folder-header:hover {
+      background: rgba(0,0,0,0.05);
+    }
+
+    .folder-header.selected {
+      background: #4a90e2;
+      color: #ffffff;
+    }
+
+    .folder-toggle {
+      font-size: 10px;
+      width: 12px;
+      transition: transform 0.2s;
+    }
+
+    .folder-toggle.expanded {
+      transform: rotate(90deg);
+    }
+
+    .folder-icon {
+      font-size: 14px;
+    }
+
+    .folder-name {
+      flex: 1;
+    }
+
+    .folder-delete {
+      opacity: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #999;
+      padding: 0 4px;
+    }
+
+    .folder-header:hover .folder-delete {
+      opacity: 1;
+    }
+
+    .folder-header.selected .folder-delete {
+      color: rgba(255,255,255,0.8);
+      opacity: 1;
+    }
+
+    .snippet-list {
+      display: none;
+      background: rgba(0,0,0,0.03);
+    }
+
+    .snippet-list.expanded {
+      display: block;
+    }
+
+    .snippet-item {
+      padding: 6px 12px 6px 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      transition: background 0.1s;
+    }
+
+    .snippet-item:hover {
+      background: rgba(0,0,0,0.05);
+    }
+
+    .snippet-item.selected {
+      background: #4a90e2;
+      color: #ffffff;
+    }
+
+    .snippet-icon {
+      font-size: 12px;
+    }
+
+    .snippet-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .snippet-delete {
+      opacity: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: #999;
+      padding: 0 4px;
+    }
+
+    .snippet-item:hover .snippet-delete {
+      opacity: 1;
+    }
+
+    .snippet-item.selected .snippet-delete {
+      color: rgba(255,255,255,0.8);
+      opacity: 1;
+    }
+
+    .content-panel {
+      flex: 1;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .editor-area {
+      flex: 1;
+      padding: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .editor-empty {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .editor-empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.2;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+
+    .form-textarea {
+      flex: 1;
+      padding: 24px;
+      border: none;
+      border-radius: 0;
+      font-size: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      resize: none;
+      line-height: 1.8;
+      background: #ffffff;
+    }
+
+    .form-textarea:focus {
+      outline: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.2);
+      border-radius: 5px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.3);
+      background-clip: padding-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ツールバー -->
+    <div class="toolbar">
+      <button class="toolbar-btn" onclick="addFolder()">
+        <span>📁</span>
+        <span>フォルダ追加</span>
+      </button>
+      <button class="toolbar-btn" onclick="addSnippet()">
+        <span>📄</span>
+        <span>スニペット追加</span>
+      </button>
+      <button class="toolbar-btn" onclick="deleteSelected()">
+        <span>🗑</span>
+        <span>削除</span>
+      </button>
+    </div>
+
+    <div class="main-content">
+      <!-- サイドバー -->
+      <div class="sidebar" id="sidebar">
+        <!-- フォルダ階層が表示される -->
+      </div>
+
+      <!-- 編集エリア -->
+      <div class="content-panel">
+        <div class="editor-area" id="editor-area">
+          <div class="editor-empty">
+            <div class="editor-empty-icon">📝</div>
+            <div>スニペットを選択してください</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let folders = [];
+    let snippets = [];
+    let expandedFolders = new Set();
+    let selectedFolder = null;
+    let selectedSnippet = null;
+
+    async function init() {
+      await loadData();
+      render();
+    }
+
+    async function loadData() {
+      const data = await ipcRenderer.invoke('get-personal-snippets');
+      folders = data.folders || ['未分類'];
+      snippets = data.snippets || [];
+      
+      // 全フォルダを展開状態に
+      folders.forEach(f => expandedFolders.add(f));
+    }
+
+    function render() {
+      renderSidebar();
+    }
+
+    function renderSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      
+      sidebar.innerHTML = folders.map(folder => {
+        const folderSnippets = snippets.filter(s => s.folder === folder);
+        const isExpanded = expandedFolders.has(folder);
+        const isSelected = selectedFolder === folder;
+        
+        return `
+          <div class="folder-group">
+            <div class="folder-header ${isSelected && !selectedSnippet ? 'selected' : ''}" onclick="selectFolder('${escapeAttr(folder)}')">
+              <span class="folder-toggle ${isExpanded ? 'expanded' : ''}" onclick="event.stopPropagation(); toggleFolder('${escapeAttr(folder)}')">▶</span>
+              <span class="folder-icon">📁</span>
+              <span class="folder-name">${escapeHtml(folder)}</span>
+              ${folder !== '未分類' ? `<button class="folder-delete" onclick="event.stopPropagation(); deleteFolder('${escapeAttr(folder)}')">×</button>` : ''}
+            </div>
+            <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
+              ${folderSnippets.length === 0 ? '<div style="padding: 12px 32px; font-size: 11px; color: #999;">スニペットなし</div>' : ''}
+              ${folderSnippets.map(snippet => `
+                <div class="snippet-item ${selectedSnippet?.id === snippet.id ? 'selected' : ''}" 
+                    onclick="selectSnippet('${snippet.id}')"
+                    oncontextmenu="event.preventDefault(); startRenameSnippet('${snippet.id}')">
+                  <span class="snippet-icon">📄</span>
+                  <span class="snippet-name" data-snippet-id="${snippet.id}">${escapeHtml(snippet.title || '無題')}</span>
+                  <button class="snippet-delete" onclick="event.stopPropagation(); deleteSnippet('${snippet.id}')">×</button>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleFolder(folderName) {
+      if (expandedFolders.has(folderName)) {
+        expandedFolders.delete(folderName);
+      } else {
+        expandedFolders.add(folderName);
+      }
+      render();
+    }
+
+    function selectFolder(folderName) {
+      selectedFolder = folderName;
+      selectedSnippet = null;
+      render();
+      showEmpty();
+    }
+
+    function selectSnippet(snippetId) {
+      selectedSnippet = snippets.find(s => s.id === snippetId);
+      selectedFolder = null;
+      render();
+      showEditor();
+    }
+
+    function showEmpty() {
+      const editor = document.getElementById('editor-area');
+      editor.innerHTML = `
+        <div class="editor-empty">
+          <div class="editor-empty-icon">📝</div>
+          <div>スニペットを選択してください</div>
+        </div>
+      `;
+    }
+
+    function showEditor() {
+      if (!selectedSnippet) {
+        showEmpty();
+        return;
+      }
+
+      const editor = document.getElementById('editor-area');
+      editor.innerHTML = `
+        <textarea class="form-textarea" id="snippet-content" oninput="autoSave()" style="width: 100%; height: 100%; border: none; padding: 24px; font-size: 14px; line-height: 1.8;">${escapeHtml(selectedSnippet.content || '')}</textarea>
+      `;
+    }
+
+    async function autoSave() {
+      if (!selectedSnippet) return;
+
+      const content = document.getElementById('snippet-content')?.value || '';
+
+      selectedSnippet.content = content;
+
+      await ipcRenderer.invoke('save-personal-snippets', snippets);
+    }
+
+    async function addFolder() {
+      const folderName = prompt('新しいフォルダ名:');
+      if (!folderName || !folderName.trim()) return;
+
+      if (folders.includes(folderName.trim())) {
+        alert('このフォルダ名は既に存在します');
+        return;
+      }
+
+      folders.push(folderName.trim());
+      expandedFolders.add(folderName.trim());
+      await ipcRenderer.invoke('save-personal-folders', folders);
+      render();
+    }
+
+    async function deleteFolder(folderName) {
+      const folderSnippets = snippets.filter(s => s.folder === folderName);
+      const message = folderSnippets.length > 0 
+        ? `フォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のスニペットは「未分類」に移動します）`
+        : `フォルダ「${folderName}」を削除しますか？`;
+      
+      if (!confirm(message)) return;
+
+      folders = folders.filter(f => f !== folderName);
+      snippets = snippets.map(s => s.folder === folderName ? {...s, folder: '未分類'} : s);
+
+      await ipcRenderer.invoke('save-personal-folders', folders);
+      await ipcRenderer.invoke('save-personal-snippets', snippets);
+
+      selectedFolder = null;
+      render();
+      showEmpty();
+    }
+
+    async function addSnippet() {
+      const targetFolder = selectedFolder || selectedSnippet?.folder || '未分類';
+      
+      const newSnippet = {
+        id: Date.now().toString(),
+        title: '新しいスニペット',
+        content: '',
+        folder: targetFolder
+      };
+
+      snippets.push(newSnippet);
+      await ipcRenderer.invoke('save-personal-snippets', snippets);
+
+      selectedSnippet = newSnippet;
+      selectedFolder = null;
+      expandedFolders.add(targetFolder);
+      render();
+      showEditor();
+    }
+
+    async function deleteSnippet(snippetId) {
+      if (!confirm('このスニペットを削除しますか？')) return;
+
+      snippets = snippets.filter(s => s.id !== snippetId);
+      await ipcRenderer.invoke('save-personal-snippets', snippets);
+
+      if (selectedSnippet?.id === snippetId) {
+        selectedSnippet = null;
+        showEmpty();
+      }
+
+      render();
+    }
+
+    async function deleteSelected() {
+      if (selectedSnippet) {
+        await deleteSnippet(selectedSnippet.id);
+      } else if (selectedFolder && selectedFolder !== '未分類') {
+        await deleteFolder(selectedFolder);
+      } else {
+        alert('削除する項目を選択してください');
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(text) {
+      return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function escapeAttr(text) {
+  return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+    function startRenameSnippet(snippetId) {
+      const snippetItem = document.querySelector(`.snippet-item[onclick*="${snippetId}"]`);
+      if (!snippetItem) return;
+      
+      const nameSpan = snippetItem.querySelector('.snippet-name');
+      const snippet = snippets.find(s => s.id === snippetId);
+      if (!snippet) return;
+      
+      const currentName = snippet.title || '無題';
+      
+      // inputフィールドに変換
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = currentName;
+      input.style.cssText = 'flex: 1; background: white; border: 1px solid #4a90e2; padding: 2px 4px; font-size: 12px; border-radius: 3px;';
+      
+      nameSpan.replaceWith(input);
+      input.focus();
+      input.select();
+      
+      // Enterで確定
+      input.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          await finishRenameSnippet(snippetId, input.value);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          render();
+        }
+      });
+      
+      // フォーカスが外れたら確定
+      input.addEventListener('blur', async () => {
+        await finishRenameSnippet(snippetId, input.value);
+      });
+    }
+
+    async function finishRenameSnippet(snippetId, newName) {
+      const snippet = snippets.find(s => s.id === snippetId);
+      if (!snippet) return;
+      
+      const trimmedName = newName.trim();
+      if (trimmedName) {
+        snippet.title = trimmedName;
+        await ipcRenderer.invoke('save-personal-snippets', snippets);
+      }
+      
+      render();
+      if (selectedSnippet?.id === snippetId) {
+        showEditor();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

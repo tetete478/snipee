@@ -1,12 +1,13 @@
 {
-  "name": "Snipee",
-  "version": "2.0.0",
-  "description": "Clipy-like clipboard manager for Windows",
+  "name": "snipee",
+  "version": "1.0.1",
+  "description": "Mac/Windows対応のクリップボード管理ツール",
   "main": "app/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --debug",
-    "build:win": "electron-builder --win --x64",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:all": "electron-builder --win --mac"
   },
@@ -25,42 +26,38 @@
   },
   "devDependencies": {
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.13.3"
+  },
+  "optionalDependencies": {
+    "robotjs": "^0.6.0"
   },
   "build": {
-    "appId": "com.teruya.clipy-windows",
+    "appId": "com.snipee.app",
     "productName": "Snipee",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "package.json",
+      "!app/**/*.map"
+    ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
+          "arch": ["x64"]
         }
       ],
       "icon": "build/icon.ico"
     },
     "mac": {
-      "category": "public.app-category.productivity",
       "target": [
         "dmg"
       ],
-      "icon": "build/icon.icns"
-    },
-    "files": [
-      "app/**/*",
-      "!app/**/*.map"
-    ],
-    "directories": {
-      "buildResources": "build",
-      "output": "dist"
+      "icon": "build/icon.icns",
+      "category": "public.app-category.productivity"
     },
     "nsis": {
       "oneClick": false,

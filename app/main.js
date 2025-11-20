@@ -4,12 +4,23 @@ const Store = require('electron-store');
 const axios = require('axios');
 const xml2js = require('xml2js');
 
+// robotjsをロード（Windowsのみ）
+let robot = null;
+if (process.platform === 'win32') {
+  try {
+    robot = require('robotjs');
+    console.log('✅ robotjs loaded successfully');
+  } catch (error) {
+    console.log('⚠️ robotjs not available:', error.message);
+  }
+}
+
 // ストアの初期化
 const store = new Store();
 
 // デフォルトホットキー設定
-const DEFAULT_CLIPBOARD_SHORTCUT = process.platform === 'darwin' ? 'Option+Shift+C' : 'Alt+Shift+C';
-const DEFAULT_SNIPPET_SHORTCUT = process.platform === 'darwin' ? 'Option+Shift+V' : 'Alt+Shift+V';
+const DEFAULT_CLIPBOARD_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+C' : 'Ctrl+Alt+C';
+const DEFAULT_SNIPPET_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+V' : 'Ctrl+Alt+V';
 
 let mainWindow;
 let clipboardWindow;
@@ -17,6 +28,7 @@ let snippetWindow;
 let permissionWindow;
 let submenuWindow = null;
 let tray = null;
+let snippetEditorWindow = null;
 
 // アクセシビリティ権限チェック
 function hasAccessibilityPermission() {
@@ -32,6 +44,7 @@ function requestAccessibilityPermission() {
 
 // クリップボード履歴管理
 let clipboardHistory = [];
+let pinnedItems = store.get('pinnedItems', []);
 let lastClipboardText = '';
 const MAX_HISTORY = 100;
 
@@ -42,7 +55,7 @@ const MASTER_SNIPPET_URL = store.get('masterSnippetUrl', '');
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 420,
-    height: 800,  // 500 → 800
+    height: 800,
     show: false,
     frame: false,
     webPreferences: {
@@ -68,14 +81,17 @@ function createMainWindow() {
 // クリップボードウィンドウ作成
 function createClipboardWindow() {
   clipboardWindow = new BrowserWindow({
-    width: 420,
-    height: 550,
+    width: 460,
+    height: 650,
     show: false,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     transparent: true,
+    hasShadow: false,
+    visibleOnAllWorkspaces: true,
+    fullscreenable: false,  // ← これを追加
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -83,6 +99,14 @@ function createClipboardWindow() {
   });
 
   clipboardWindow.loadFile(path.join(__dirname, 'index.html'));
+
+  // ウィンドウ位置を保存
+  clipboardWindow.on('moved', () => {
+    if (clipboardWindow) {
+      const bounds = clipboardWindow.getBounds();
+      store.set('clipboardWindowPosition', { x: bounds.x, y: bounds.y });
+    }
+  });
 }
 
 // サブメニューウィンドウ作成
@@ -108,14 +132,18 @@ function createSubmenuWindow() {
 // スニペットウィンドウ作成
 function createSnippetWindow() {
   snippetWindow = new BrowserWindow({
-    width: 420,
-    height: 550,
+    width: 460,
+    height: 650,
     show: false,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     transparent: true,
+    movable: true,
+    hasShadow: false,
+    visibleOnAllWorkspaces: true,
+    fullscreenable: false,  // ← これを追加
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
@@ -123,6 +151,80 @@ function createSnippetWindow() {
   });
 
   snippetWindow.loadFile(path.join(__dirname, 'snippets.html'));
+
+  // ウィンドウ位置を保存
+  snippetWindow.on('moved', () => {
+    if (snippetWindow) {
+      const bounds = snippetWindow.getBounds();
+      store.set('snippetWindowPosition', { x: bounds.x, y: bounds.y });
+    }
+  });
+}
+
+// スニペット編集ウィンドウ作成
+function createSnippetEditorWindow() {
+  snippetEditorWindow = new BrowserWindow({
+    width: 900,
+    height: 600,
+    show: false,
+    frame: true,
+    resizable: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  snippetEditorWindow.loadFile(path.join(__dirname, 'snippet-editor.html'));
+
+  snippetEditorWindow.once('ready-to-show', () => {
+    snippetEditorWindow.show();
+  });
+
+  snippetEditorWindow.on('closed', () => {
+    snippetEditorWindow = null;
+  });
+}
+
+// グローバルショートカット登録（リトライ機能付き）
+function registerGlobalShortcuts() {
+  globalShortcut.unregisterAll();
+
+  const mainHotkey = store.get('customHotkeyMain', DEFAULT_CLIPBOARD_SHORTCUT);
+  const snippetHotkey = store.get('customHotkeySnippet', DEFAULT_SNIPPET_SHORTCUT);
+
+  // リトライ処理付きで登録
+  const registerWithRetry = (accelerator, callback, retries = 3) => {
+    const attempt = (remaining) => {
+      try {
+        const success = globalShortcut.register(accelerator, callback);
+        if (success) {
+          console.log(`✅ Successfully registered: ${accelerator}`);
+          return true;
+        } else if (remaining > 0) {
+          console.log(`⚠️ Failed to register ${accelerator}, retrying... (${remaining} attempts left)`);
+          setTimeout(() => attempt(remaining - 1), 500);
+        } else {
+          console.error(`❌ Failed to register ${accelerator} after all retries`);
+          return false;
+        }
+      } catch (error) {
+        console.error(`❌ Error registering ${accelerator}:`, error);
+        if (remaining > 0) {
+          setTimeout(() => attempt(remaining - 1), 500);
+        }
+      }
+    };
+    attempt(retries);
+  };
+
+  registerWithRetry(mainHotkey, () => {
+    showClipboardWindow();
+  });
+
+  registerWithRetry(snippetHotkey, () => {
+    showSnippetWindow();
+  });
 }
 
 // 権限案内ウィンドウ作成
@@ -238,29 +340,55 @@ function showClipboardWindow() {
   }
 
   if (clipboardWindow.isVisible()) {
-    clipboardWindow.hide();  // 開いていたら閉じる (これだけ)
+    clipboardWindow.hide();
   } else {
-    positionAndShowClipboard();  // 閉じていたら開く
+    positionAndShowClipboard();
   }
 }
 
 function positionAndShowClipboard() {
   const { screen } = require('electron');
-  const point = screen.getCursorScreenPoint();
-  const display = screen.getDisplayNearestPoint(point);
   
-  let x = point.x - 210;  // 185 → 210 (420の半分)
-  let y = point.y - 275;
-
-  if (x + 420 > display.bounds.x + display.bounds.width) {  // 370 → 420
-    x = display.bounds.x + display.bounds.width - 430;  // 380 → 430
+  // macOSの場合、表示前に必ず設定を適用
+  if (process.platform === 'darwin') {
+    clipboardWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    clipboardWindow.setAlwaysOnTop(true, 'floating');
   }
   
-  if (y + 550 > display.bounds.y + display.bounds.height) {
-    y = display.bounds.y + display.bounds.height - 560;
-  }
+  // ウィンドウ位置設定を取得
+  const positionMode = store.get('windowPositionMode', 'cursor');
 
-  clipboardWindow.setPosition(Math.floor(x), Math.floor(y));
+  if (positionMode === 'previous') {
+    // 前回の位置に表示
+    const savedPosition = store.get('clipboardWindowPosition');
+    if (savedPosition) {
+      clipboardWindow.setPosition(savedPosition.x, savedPosition.y);
+    } else {
+      // 初回は画面中央
+      const display = screen.getPrimaryDisplay();
+      const x = Math.floor((display.bounds.width - 460) / 2);
+      const y = Math.floor((display.bounds.height - 650) / 2);
+      clipboardWindow.setPosition(x, y);
+    }
+  } else {
+    // マウスカーソル位置に表示
+    const point = screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(point);
+    
+    let x = point.x - 210;
+    let y = point.y - 100;
+
+    if (x + 460 > display.bounds.x + display.bounds.width) {
+      x = display.bounds.x + display.bounds.width - 470;
+    }
+    
+    if (y + 650 > display.bounds.y + display.bounds.height) {
+      y = display.bounds.y + display.bounds.height - 660;
+    }
+
+    clipboardWindow.setPosition(Math.floor(x), Math.floor(y));
+  }
+  
   clipboardWindow.show();
   clipboardWindow.focus();
 }
@@ -272,29 +400,51 @@ function showSnippetWindow() {
   }
 
   if (snippetWindow.isVisible()) {
-    snippetWindow.hide();  // 開いていたら閉じる (これだけ)
+    snippetWindow.hide();
   } else {
-    positionAndShowSnippet();  // 閉じていたら開く
+    positionAndShowSnippet();
   }
 }
 
 function positionAndShowSnippet() {
   const { screen } = require('electron');
-  const point = screen.getCursorScreenPoint();
-  const display = screen.getDisplayNearestPoint(point);
   
-  let x = point.x - 210;  // 180 → 210 (420の半分)
-  let y = point.y - 275;
-
-  if (x + 420 > display.bounds.x + display.bounds.width) {  // 360 → 420
-    x = display.bounds.x + display.bounds.width - 430;  // 370 → 430
+  // macOSの場合、表示前に必ず設定を適用
+  if (process.platform === 'darwin') {
+    snippetWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    snippetWindow.setAlwaysOnTop(true, 'floating');
   }
   
-  if (y + 550 > display.bounds.y + display.bounds.height) {
-    y = display.bounds.y + display.bounds.height - 560;
-  }
+  const positionMode = store.get('windowPositionMode', 'cursor');
 
-  snippetWindow.setPosition(Math.floor(x), Math.floor(y));
+  if (positionMode === 'previous') {
+    const savedPosition = store.get('snippetWindowPosition');
+    if (savedPosition) {
+      snippetWindow.setPosition(savedPosition.x, savedPosition.y);
+    } else {
+      const display = screen.getPrimaryDisplay();
+      const x = Math.floor((display.bounds.width - 460) / 2);
+      const y = Math.floor((display.bounds.height - 650) / 2);
+      snippetWindow.setPosition(x, y);
+    }
+  } else {
+    const point = screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(point);
+    
+    let x = point.x - 210;
+    let y = point.y - 100;
+
+    if (x + 460 > display.bounds.x + display.bounds.width) {
+      x = display.bounds.x + display.bounds.width - 470;
+    }
+    
+    if (y + 650 > display.bounds.y + display.bounds.height) {
+      y = display.bounds.y + display.bounds.height - 660;
+    }
+
+    snippetWindow.setPosition(Math.floor(x), Math.floor(y));
+  }
+  
   snippetWindow.show();
   snippetWindow.focus();
 }
@@ -318,6 +468,7 @@ function showSubmenu(items, targetBounds) {
 
   submenuWindow.setPosition(Math.floor(x), Math.floor(y));
   submenuWindow.show();
+  submenuWindow.focus();
 }
 
 // サブメニューを隠す
@@ -345,18 +496,13 @@ async function fetchMasterSnippets() {
       strict: false,
       trim: true,
       normalize: false,
-      normalizeTags: true,        // ← これをtrueに変更
+      normalizeTags: true,
       attrkey: '$',
       charkey: '_',
       explicitCharkey: false,
       mergeAttrs: false
     });
     const result = await parser.parseStringPromise(xmlData);
-
-    // XMLパース結果の詳細ログ
-    console.log('=== Raw Parse Result ===');
-    console.log(JSON.stringify(result, null, 2).substring(0, 500)); // 最初の500文字だけ
-    console.log('========================');
 
     // Clipy形式のXMLをSnipee内部形式に変換
     const snippets = [];
@@ -385,21 +531,6 @@ async function fetchMasterSnippets() {
         });
       });
     }
-
-    // デバッグ用ログ
-    console.log('=== XML Parse Result ===');
-    console.log('Result keys:', Object.keys(result));
-    console.log('Folders found:', result.folders ? 'Yes' : 'No');
-    if (result.folders && result.folders.folder) {
-      const folderArray = Array.isArray(result.folders.folder) 
-        ? result.folders.folder 
-        : [result.folders.folder];
-      console.log('Number of folders:', folderArray.length);
-      console.log('First folder:', folderArray[0]?.title);
-    }
-    console.log('Total snippets:', snippets.length);
-    console.log('First snippet:', snippets[0]);
-    console.log('========================');
 
     return { snippets };
   } catch (error) {
@@ -443,17 +574,10 @@ app.whenReady().then(() => {
 
   startClipboardMonitoring();
 
-  // 簡易ホーム用ホットキー
-  const mainHotkey = store.get('customHotkeyMain', DEFAULT_CLIPBOARD_SHORTCUT);
-  const registered = globalShortcut.register(mainHotkey, () => {
-    showClipboardWindow();
-  });
-
-  // スニペット専用ホットキー
-  const snippetHotkey = store.get('customHotkeySnippet', DEFAULT_SNIPPET_SHORTCUT);
-  const snippetRegistered = globalShortcut.register(snippetHotkey, () => {
-    showSnippetWindow();
-  });
+  // IMEの初期化を待つために少し遅延してからホットキー登録
+  setTimeout(() => {
+    registerGlobalShortcuts();
+  }, 1000);
 
   syncSnippets();
 
@@ -462,14 +586,16 @@ app.whenReady().then(() => {
 
 // デバッグログ
 ipcMain.on('debug-log', (event, message) => {
-  // console.log(message);
+  console.log(message);
 });
 
 ipcMain.handle('get-all-items', () => {
   const masterSnippets = store.get('masterSnippets', { snippets: [] });
+  const personalSnippets = store.get('personalSnippets', []);
   
   return {
     history: clipboardHistory,
+    personalSnippets: personalSnippets,
     masterSnippets: masterSnippets.snippets || [],
     lastSync: store.get('lastSync', null),
     hasPermission: hasAccessibilityPermission()
@@ -517,25 +643,10 @@ ipcMain.handle('set-hotkey', (event, type, accelerator) => {
       store.set('customHotkeySnippet', accelerator);
     }
     
-    // 両方のホットキーを再登録
-    globalShortcut.unregisterAll();
+    // 両方のホットキーを再登録（リトライ機能付き）
+    registerGlobalShortcuts();
     
-    const mainHotkey = store.get('customHotkeyMain', DEFAULT_CLIPBOARD_SHORTCUT);
-    const snippetHotkey = store.get('customHotkeySnippet', DEFAULT_SNIPPET_SHORTCUT);
-    
-    const registered = globalShortcut.register(mainHotkey, () => {
-      showClipboardWindow();
-    });
-    
-    globalShortcut.register(snippetHotkey, () => {
-      showSnippetWindow();
-    });
-    
-    if (registered) {
-      return { success: true };
-    } else {
-      return { success: false, error: 'このホットキーは登録できません（他のアプリで使用中の可能性があります）' };
-    }
+    return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -544,15 +655,9 @@ ipcMain.handle('set-hotkey', (event, type, accelerator) => {
 ipcMain.handle('reset-all-hotkeys', () => {
   store.delete('customHotkeyMain');
   store.delete('customHotkeySnippet');
-  globalShortcut.unregisterAll();
   
-  globalShortcut.register(DEFAULT_CLIPBOARD_SHORTCUT, () => {
-    showClipboardWindow();
-  });
-  
-  globalShortcut.register(DEFAULT_SNIPPET_SHORTCUT, () => {
-    showSnippetWindow();
-  });
+  // リトライ機能付きで再登録
+  registerGlobalShortcuts();
   
   return true;
 });
@@ -600,6 +705,25 @@ ipcMain.handle('clear-all-history', () => {
   clipboardHistory = [];
   store.set('clipboardHistory', []);
   return true;
+});
+
+ipcMain.handle('toggle-pin-item', (event, itemId) => {
+  const index = pinnedItems.indexOf(itemId);
+  
+  if (index > -1) {
+    // ピン留め解除
+    pinnedItems.splice(index, 1);
+  } else {
+    // ピン留め
+    pinnedItems.push(itemId);
+  }
+  
+  store.set('pinnedItems', pinnedItems);
+  return { pinnedItems };
+});
+
+ipcMain.handle('get-pinned-items', () => {
+  return pinnedItems;
 });
 
 ipcMain.handle('copy-to-clipboard', (event, text) => {
@@ -674,7 +798,7 @@ ipcMain.handle('get-window-bounds', () => {
   if (clipboardWindow && !clipboardWindow.isDestroyed()) {
     return clipboardWindow.getBounds();
   }
-  return { x: 0, y: 0, width: 320, height: 550 };
+  return { x: 0, y: 0, width: 460, height: 650 };
 });
 
 // マウストラッキング
@@ -751,44 +875,43 @@ ipcMain.handle('is-mouse-over-submenu', () => {
   return isMouseOverSubmenu;
 });
 
-// サブメニューアイテム選択
+// サブメニューアイテム選択（改善版）
 ipcMain.handle('select-submenu-item', async (event, item) => {
   clipboard.writeText(item.content);
   lastClipboardText = item.content;
 
+  // ウィンドウを非表示にしてフォーカスを元に戻す
   hideSubmenu();
   if (clipboardWindow) {
     clipboardWindow.hide();
   }
 
-  await new Promise(resolve => setTimeout(resolve, 100));
+  // フォーカスが戻るまで待機
+  await new Promise(resolve => setTimeout(resolve, 200));
 
-  if (process.platform === 'win32') {
-    const { exec } = require('child_process');
-    exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"', 
-      (error) => {
-        if (error) console.error('Paste error:', error);
-      }
-    );
-  } else if (process.platform === 'darwin') {
-    if (hasAccessibilityPermission()) {
-      const { exec } = require('child_process');
-      exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'',
-        (error) => {
-          if (error) console.error('Paste error:', error);
-        }
-      );
+  // プラットフォームごとのペースト処理
+  if (process.platform === 'win32' && robot) {
+    try {
+      // robotjsを使用して Ctrl+V を送信
+      robot.keyTap('v', ['control']);
+      console.log('✅ Auto-paste executed');
+    } catch (error) {
+      console.error('❌ Paste error:', error);
     }
+  } else if (process.platform === 'darwin') {
+    // Macはセキュリティ上の理由で自動ペースト不可（コピーのみ）
+    console.log('📋 Mac: Text copied to clipboard (paste manually with Cmd+V)');
   }
   
   return true;
 });
 
-// クリップボードにコピー & 自動ペースト
+// クリップボードにコピー & 自動ペースト（改善版）
 ipcMain.handle('paste-text', async (event, text) => {
   clipboard.writeText(text);
   lastClipboardText = text;
 
+  // ウィンドウを非表示にしてフォーカスを元に戻す
   if (clipboardWindow) {
     clipboardWindow.hide();
   }
@@ -797,26 +920,106 @@ ipcMain.handle('paste-text', async (event, text) => {
     snippetWindow.hide();
   }
 
-  await new Promise(resolve => setTimeout(resolve, 100));
+  // フォーカスが戻るまで待機
+  await new Promise(resolve => setTimeout(resolve, 200));
 
-  if (process.platform === 'win32') {
-    const { exec } = require('child_process');
-    exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"', 
-      (error) => {
-        if (error) console.error('Paste error:', error);
-      }
-    );
-  } else if (process.platform === 'darwin') {
-    if (hasAccessibilityPermission()) {
-      const { exec } = require('child_process');
-      exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'',
-        (error) => {
-          if (error) console.error('Paste error:', error);
-        }
-      );
+  // プラットフォームごとのペースト処理
+  if (process.platform === 'win32' && robot) {
+    try {
+      // robotjsを使用して Ctrl+V を送信
+      robot.keyTap('v', ['control']);
+      console.log('✅ Auto-paste executed');
+    } catch (error) {
+      console.error('❌ Paste error:', error);
     }
+  } else if (process.platform === 'darwin') {
+    // Macはセキュリティ上の理由で自動ペースト不可（コピーのみ）
+    console.log('📋 Mac: Text copied to clipboard (paste manually with Cmd+V)');
   }
 
+  return true;
+});
+
+// 個別スニペット管理
+ipcMain.handle('get-personal-snippets', () => {
+  return {
+    folders: store.get('personalFolders', ['未分類']),
+    snippets: store.get('personalSnippets', [])
+  };
+});
+
+ipcMain.handle('save-personal-folders', (event, folders) => {
+  store.set('personalFolders', folders);
+  return true;
+});
+
+ipcMain.handle('save-personal-snippets', (event, snippets) => {
+  store.set('personalSnippets', snippets);
+  
+  // 簡易ホームとスニペット専用ホームに更新を通知
+  if (clipboardWindow && !clipboardWindow.isDestroyed()) {
+    clipboardWindow.webContents.send('personal-snippets-updated');
+  }
+  if (snippetWindow && !snippetWindow.isDestroyed()) {
+    snippetWindow.webContents.send('personal-snippets-updated');
+  }
+  
+  return true;
+});
+
+ipcMain.handle('open-snippet-editor', () => {
+  if (!snippetEditorWindow || snippetEditorWindow.isDestroyed()) {
+    createSnippetEditorWindow();
+  } else {
+    snippetEditorWindow.show();
+    snippetEditorWindow.focus();
+  }
+  return true;
+});
+
+ipcMain.handle('close-snippet-editor', () => {
+  if (snippetEditorWindow) {
+    snippetEditorWindow.close();
+  }
+  return true;
+});
+
+// スニペットウィンドウの位置を取得
+ipcMain.handle('get-snippet-window-bounds', () => {
+  if (snippetWindow && !snippetWindow.isDestroyed()) {
+    return snippetWindow.getBounds();
+  }
+  return { x: 0, y: 0, width: 460, height: 650 };
+});
+
+// サブメニューからユーザーが閉じたときの通知
+ipcMain.on('submenu-closed-by-user', () => {
+  hideSubmenu();
+  if (snippetWindow && !snippetWindow.isDestroyed()) {
+    snippetWindow.webContents.send('reset-submenu-flag');
+    setTimeout(() => {
+      snippetWindow.focus();
+    }, 50);
+  }
+});
+
+// ウィンドウ位置設定の取得と保存
+ipcMain.handle('get-window-position-mode', () => {
+  return store.get('windowPositionMode', 'cursor');
+});
+
+ipcMain.handle('set-window-position-mode', (event, mode) => {
+  store.set('windowPositionMode', mode);
+  return true;
+});
+
+// 非表示フォルダの取得と保存
+ipcMain.handle('get-hidden-folders', () => {
+  return store.get('hiddenFolders', []);
+});
+
+ipcMain.handle('set-hidden-folders', (event, folders) => {
+  store.set('hiddenFolders', folders);
   return true;
 });
 
