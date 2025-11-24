@@ -3,58 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <title>Snipee 設定</title>
+  <link rel="stylesheet" href="common/variables.css">
+  <link rel="stylesheet" href="common/common.css">
+  <script src="common/utils.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    /* settings.html 固有のスタイルのみ */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
       background: #f5f5f5;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
 
     .container {
-      width: 420px;
-      height: 800px;
+      width: 500px;
+      height: 400px;
       max-height: 95vh;
-      background: #ffffff;
+      background: var(--bg-color);
       display: flex;
       flex-direction: column;
     }
 
     .header {
-      background: #ffffff;
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
+      background: var(--bg-color);
+      padding: 5px 20px;
+      border-bottom: 1px solid var(--border-color);
       -webkit-app-region: drag;
     }
     
     .header h1 {
-      font-size: 20px;
+      font-size: var(--font-size-normal);
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
       margin: 0;
     }
 
-    .content {
+    /* タブナビゲーション */
+    .tabs {
+      display: flex;
+      background: #f5f5f5;
+      border-bottom: 1px solid #d0d0d0;
+      padding: 0;
+      -webkit-app-region: drag;
+    }
+
+    .tab {
+      padding: 2px 10px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-size: var(--font-size-small); 
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
       flex: 1;
-      overflow-y: auto;
-      padding: 20px;
+      justify-content: center;
       -webkit-app-region: no-drag;
     }
 
-    .section {
-      background: #fafafa;
+    .tab span:first-child {
+      font-size: 18px;
+    }
+
+    .tab span:last-child {
+      font-size: var(--font-size-small);
+      font-weight: 600;
+    }
+
+    .tab:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-color);
+    }
+
+    .tab.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      background: var(--bg-color);
+    }
+
+    /* タブコンテンツ */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-app-region: no-drag;
+    }
+
+    .tab-content {
+      display: none;
       padding: 12px;
-      border-radius: 6px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .section {
+      background: transparent;
+      padding: 10px;
+      border-radius: 0;
       margin-bottom: 10px;
-      border: 1px solid #e8e8e8;
+      border: none;
     }
 
     .section:last-child {
@@ -66,21 +118,19 @@
       align-items: center;
       gap: 6px;
       margin-bottom: 8px;
-      cursor: move;
     }
 
     .section-header h2 {
-      font-size: 14px;
+      font-size: var(--font-size-medium);
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
     }
 
     .section-description {
-      font-size: 11px;
+      font-size: var(--font-size-small);
       color: #777;
       margin-bottom: 10px;
       line-height: 1.4;
-      cursor: move;
     }
 
     .form-group {
@@ -106,18 +156,18 @@
       width: 100%;
       padding: 7px 10px;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       font-size: 12px;
-      font-family: inherit;
+      font-family: var(--font-family);
       transition: all 0.2s;
-      background: #ffffff;
+      background: var(--bg-color);
       -webkit-app-region: no-drag;
     }
 
     input[type="text"]:focus,
     input[type="url"]:focus {
       outline: none;
-      border-color: #007aff;
+      border-color: var(--primary-color);
       box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
     }
 
@@ -137,7 +187,7 @@
     .btn {
       padding: 6px 12px;
       border: none;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       cursor: pointer;
       font-size: 12px;
       font-weight: 500;
@@ -153,7 +203,7 @@
     }
 
     .btn-primary {
-      background: #007aff;
+      background: var(--primary-color);
       color: white;
     }
 
@@ -172,7 +222,7 @@
 
     .btn-secondary {
       background: #f0f0f0;
-      color: #333;
+      color: var(--text-color);
       border: 1px solid #ddd;
     }
 
@@ -188,9 +238,9 @@
 
     .alert {
       padding: 8px 10px;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       margin-bottom: 8px;
-      font-size: 11px;
+      font-size: var(--font-size-small);
       display: none;
       align-items: center;
       gap: 6px;
@@ -229,9 +279,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 8px 10px;
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
       font-size: 12px;
       transition: all 0.2s;
       -webkit-app-region: no-drag;
@@ -239,11 +289,11 @@
 
     .link-item:hover {
       background: #f8f9fa;
-      border-color: #007aff;
+      border-color: var(--primary-color);
     }
 
     .link-item a {
-      color: #007aff;
+      color: var(--primary-color);
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -276,11 +326,11 @@
     }
 
     .sync-status {
-      background: #ffffff;
+      background: var(--bg-color);
       padding: 8px 10px;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
-      font-size: 11px;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-color);
+      font-size: var(--font-size-small);
       color: #666;
       margin-top: 8px;
     }
@@ -318,9 +368,9 @@
     }
 
     .modal-header h3 {
-      font-size: 15px;
+      font-size: var(--font-size-large);
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
     }
 
     .modal-actions {
@@ -330,21 +380,9 @@
       gap: 8px;
     }
 
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #f5f5f5;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #aaa;
+    .keyboard-focus {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -354,140 +392,176 @@
       <h1>📋 Snipee 設定</h1>
     </div>
 
+    <!-- タブナビゲーション -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(event, 'general')">
+        <span>📖</span>
+        <span>一般</span>
+      </button>
+      <button class="tab" onclick="switchTab(event, 'shortcuts')">
+        <span>⌨️</span>
+        <span>ショートカット</span>
+      </button>
+      <button class="tab" onclick="switchTab(event, 'sync')">
+        <span>🔄</span>
+        <span>同期</span>
+      </button>
+      <button class="tab" onclick="switchTab(event, 'display')">
+        <span>⚙️</span>
+        <span>表示</span>
+      </button>
+    </div>
+
     <div class="content">
-      <div class="section">
-        <div class="section-header">
-          <h2>📖 マニュアル</h2>
-        </div>
-        <div class="section-description">
-          Snipeeの使い方や詳細情報はこちらをご覧ください。
-        </div>
-        
-        <div class="link-list">
-          <div class="link-item">
-            <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/blob/main/MANUAL.md'); return false;">
-              📚 使い方マニュアル
-            </a>
+      <!-- 一般タブ -->
+      <div class="tab-content active" id="general-tab">
+        <div class="section">
+          <div class="section-header">
+            <h2>📖 マニュアル</h2>
           </div>
-          <div class="link-item">
-            <a href="#" onclick="openExternal('https://github.com/yourusername/snipee/issues'); return false;">
-              🐛 バグ報告・機能リクエスト
-            </a>
+          <div class="section-description">
+            Snipeeの使い方や詳細情報はこちらをご覧ください。
+          </div>
+          
+          <div class="link-list">
+            <div class="link-item">
+              <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/blob/main/MANUAL.md'); return false;">
+                📚 使い方マニュアル
+              </a>
+            </div>
+            <div class="link-item">
+              <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/issues'); return false;">
+                🐛 バグ報告・機能リクエスト
+              </a>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-header">
-          <h2>⌨️ ホットキー設定</h2>
-        </div>
-        <div class="section-description">
-          クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。
-        </div>
-        
-        <div class="form-group">
-          <div class="hotkey-display">
-            <label>簡易ホーム</label>
-            <input type="text" id="hotkey-main" readonly>
-            <button class="btn btn-secondary" onclick="showHotkeyModal('main')">変更</button>
+      <!-- ショートカットタブ -->
+      <div class="tab-content" id="shortcuts-tab">
+        <div class="section">
+          <div class="section-header">
+            <h2>⌨️ ホットキー設定</h2>
           </div>
-          <div class="help-text">
-            クリップボード履歴を開きます（デフォルト: <span id="default-main">Option+Shift+C</span>）
+          <div class="section-description">
+            クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。
+          </div>
+          
+          <div class="form-group">
+            <div class="hotkey-display">
+              <label>簡易ホーム</label>
+              <input type="text" id="hotkey-main" readonly>
+              <button class="btn btn-secondary" onclick="showHotkeyModal('main')">変更</button>
+            </div>
+            <div class="help-text">
+              クリップボード履歴を開きます（デフォルト: <span id="default-main">Command+Control+C</span>）
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="hotkey-display">
+              <label>スニペット専用</label>
+              <input type="text" id="hotkey-snippet" readonly>
+              <button class="btn btn-secondary" onclick="showHotkeyModal('snippet')">変更</button>
+            </div>
+            <div class="help-text">
+              スニペット一覧を開きます（デフォルト: <span id="default-snippet">Command+Control+V</span>）
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="resetAllHotkeys()">🔄 すべてデフォルトに戻す</button>
           </div>
         </div>
 
-        <div class="form-group">
-          <div class="hotkey-display">
-            <label>スニペット専用</label>
-            <input type="text" id="hotkey-snippet" readonly>
-            <button class="btn btn-secondary" onclick="showHotkeyModal('snippet')">変更</button>
-          </div>
-          <div class="help-text">
-            スニペット一覧を開きます（デフォルト: <span id="default-snippet">Option+Shift+V</span>）
-          </div>
-        </div>
+        <div id="shortcut-alert" class="alert"></div>
+      </div>
 
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="resetAllHotkeys()">🔄 すべてデフォルトに戻す</button>
+      <!-- 同期タブ -->
+      <div class="tab-content" id="sync-tab">
+        <div class="section">
+          <div class="section-header">
+            <h2>🔄 共有スニペット同期</h2>
+          </div>
+          <div class="section-description">
+            Google Driveでチーム全体のスニペットを共有できます。XML形式のファイルを作成し、共有リンクを設定してください。
+          </div>
+          
+          <div id="sync-alert" class="alert"></div>
+
+          <div class="form-group">
+            <label>Google Drive共有リンクURL</label>
+            <input type="url" id="master-url" placeholder="https://drive.google.com/file/d/...">
+            <div class="help-text">
+              ファイル → 共有 → リンクを知っている全員 → リンクをコピー
+            </div>
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="saveMasterUrl()">💾 保存して同期</button>
+            <button class="btn btn-success" onclick="manualSync()">🔄 手動同期</button>
+            <button class="btn btn-secondary" onclick="removeMasterUrl()">🗑️ 同期解除</button>
+          </div>
+
+          <div class="sync-status" id="sync-status">
+            最終同期: 未同期
+          </div>
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-header">
-          <h2>🔄 共有スニペット同期</h2>
-        </div>
-        <div class="section-description">
-          Google Driveでチーム全体のスニペットを共有できます。JSON形式のファイルを作成し、共有リンクを設定してください。
-        </div>
-        
-        <div id="sync-alert" class="alert"></div>
-
-        <div class="form-group">
-          <label>Google Drive共有リンクURL</label>
-          <input type="url" id="master-url" placeholder="https://drive.google.com/file/d/...">
-          <div class="help-text">
-            ファイル → 共有 → リンクを知っている全員 → リンクをコピー
+      <!-- 表示タブ -->
+      <div class="tab-content" id="display-tab">
+        <div class="section">
+          <div class="section-header">
+            <h2>👁️ フォルダの表示設定</h2>
           </div>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="saveMasterUrl()">💾 保存して同期</button>
-          <button class="btn btn-success" onclick="manualSync()">🔄 手動同期</button>
-        </div>
+          <div class="section-description">
+            表示したくないフォルダのチェックを外してください。チェックを外したフォルダは簡易ホームとスニペット専用ウィンドウに表示されなくなります。
+          </div>
+          
+          <div id="folder-alert" class="alert"></div>
 
-        <div class="sync-status" id="sync-status">
-          最終同期: 未同期
-        </div>
-      </div>
+          <div id="folder-list" style="max-height: 300px; overflow-y: auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
+            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+              フォルダを読み込んでいます...
+            </div>
+          </div>
 
-      <div class="section">
-        <div class="section-header">
-          <h2>👁️ フォルダの表示設定</h2>
-        </div>
-        <div class="section-description">
-          表示したくないフォルダのチェックを外してください。チェックを外したフォルダは簡易ホームとスニペット専用ウィンドウに表示されなくなります。
-        </div>
-        
-        <div id="folder-alert" class="alert"></div>
-
-        <div id="folder-list" style="max-height: 300px; overflow-y: auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
-          <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-            フォルダを読み込んでいます...
+          <div class="btn-group" style="margin-top: 8px;">
+            <button class="btn btn-primary" onclick="saveFolderSettings()">💾 設定を保存</button>
+            <button class="btn btn-secondary" onclick="selectAllFolders()">☑️ すべて表示</button>
+            <button class="btn btn-secondary" onclick="deselectAllFolders()">☐ すべて非表示</button>
           </div>
         </div>
 
-        <div class="btn-group" style="margin-top: 8px;">
-          <button class="btn btn-primary" onclick="saveFolderSettings()">💾 設定を保存</button>
-          <button class="btn btn-secondary" onclick="selectAllFolders()">☑️ すべて表示</button>
-          <button class="btn btn-secondary" onclick="deselectAllFolders()">☐ すべて非表示</button>
+        <div class="section">
+          <div class="section-header">
+            <h2>📍 ウィンドウ位置設定</h2>
+          </div>
+          <div class="section-description">
+            ウィンドウの表示位置を設定できます。
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="radio" name="windowPosition" value="cursor" style="margin-right: 8px;">
+              <span>マウスカーソル位置に表示</span>
+            </label>
+            <label style="display: flex; align-items: center; cursor: pointer;">
+              <input type="radio" name="windowPosition" value="previous" style="margin-right: 8px;">
+              <span>前回の位置に表示</span>
+            </label>
+          </div>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">
+            「前回の位置」を選ぶと、ウィンドウを移動した位置を記憶します
+          </p>
         </div>
-      </div>
-
-      <div class="section">
-        <div class="section-header">
-          <h2>📍 ウィンドウ位置設定</h2>
-        </div>
-        <div class="section-description">
-          ウィンドウの表示位置を設定できます。
-        </div>
-        
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <label style="display: flex; align-items: center; cursor: pointer;">
-            <input type="radio" name="windowPosition" value="cursor" style="margin-right: 8px;">
-            <span>マウスカーソル位置に表示</span>
-          </label>
-          <label style="display: flex; align-items: center; cursor: pointer;">
-            <input type="radio" name="windowPosition" value="previous" style="margin-right: 8px;">
-            <span>前回の位置に表示</span>
-          </label>
-        </div>
-        <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">
-          「前回の位置」を選ぶと、ウィンドウを移動した位置を記憶します
-        </p>
       </div>
     </div>
   </div>
 
+  <!-- ホットキー変更モーダル -->
   <div class="modal" id="hotkey-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -517,6 +591,11 @@
     const { ipcRenderer, shell } = require('electron');
     const Store = require('electron-store');
     const store = new Store();
+
+    // キーボードナビゲーション
+    const tabNames = ['general', 'shortcuts', 'sync', 'display'];
+    let currentTabIndex = 0;
+    let nav; // KeyboardNavigator
     
     let capturedHotkey = null;
     let currentEditingType = null;
@@ -525,14 +604,15 @@
 
     window.addEventListener('DOMContentLoaded', async () => {
       if (!isMac) {
-        document.getElementById('default-main').textContent = 'Alt+Shift+C';
-        document.getElementById('default-snippet').textContent = 'Alt+Shift+V';
+        document.getElementById('default-main').textContent = 'Ctrl+Alt+C';
+        document.getElementById('default-snippet').textContent = 'Ctrl+Alt+V';
       }
 
       await loadHotkeys();
       await loadSyncStatus();
 
-      const masterUrl = store.get('masterSnippetUrl', '');
+      const defaultUrl = 'https://drive.google.com/file/d/1MIHYx_GUjfqv591h6rzIbcxm_FQZwAXY/view?usp=sharing';
+      const masterUrl = store.get('masterSnippetUrl', defaultUrl);
       document.getElementById('master-url').value = masterUrl;
 
       await loadFolders();
@@ -589,24 +669,115 @@
       });
 
       // Escキー処理
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
+      // キーボードナビゲーション
+      // KeyboardNavigator初期化
+      nav = new KeyboardNavigator({
+        selectedClass: 'keyboard-focus',
+        onEscape: () => {
           const modal = document.getElementById('hotkey-modal');
           if (modal.classList.contains('show')) {
             closeHotkeyModal();
           } else {
-            ipcRenderer.invoke('hide-settings-window');
+            const isInputFocused = document.activeElement.tagName === 'INPUT' && 
+                                   !document.activeElement.readOnly;
+            if (isInputFocused) {
+              document.activeElement.blur();
+            } else {
+              ipcRenderer.invoke('hide-settings-window');
+            }
           }
+        },
+        onEnter: (item) => {
+          if (item) {
+            if (item.type === 'checkbox') {
+              item.checked = !item.checked;
+            } else {
+              item.click();
+            }
+          }
+        },
+        onLeft: () => {
+          currentTabIndex = (currentTabIndex - 1 + tabNames.length) % tabNames.length;
+          switchTabByIndex(currentTabIndex);
+        },
+        onRight: () => {
+          currentTabIndex = (currentTabIndex + 1) % tabNames.length;
+          switchTabByIndex(currentTabIndex);
         }
       });
+      
+      // モーダル・入力中の特殊処理をラップ
+      document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('hotkey-modal');
+        if (modal.classList.contains('show') && e.key !== 'Escape') {
+          return; // モーダル中はEsc以外無視
+        }
+        
+        const isInputFocused = document.activeElement.tagName === 'INPUT' && 
+                               !document.activeElement.readOnly;
+        if (isInputFocused && e.key !== 'Escape') {
+          return; // 入力中はEsc以外無視
+        }
+        
+        nav.handleKeyDown(e);
+      });
+      
+      // 初期化時にアイテム更新
+      updateSelectableItems();
     });
+
+    // タブ切り替え
+    function switchTab(event, tabName) {
+      // すべてのタブを非アクティブに
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // すべてのタブコンテンツを非表示に
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // 選択されたタブをアクティブに
+      event.currentTarget.classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    // インデックスでタブ切り替え
+    function switchTabByIndex(index) {
+      currentTabIndex = index;
+      const tabs = document.querySelectorAll('.tab');
+      const tabName = tabNames[index];
+      
+      // タブを非アクティブに
+      tabs.forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // 選択したタブをアクティブに
+      tabs[index].classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+      
+      // タブ内のアイテムを更新
+      updateSelectableItems();
+    }
+
+    // 選択可能アイテムを更新
+    function updateSelectableItems() {
+      const activeTab = document.querySelector('.tab-content.active');
+      const selector = '.link-item, .btn, input:not([readonly]), input[type="checkbox"]';
+      nav.selectableItems = Array.from(activeTab.querySelectorAll(selector));
+      nav.selectedIndex = 0;
+      nav.updateVisual();
+    }
 
     async function loadHotkeys() {
       const mainHotkey = await ipcRenderer.invoke('get-current-hotkey', 'main');
       const snippetHotkey = await ipcRenderer.invoke('get-current-hotkey', 'snippet');
       
-      document.getElementById('hotkey-main').value = mainHotkey || (isMac ? 'Option+Shift+C' : 'Alt+Shift+C');
-      document.getElementById('hotkey-snippet').value = snippetHotkey || (isMac ? 'Option+Shift+V' : 'Alt+Shift+V');
+      document.getElementById('hotkey-main').value = mainHotkey || (isMac ? 'Command+Control+C' : 'Ctrl+Alt+C');
+      document.getElementById('hotkey-snippet').value = snippetHotkey || (isMac ? 'Command+Control+V' : 'Ctrl+Alt+V');
     }
 
     async function loadSyncStatus() {
@@ -655,7 +826,7 @@
       if (result.success) {
         closeHotkeyModal();
         await loadHotkeys();
-        showAlert('✅ ホットキーを変更しました。', 'success', 'sync-alert');
+        showAlert('✅ ホットキーを変更しました。', 'success', 'shortcut-alert');
       } else {
         document.getElementById('hotkey-error').textContent = `❌ ${result.error}`;
         document.getElementById('hotkey-error').style.display = 'block';
@@ -667,7 +838,7 @@
       
       await ipcRenderer.invoke('reset-all-hotkeys');
       await loadHotkeys();
-      showAlert('✅ すべてのホットキーをデフォルトに戻しました。', 'success', 'sync-alert');
+      showAlert('✅ すべてのホットキーをデフォルトに戻しました。', 'success', 'shortcut-alert');
     }
 
     async function saveMasterUrl() {
@@ -678,23 +849,23 @@
       }
 
       const result = await ipcRenderer.invoke('set-master-url', url);
-      if (result) {
+      if (result.success) {
         showAlert('✅ マスターURLを保存し、同期しました', 'success', 'sync-alert');
         await loadSyncStatus();
         await loadFolders();
       } else {
-        showAlert('❌ 同期に失敗しました。URLを確認してください', 'error', 'sync-alert');
+        showAlert(`❌ ${result.error || '同期に失敗しました'}`, 'error', 'sync-alert');
       }
     }
 
     async function manualSync() {
       const result = await ipcRenderer.invoke('manual-sync');
-      if (result.success && result.lastSync) {
+      if (result.success) {
         showAlert('✅ 同期完了しました', 'success', 'sync-alert');
         await loadSyncStatus();
         await loadFolders();
       } else {
-        showAlert('❌ 同期に失敗しました。URLを確認してください', 'error', 'sync-alert');
+        showAlert(`❌ ${result.error || '同期に失敗しました'}`, 'error', 'sync-alert');
       }
     }
 
@@ -703,37 +874,64 @@
       alert.className = `alert alert-${type} show`;
       alert.textContent = message;
       
+      // エラーの場合は10秒、それ以外は5秒で消える
+      const duration = type === 'error' ? 10000 : 5000;
+      
       setTimeout(() => {
         alert.classList.remove('show');
-      }, 5000);
+      }, duration);
     }
 
     async function loadFolders() {
       const data = await ipcRenderer.invoke('get-all-items');
       const masterSnippets = data.masterSnippets || [];
-      const folders = [...new Set(masterSnippets.map(s => s.folder || '未分類'))];
+      
+      // マスタスニペットのフォルダ
+      const masterFolders = [...new Set(masterSnippets.map(s => s.folder || '未分類'))];
+      
+      // 個別スニペットのフォルダ
+      const personalData = await ipcRenderer.invoke('get-personal-snippets');
+      const personalFolders = personalData.folders || [];
+      
+      // すべてのフォルダを統合（重複排除）
+      const allFolders = [...new Set([...masterFolders, ...personalFolders])];
+      
       const hiddenFolders = store.get('hiddenFolders', []);
       
       const folderListDiv = document.getElementById('folder-list');
       
-      if (folders.length === 0) {
+      if (allFolders.length === 0) {
         folderListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">フォルダがありません</div>';
         return;
       }
       
-      folderListDiv.innerHTML = folders.map(folder => `
-        <div style="padding: 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;">
+      folderListDiv.innerHTML = allFolders.map(folder => {
+        const isMaster = masterFolders.includes(folder);
+        const isPersonal = personalFolders.includes(folder);
+        
+        let badge = '';
+        if (isMaster && isPersonal) {
+          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #007aff; color: white; border-radius: 3px; margin-left: 6px;">マスタ・個別</span>';
+        } else if (isMaster) {
+          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #34c759; color: white; border-radius: 3px; margin-left: 6px;">マスタ</span>';
+        } else if (isPersonal) {
+          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #ff9500; color: white; border-radius: 3px; margin-left: 6px;">個別</span>';
+        }
+        
+        return `
+        <div style="padding: 5px 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;">
           <input type="checkbox" 
-                 id="folder-${escapeAttr(folder)}" 
-                 value="${escapeAttr(folder)}" 
-                 ${!hiddenFolders.includes(folder) ? 'checked' : ''}
-                 style="width: 16px; height: 16px; cursor: pointer;">
+                id="folder-${escapeAttr(folder)}" 
+                value="${escapeAttr(folder)}" 
+                ${!hiddenFolders.includes(folder) ? 'checked' : ''}
+                style="width: 16px; height: 16px; cursor: pointer;">
           <label for="folder-${escapeAttr(folder)}" 
-                 style="flex: 1; cursor: pointer; font-size: 12px; color: #333; margin-bottom: 0;">
-            ${escapeHtml(folder)}
+                style="flex: 1; cursor: pointer; font-size: 11px; color: #333; margin-bottom: 0; display: flex; align-items: center; line-height: 1.2;">
+            ${escapeHtml(folder)}${badge}
           </label>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     async function loadWindowPositionSetting() {
@@ -776,14 +974,20 @@
       checkboxes.forEach(checkbox => checkbox.checked = false);
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+    async function removeMasterUrl() {
+      if (!confirm('Google Drive同期を解除しますか？\n\nマスタスニペットはすべて削除されます。\n個別スニペットは残ります。')) {
+        return;
+      }
 
-    function escapeAttr(text) {
-      return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const result = await ipcRenderer.invoke('remove-master-url');
+      if (result) {
+        document.getElementById('master-url').value = '';
+        showAlert('✅ 同期を解除しました', 'success', 'sync-alert');
+        await loadSyncStatus();
+        await loadFolders();
+      } else {
+        showAlert('❌ 同期解除に失敗しました', 'error', 'sync-alert');
+      }
     }
   </script>
 </body>

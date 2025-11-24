@@ -3,18 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <title>スニペット編集 - Snipee</title>
+  <link rel="stylesheet" href="common/variables.css">
+  <link rel="stylesheet" href="common/common.css">
+  <script src="common/utils.js"></script>
+  <script src="common/drag-drop.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    /* snippet-editor.html 固有のスタイルのみ */
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
-      background: #f5f5f5;
-      color: #333;
-      overflow: hidden;
+      background: #ffffff;
+      color: #1d1d1f;
     }
 
     .container {
@@ -23,37 +20,53 @@
       height: 100vh;
     }
 
+    .section-header {
+      padding: 12px 12px 6px 12px;
+      font-size: var(--font-size-small);
+      font-weight: 600;
+      color: #86868b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #f5f5f7;
+      border-bottom: 1px solid #e5e5ea;
+      user-select: none;
+      cursor: default;
+    }
+
     .toolbar {
-      background: linear-gradient(to bottom, #fafafa, #f0f0f0);
-      border-bottom: 1px solid #c0c0c0;
-      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #d2d2d7;
+      padding: 12px 16px;
       display: flex;
       gap: 8px;
       align-items: center;
+      -webkit-app-region: drag;
     }
 
     .toolbar-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      background: linear-gradient(to bottom, #ffffff, #f8f8f8);
-      border: 1px solid #c0c0c0;
-      border-radius: 5px;
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid #d2d2d7;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 12px;
-      color: #333;
-      transition: all 0.15s;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+      font-size: var(--font-size-normal);
+      color: #1d1d1f;
+      transition: all 0.2s ease;
+      font-weight: 400;
+      -webkit-app-region: no-drag;
     }
 
     .toolbar-btn:hover {
-      background: linear-gradient(to bottom, #f8f8f8, #f0f0f0);
+      background: #f5f5f7;
+      border-color: #86868b;
     }
 
     .toolbar-btn:active {
-      background: linear-gradient(to bottom, #e8e8e8, #e0e0e0);
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+      background: #e8e8ed;
+      transform: scale(0.98);
     }
 
     .main-content {
@@ -63,43 +76,58 @@
     }
 
     .sidebar {
-      width: 220px;
-      background: #e8e8e8;
-      border-right: 1px solid #c0c0c0;
+      width: 240px;
+      background: #f5f5f7;
+      border-right: 1px solid #d2d2d7;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
     }
 
     .folder-group {
-      border-bottom: 1px solid #d0d0d0;
+      border-bottom: 1px solid #e5e5ea;
+      box-sizing: border-box;
+    }
+
+    .folder-group.drag-over-bottom {
+      border-bottom: 2px solid var(--primary-color);
     }
 
     .folder-header {
-      padding: 8px 12px;
+      padding: 4px 12px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 13px;
+      font-size: var(--font-size-normal);
       font-weight: 500;
       user-select: none;
-      transition: background 0.1s;
+      transition: background 0.15s ease;
+      color: #1d1d1f;
+      line-height: 1.2;
+      border-top: 2px solid transparent;
     }
 
     .folder-header:hover {
-      background: rgba(0,0,0,0.05);
+      background: #e8e8ed;
     }
 
     .folder-header.selected {
-      background: #4a90e2;
+      background: var(--primary-color);
       color: #ffffff;
     }
 
     .folder-toggle {
       font-size: 10px;
       width: 12px;
-      transition: transform 0.2s;
+      transition: transform 0.2s ease;
+      color: #86868b;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .folder-header.selected .folder-toggle {
+      color: rgba(255,255,255,0.8);
     }
 
     .folder-toggle.expanded {
@@ -107,62 +135,66 @@
     }
 
     .folder-icon {
-      font-size: 14px;
+      font-size: var(--font-size-medium);
+      opacity: 0.8;
+      cursor: pointer;
+      user-select: none;
     }
 
     .folder-name {
       flex: 1;
-    }
-
-    .folder-delete {
-      opacity: 0;
-      background: none;
-      border: none;
+      font-weight: 500;
+      font-size: 12px;
       cursor: pointer;
-      font-size: 14px;
-      color: #999;
-      padding: 0 4px;
-    }
-
-    .folder-header:hover .folder-delete {
-      opacity: 1;
-    }
-
-    .folder-header.selected .folder-delete {
-      color: rgba(255,255,255,0.8);
-      opacity: 1;
+      user-select: none;
     }
 
     .snippet-list {
       display: none;
-      background: rgba(0,0,0,0.03);
+      background: rgba(0,0,0,0.02);
+      border-bottom: 2px solid transparent;
     }
 
     .snippet-list.expanded {
       display: block;
     }
 
+    .snippet-list.drag-over-bottom {
+      border-bottom-color: var(--primary-color);
+    }
+
     .snippet-item {
-      padding: 6px 12px 6px 32px;
+      padding: 3px 12px 3px 32px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
       font-size: 12px;
-      transition: background 0.1s;
+      transition: background 0.15s ease;
+      color: #1d1d1f;
+      user-select: none;
+      line-height: 1.2;
+      border-top: 2px solid transparent;
     }
 
     .snippet-item:hover {
-      background: rgba(0,0,0,0.05);
+      background: #e8e8ed;
     }
 
     .snippet-item.selected {
-      background: #4a90e2;
-      color: #ffffff;
+      background: #d0d0d5;
+      color: #1d1d1f;
     }
 
     .snippet-icon {
       font-size: 12px;
+      opacity: 0.6;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .snippet-item.selected .snippet-icon {
+      opacity: 0.9;
     }
 
     .snippet-name {
@@ -170,25 +202,25 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-
-    .snippet-delete {
-      opacity: 0;
-      background: none;
-      border: none;
+      font-weight: 400;
+      font-size: var(--font-size-small);
       cursor: pointer;
-      font-size: 12px;
-      color: #999;
-      padding: 0 4px;
+      user-select: none;
     }
 
-    .snippet-item:hover .snippet-delete {
-      opacity: 1;
+    .snippet-badge {
+      font-size: 9px;
+      padding: 1px 4px;
+      background: #34c759;
+      color: white;
+      border-radius: 3px;
+      margin-left: 4px;
+      user-select: none;
+      pointer-events: none;
     }
 
-    .snippet-item.selected .snippet-delete {
-      color: rgba(255,255,255,0.8);
-      opacity: 1;
+    .snippet-item.selected .snippet-badge {
+      background: rgba(255,255,255,0.3);
     }
 
     .content-panel {
@@ -214,84 +246,205 @@
       justify-content: center;
       align-items: center;
       height: 100%;
-      color: #999;
-      font-size: 14px;
+      color: #86868b;
+      font-size: var(--font-size-medium);
     }
 
     .editor-empty-icon {
       font-size: 64px;
       margin-bottom: 16px;
-      opacity: 0.2;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .form-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #4a90e2;
-      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+      opacity: 0.15;
     }
 
     .form-textarea {
       flex: 1;
-      padding: 24px;
+      padding: 12px;
       border: none;
       border-radius: 0;
-      font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
+      font-size: var(--font-size-normal);
+      font-family: var(--font-family);
       resize: none;
-      line-height: 1.8;
+      line-height: 1.3;
       background: #ffffff;
+      color: #1d1d1f;
     }
 
     .form-textarea:focus {
       outline: none;
     }
 
-    ::-webkit-scrollbar {
-      width: 10px;
+    .form-textarea:read-only {
+      background: #f5f5f7;
+      color: #86868b;
+      cursor: not-allowed;
     }
 
-    ::-webkit-scrollbar-track {
-      background: transparent;
+    .editor-header {
+      padding: 12px;
+      border-bottom: 1px solid #e5e5ea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fafafa;
     }
 
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.2);
-      border-radius: 5px;
-      border: 2px solid transparent;
-      background-clip: padding-box;
+    .editor-title {
+      font-size: var(--font-size-large);
+      font-weight: 600;
+      color: #1d1d1f;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0,0,0,0.3);
-      background-clip: padding-box;
+    .master-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: #34c759;
+      color: white;
+      border-radius: 3px;
+    }
+
+    .readonly-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: #ff9500;
+      color: white;
+      border-radius: 3px;
+    }
+
+    .dragging {
+      opacity: 0.5;
+      background: rgba(0, 122, 255, 0.15) !important;
+      transition: opacity 0.15s ease;
+    }
+
+    .drag-over {
+      border-top-color: var(--primary-color) !important;
+    }
+
+    .editor-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    .main-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #d2d2d7;
+      position: relative;
+    }
+
+    .description-panel {
+      width: 160px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      transition: width 0.2s ease;
+      position: relative;
+    }
+
+    .description-panel.collapsed {
+      width: 0;
+      overflow: hidden;
+      border-left: none;
+    }
+
+    .description-toggle {
+      position: absolute;
+      top: 50%;
+      right: -8px;
+      transform: translateY(-50%);
+      background: #ffffff;
+      border: 1px solid #d2d2d7;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 8px;
+      color: #86868b;
+      padding: 4px 2px;
+      transition: all 0.2s ease;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      width: 16px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .description-toggle:hover {
+      color: var(--primary-color);
+      border-color: var(--primary-color);
+      background: #f8f9fa;
+    }
+
+    .description-toggle:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .description-textarea {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 0;
+      font-size: var(--font-size-normal);
+      font-family: var(--font-family);
+      resize: none;
+      line-height: 1.3;
+      background: #fafafa;
+      color: #1d1d1f;
+    }
+
+    .description-panel.collapsed .description-textarea {
+      display: none;
+    }
+
+    .description-textarea:focus {
+      outline: none;
+    }
+
+    .folder-badge {
+      font-size: 8px;
+      padding: 1px 4px;
+      background: #ff6b6b;
+      color: white;
+      border-radius: 2px;
+      margin-left: 6px;
+      user-select: none;
+      pointer-events: none;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+
+    .folder-badge.personal {
+      background: #5a9fd4;
+      opacity: 0.85;
+    }
+
+    .folder-header.selected .folder-badge {
+      background: rgba(255,255,255,0.3);
+      opacity: 1;
+    }
+
+    .folder-toggle-area {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      margin-left: -12px;
+      padding-left: 12px;
+    }
+
+    .pane-focused {
+      box-shadow: 0 0 0 2px var(--primary-color);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- ツールバー -->
     <div class="toolbar">
       <button class="toolbar-btn" onclick="addFolder()">
         <span>📁</span>
@@ -308,12 +461,7 @@
     </div>
 
     <div class="main-content">
-      <!-- サイドバー -->
-      <div class="sidebar" id="sidebar">
-        <!-- フォルダ階層が表示される -->
-      </div>
-
-      <!-- 編集エリア -->
+      <div class="sidebar" id="sidebar"></div>
       <div class="content-panel">
         <div class="editor-area" id="editor-area">
           <div class="editor-empty">
@@ -328,8 +476,13 @@
   <script>
     const { ipcRenderer } = require('electron');
 
+    let isDescriptionOpen = true;
+
     let folders = [];
-    let snippets = [];
+    let masterSnippets = [];
+    let personalSnippets = [];
+    let allSnippets = [];
+    let currentPane = 'sidebar'; // 'sidebar' | 'content' | 'description'
     let expandedFolders = new Set();
     let selectedFolder = null;
     let selectedSnippet = null;
@@ -340,12 +493,27 @@
     }
 
     async function loadData() {
-      const data = await ipcRenderer.invoke('get-personal-snippets');
-      folders = data.folders || ['未分類'];
-      snippets = data.snippets || [];
+      const personalData = await ipcRenderer.invoke('get-personal-snippets');
+      folders = personalData.folders || [];
+      personalSnippets = personalData.snippets || [];
       
-      // 全フォルダを展開状態に
-      folders.forEach(f => expandedFolders.add(f));
+      const allData = await ipcRenderer.invoke('get-all-items');
+      masterSnippets = allData.masterSnippets || [];
+      
+      const masterOrder = await ipcRenderer.invoke('get-master-order');
+      if (masterOrder.length > 0) {
+        const orderMap = new Map(masterOrder.map((item, index) => [item.id, index]));
+        
+        masterSnippets.sort((a, b) => {
+          const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : 999999;
+          const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : 999999;
+          return orderA - orderB;
+        });
+      }
+      
+      masterSnippets = masterSnippets.map(s => ({ ...s, isMaster: true }));
+      
+      allSnippets = [...masterSnippets, ...personalSnippets];
     }
 
     function render() {
@@ -355,34 +523,84 @@
     function renderSidebar() {
       const sidebar = document.getElementById('sidebar');
       
-      sidebar.innerHTML = folders.map(folder => {
-        const folderSnippets = snippets.filter(s => s.folder === folder);
-        const isExpanded = expandedFolders.has(folder);
-        const isSelected = selectedFolder === folder;
-        
-        return `
-          <div class="folder-group">
-            <div class="folder-header ${isSelected && !selectedSnippet ? 'selected' : ''}" onclick="selectFolder('${escapeAttr(folder)}')">
-              <span class="folder-toggle ${isExpanded ? 'expanded' : ''}" onclick="event.stopPropagation(); toggleFolder('${escapeAttr(folder)}')">▶</span>
-              <span class="folder-icon">📁</span>
-              <span class="folder-name">${escapeHtml(folder)}</span>
-              ${folder !== '未分類' ? `<button class="folder-delete" onclick="event.stopPropagation(); deleteFolder('${escapeAttr(folder)}')">×</button>` : ''}
-            </div>
-            <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
-              ${folderSnippets.length === 0 ? '<div style="padding: 12px 32px; font-size: 11px; color: #999;">スニペットなし</div>' : ''}
-              ${folderSnippets.map(snippet => `
-                <div class="snippet-item ${selectedSnippet?.id === snippet.id ? 'selected' : ''}" 
-                    onclick="selectSnippet('${snippet.id}')"
-                    oncontextmenu="event.preventDefault(); startRenameSnippet('${snippet.id}')">
-                  <span class="snippet-icon">📄</span>
-                  <span class="snippet-name" data-snippet-id="${snippet.id}">${escapeHtml(snippet.title || '無題')}</span>
-                  <button class="snippet-delete" onclick="event.stopPropagation(); deleteSnippet('${snippet.id}')">×</button>
+      // ✅ マスタスニペットから直接フォルダリストを生成
+      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
+      
+      // ✅ 個別スニペットのフォルダだけを使う
+      const personalFolders = folders;
+      
+      const masterSection = masterFolders.length > 0 ? `
+        <div class="section-header">マスタスニペット</div>
+        ${masterFolders.map(folder => {
+          const folderSnippets = masterSnippets.filter(s => s.folder === folder);
+          const isExpanded = expandedFolders.has(folder);
+          const isSelected = selectedFolder === folder;
+          
+          return `
+            <div class="folder-group">
+              <div class="folder-header ${isSelected && !selectedSnippet ? 'selected' : ''}" data-is-master="true" data-folder="${escapeAttr(folder)}">
+                <div class="folder-toggle-area" onclick="toggleFolder('${escapeAttr(folder)}')">
+                  <span class="folder-toggle ${isExpanded ? 'expanded' : ''}">▶</span>
+                  <span class="folder-icon">📁</span>
                 </div>
-              `).join('')}
+                <span class="folder-name" onclick="toggleFolder('${escapeAttr(folder)}')" title="${escapeAttr(folder)}">${escapeHtml(folder)}</span>
+                <span class="folder-badge">マスタ</span>
+              </div>
+              <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
+                ${folderSnippets.map(snippet => `
+                  <div class="snippet-item ${selectedSnippet?.id === snippet.id ? 'selected' : ''}" 
+                    data-id="${snippet.id}"
+                    data-folder="${escapeAttr(folder)}"
+                    data-is-master="true"
+                    onclick="selectSnippet('${snippet.id}')">
+                    <span class="snippet-icon">🔒</span>
+                    <span class="snippet-name" title="${escapeAttr(snippet.title || '無題')}">${escapeHtml(snippet.title || '無題')}</span>
+                  </div>
+                `).join('')}
+              </div>
             </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('')}
+      ` : '';
+      
+      const personalSection = personalFolders.length > 0 ? `
+        <div class="section-header">個別スニペット</div>
+        ${personalFolders.map(folder => {
+          const folderSnippets = personalSnippets.filter(s => s.folder === folder);
+          const isExpanded = expandedFolders.has(folder);
+          const isSelected = selectedFolder === folder;
+          
+          return `
+            <div class="folder-group">
+              <div class="folder-header ${isSelected && !selectedSnippet ? 'selected' : ''}" data-is-master="false" data-folder="${escapeAttr(folder)}">
+                <div class="folder-toggle-area" onclick="toggleFolder('${escapeAttr(folder)}')">
+                  <span class="folder-toggle ${isExpanded ? 'expanded' : ''}">▶</span>
+                  <span class="folder-icon">📁</span>
+                </div>
+                <span class="folder-name" ondblclick="event.preventDefault(); startRenameFolder('${escapeAttr(folder)}')" title="${escapeAttr(folder)}">${escapeHtml(folder)}</span>
+                <span class="folder-badge personal">個別</span>
+              </div>
+              <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
+                ${folderSnippets.map(snippet => `
+                  <div class="snippet-item ${selectedSnippet?.id === snippet.id ? 'selected' : ''}" 
+                    data-id="${snippet.id}"
+                    data-folder="${escapeAttr(folder)}"
+                    data-is-master="false"
+                    onclick="selectSnippet('${snippet.id}')"
+                    ondblclick="event.preventDefault(); startRenameSnippet('${snippet.id}')">
+                    <span class="snippet-icon">📄</span>
+                    <span class="snippet-name" title="${escapeAttr(snippet.title || '無題')}">${escapeHtml(snippet.title || '無題')}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      ` : '';
+      
+      sidebar.innerHTML = masterSection + personalSection;
+
+      initDragAndDrop();
     }
 
     function toggleFolder(folderName) {
@@ -397,13 +615,15 @@
     function selectFolder(folderName) {
       selectedFolder = folderName;
       selectedSnippet = null;
+      currentPane = 'sidebar';
       render();
       showEmpty();
     }
 
     function selectSnippet(snippetId) {
-      selectedSnippet = snippets.find(s => s.id === snippetId);
+      selectedSnippet = allSnippets.find(s => s.id === snippetId);
       selectedFolder = null;
+      currentPane = 'sidebar';
       render();
       showEditor();
     }
@@ -424,164 +644,684 @@
         return;
       }
 
+      const isMaster = selectedSnippet.isMaster === true;
+      const readonlyAttr = isMaster ? 'readonly' : '';
+      
       const editor = document.getElementById('editor-area');
       editor.innerHTML = `
-        <textarea class="form-textarea" id="snippet-content" oninput="autoSave()" style="width: 100%; height: 100%; border: none; padding: 24px; font-size: 14px; line-height: 1.8;">${escapeHtml(selectedSnippet.content || '')}</textarea>
+        ${isMaster ? `
+        <div class="editor-header">
+          <span class="editor-title">${escapeHtml(selectedSnippet.title || '無題')}</span>
+          <span class="master-badge">マスタスニペット</span>
+          <span class="readonly-badge">内容: 読み取り専用</span>
+        </div>
+        ` : ''}
+        <div class="editor-container">
+          <div class="main-editor">
+            <textarea class="form-textarea" id="snippet-content" ${readonlyAttr} ${isMaster ? '' : 'oninput="autoSave()"'}>${escapeHtml(selectedSnippet.content || '')}</textarea>
+            <button class="description-toggle" onclick="toggleDescription()">
+              ${isDescriptionOpen ? '▶' : '◀'}
+            </button>
+          </div>
+          <div class="description-panel ${isDescriptionOpen ? '' : 'collapsed'}">
+            <textarea class="description-textarea" id="snippet-description" oninput="autoSaveDescription()" placeholder="このスニペットの説明を入力...（個人用メモ）">${escapeHtml(selectedSnippet.description || '')}</textarea>
+          </div>
+        </div>
       `;
     }
 
+    function toggleDescription() {
+      isDescriptionOpen = !isDescriptionOpen;
+      showEditor();
+    }
+
+    function focusPane(pane) {
+      currentPane = pane;
+      
+      // 全てのフォーカス状態をクリア
+      document.querySelectorAll('.pane-focused').forEach(el => el.classList.remove('pane-focused'));
+      document.getElementById('title-input')?.blur();
+      document.getElementById('snippet-content')?.blur();
+      document.getElementById('snippet-description')?.blur();
+      
+      if (pane === 'content') {
+        const textarea = document.getElementById('snippet-content');
+        if (textarea) {
+          textarea.focus();
+          textarea.classList.add('pane-focused');
+        }
+      } else if (pane === 'description') {
+        const textarea = document.getElementById('snippet-description');
+        if (textarea) {
+          textarea.focus();
+          textarea.classList.add('pane-focused');
+        }
+      }
+      // sidebarの場合は何もフォーカスしない
+    }
+
     async function autoSave() {
+      if (!selectedSnippet || selectedSnippet.isMaster) return;
+      selectedSnippet.content = document.getElementById('snippet-content')?.value || '';
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+    }
+
+    async function autoSaveDescription() {
       if (!selectedSnippet) return;
-
-      const content = document.getElementById('snippet-content')?.value || '';
-
-      selectedSnippet.content = content;
-
-      await ipcRenderer.invoke('save-personal-snippets', snippets);
+      
+      const description = document.getElementById('snippet-description')?.value || '';
+      selectedSnippet.description = description;
+      
+      if (selectedSnippet.isMaster) {
+        await ipcRenderer.invoke('update-master-description', selectedSnippet.id, description);
+        await loadData();
+      } else {
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
     }
 
     async function addFolder() {
-      const folderName = prompt('新しいフォルダ名:');
-      if (!folderName || !folderName.trim()) return;
-
-      if (folders.includes(folderName.trim())) {
-        alert('このフォルダ名は既に存在します');
-        return;
+      const newFolderName = '新しいフォルダ';
+      let folderName = newFolderName;
+      let counter = 1;
+      while (folders.includes(folderName)) {
+        folderName = `${newFolderName} ${counter}`;
+        counter++;
       }
 
-      folders.push(folderName.trim());
-      expandedFolders.add(folderName.trim());
+      folders.push(folderName);
+      expandedFolders.add(folderName);
       await ipcRenderer.invoke('save-personal-folders', folders);
+      selectedFolder = folderName;
       render();
+      setTimeout(() => startRenameFolder(folderName), 100);
     }
 
     async function deleteFolder(folderName) {
-      const folderSnippets = snippets.filter(s => s.folder === folderName);
+      const folderSnippets = personalSnippets.filter(s => s.folder === folderName);
       const message = folderSnippets.length > 0 
-        ? `フォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のスニペットは「未分類」に移動します）`
+        ? `フォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のスニペットも削除されます）`
         : `フォルダ「${folderName}」を削除しますか？`;
       
       if (!confirm(message)) return;
 
       folders = folders.filter(f => f !== folderName);
-      snippets = snippets.map(s => s.folder === folderName ? {...s, folder: '未分類'} : s);
+      personalSnippets = personalSnippets.filter(s => s.folder !== folderName);
 
       await ipcRenderer.invoke('save-personal-folders', folders);
-      await ipcRenderer.invoke('save-personal-snippets', snippets);
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
 
       selectedFolder = null;
+      await loadData();
       render();
       showEmpty();
     }
 
     async function addSnippet() {
-      const targetFolder = selectedFolder || selectedSnippet?.folder || '未分類';
+      const targetFolder = selectedFolder || selectedSnippet?.folder || folders[0];
+      
+      if (!targetFolder) {
+        alert('先にフォルダを作成してください');
+        return;
+      }
       
       const newSnippet = {
         id: Date.now().toString(),
         title: '新しいスニペット',
         content: '',
-        folder: targetFolder
+        description: '', 
+        folder: targetFolder,
+        isMaster: false
       };
 
-      snippets.push(newSnippet);
-      await ipcRenderer.invoke('save-personal-snippets', snippets);
+      personalSnippets.push(newSnippet);
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
 
       selectedSnippet = newSnippet;
       selectedFolder = null;
       expandedFolders.add(targetFolder);
+      await loadData();
       render();
       showEditor();
     }
 
     async function deleteSnippet(snippetId) {
+      const snippet = allSnippets.find(s => s.id === snippetId);
+      
+      if (snippet.isMaster) {
+        alert('マスタスニペットは削除できません');
+        return;
+      }
+      
       if (!confirm('このスニペットを削除しますか？')) return;
 
-      snippets = snippets.filter(s => s.id !== snippetId);
-      await ipcRenderer.invoke('save-personal-snippets', snippets);
+      personalSnippets = personalSnippets.filter(s => s.id !== snippetId);
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
 
       if (selectedSnippet?.id === snippetId) {
         selectedSnippet = null;
         showEmpty();
       }
 
+      await loadData();
       render();
     }
 
     async function deleteSelected() {
       if (selectedSnippet) {
         await deleteSnippet(selectedSnippet.id);
-      } else if (selectedFolder && selectedFolder !== '未分類') {
+      } else if (selectedFolder) {
         await deleteFolder(selectedFolder);
       } else {
         alert('削除する項目を選択してください');
       }
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    function handleEditorKeydown(e) {
+      // content
+      if (currentPane === 'content') {
+        if (e.key === 'ArrowLeft' && !e.shiftKey) {
+          const textarea = document.getElementById('snippet-content');
+          // カーソルが先頭の場合のみsidebarへ
+          if (textarea && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+            e.preventDefault();
+            focusPane('sidebar');
+          }
+        } else if (e.key === 'ArrowRight' && !e.shiftKey) {
+          const textarea = document.getElementById('snippet-content');
+          // カーソルが末尾の場合のみdescriptionへ
+          if (textarea && textarea.selectionStart === textarea.value.length) {
+            e.preventDefault();
+            focusPane('description');
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          focusPane('sidebar');
+        }
+        return;
+      }
+      
+      // description
+      if (currentPane === 'description') {
+        if (e.key === 'ArrowLeft' && !e.shiftKey) {
+          const textarea = document.getElementById('snippet-description');
+          // カーソルが先頭の場合のみcontentへ
+          if (textarea && textarea.selectionStart === 0 && textarea.selectionEnd === 0) {
+            e.preventDefault();
+            focusPane('content');
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          focusPane('sidebar');
+        }
+        return;
+      }
     }
-
-    function escapeAttr(text) {
-      return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    function escapeAttr(text) {
-  return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
 
     function startRenameSnippet(snippetId) {
-      const snippetItem = document.querySelector(`.snippet-item[onclick*="${snippetId}"]`);
+      const snippet = allSnippets.find(s => s.id === snippetId);
+      if (snippet.isMaster) {
+        alert('マスタスニペットの名前は変更できません');
+        return;
+      }
+      
+      const snippetItem = document.querySelector(`.snippet-item[data-id="${snippetId}"]`);
       if (!snippetItem) return;
       
       const nameSpan = snippetItem.querySelector('.snippet-name');
-      const snippet = snippets.find(s => s.id === snippetId);
       if (!snippet) return;
       
-      const currentName = snippet.title || '無題';
-      
-      // inputフィールドに変換
       const input = document.createElement('input');
       input.type = 'text';
-      input.value = currentName;
-      input.style.cssText = 'flex: 1; background: white; border: 1px solid #4a90e2; padding: 2px 4px; font-size: 12px; border-radius: 3px;';
+      input.value = snippet.title || '無題';
+      input.style.cssText = 'flex: 1; min-width: 0; width: 0; max-width: 100%; background: white; border: 1px solid #007aff; padding: 2px 4px; font-size: 12px; border-radius: 4px; box-sizing: border-box;';
       
       nameSpan.replaceWith(input);
       input.focus();
       input.select();
       
-      // Enterで確定
+      let isFinishing = false;
+
       input.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          await finishRenameSnippet(snippetId, input.value);
+          e.stopPropagation();
+          if (!isFinishing) {
+            isFinishing = true;
+            await finishRenameSnippet(snippetId, input.value);
+          }
         } else if (e.key === 'Escape') {
           e.preventDefault();
+          e.stopPropagation();
+          isFinishing = true;
           render();
         }
       });
-      
-      // フォーカスが外れたら確定
+
       input.addEventListener('blur', async () => {
-        await finishRenameSnippet(snippetId, input.value);
+        if (!isFinishing) {
+          isFinishing = true;
+          await finishRenameSnippet(snippetId, input.value);
+        }
       });
     }
 
     async function finishRenameSnippet(snippetId, newName) {
-      const snippet = snippets.find(s => s.id === snippetId);
+      const snippet = personalSnippets.find(s => s.id === snippetId);
       if (!snippet) return;
       
       const trimmedName = newName.trim();
       if (trimmedName) {
         snippet.title = trimmedName;
-        await ipcRenderer.invoke('save-personal-snippets', snippets);
       }
       
+      await loadData();
       render();
       if (selectedSnippet?.id === snippetId) {
         showEditor();
+      }
+      
+      if (trimmedName) {
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
+
+      moveToNextItem();
+    }
+
+    function startRenameFolder(folderName) {
+      const escapedName = folderName.replace(/"/g, '\\"');
+      const folderHeader = document.querySelector(`.folder-header[data-is-master="false"][data-folder="${escapedName}"]`);
+      
+      if (!folderHeader) return;
+      
+      const nameSpan = folderHeader.querySelector('.folder-name');
+      if (!nameSpan) return;
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = folderName;
+      input.style.cssText = 'flex: 1; min-width: 0; width: 0; max-width: 100%; background: white; border: 1px solid #007aff; padding: 2px 4px; font-size: 12px; border-radius: 4px; box-sizing: border-box;';
+      
+      nameSpan.replaceWith(input);
+      input.focus();
+      input.select();
+      
+      let isFinishing = false;
+
+      input.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isFinishing) {
+            isFinishing = true;
+            await finishRenameFolder(folderName, input.value);
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          isFinishing = true;
+          render();
+        }
+      });
+      
+      input.addEventListener('blur', async () => {
+        if (!isFinishing) {
+          isFinishing = true;
+          await finishRenameFolder(folderName, input.value);
+        }
+      });
+    }
+
+    async function finishRenameFolder(oldName, newName) {
+      const trimmedName = newName.trim();
+      
+      if (!trimmedName || trimmedName === oldName) {
+        render();
+        return;
+      }
+      
+      const otherFolders = folders.filter(f => f !== oldName);
+      
+      if (otherFolders.includes(trimmedName)) {
+        alert('このフォルダ名は既に存在します');
+        render();
+        return;
+      }
+      
+      const index = folders.indexOf(oldName);
+      if (index !== -1) {
+        folders[index] = trimmedName;
+      }
+      
+      personalSnippets = personalSnippets.map(s => 
+        s.folder === oldName ? {...s, folder: trimmedName} : s
+      );
+      
+      if (expandedFolders.has(oldName)) {
+        expandedFolders.delete(oldName);
+        expandedFolders.add(trimmedName);
+      }
+      
+      if (selectedFolder === oldName) {
+        selectedFolder = trimmedName;
+      }
+      
+      await ipcRenderer.invoke('save-personal-folders', folders);
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      
+      await loadData();
+      render();
+    }
+
+    // ドラッグ＆ドロップマネージャー
+    let dragDropManager = null;
+
+    function initDragAndDrop() {
+      if (!dragDropManager) {
+        dragDropManager = new DragDropManager({
+          container: '#sidebar',
+          folderSelector: '.folder-header',
+          itemSelector: '.snippet-item',
+          listSelector: '.snippet-list',
+          groupSelector: '.folder-group',
+          groupAttribute: 'data-is-master',
+          nameAttribute: 'data-folder',
+          idAttribute: 'data-id',
+          folderAttribute: 'data-folder',
+          
+          onFolderReorder: async (newOrder, isMaster) => {
+            if (isMaster) {
+              const folderOrder = new Map(newOrder.map((f, i) => [f, i]));
+              masterSnippets.sort((a, b) => {
+                const orderA = folderOrder.get(a.folder) ?? 999;
+                const orderB = folderOrder.get(b.folder) ?? 999;
+                return orderA - orderB;
+              });
+              
+              const orderData = masterSnippets.map(s => ({ id: s.id, folder: s.folder }));
+              await ipcRenderer.invoke('save-master-order', orderData);
+            } else {
+              folders.length = 0;
+              folders.push(...newOrder);
+              await ipcRenderer.invoke('save-personal-folders', folders);
+            }
+            await loadData();
+            render();
+          },
+          
+          onItemReorder: async (draggedId, targetId, folderName, isMaster) => {
+            if (isMaster) {
+              await reorderMasterSnippet(draggedId, targetId, folderName);
+            } else {
+              await reorderPersonalSnippet(draggedId, targetId, folderName);
+            }
+          },
+          
+          onItemDropToEnd: async (draggedId, folderName, isMaster) => {
+            await moveSnippetToEnd(draggedId, folderName, isMaster);
+          }
+        });
+        
+        dragDropManager.init();
+      }
+      
+      dragDropManager.attachEvents();
+    }
+
+    async function reorderMasterSnippet(draggedId, targetId, folderName) {
+      const folderSnippets = masterSnippets.filter(s => s.folder === folderName);
+      const otherSnippets = masterSnippets.filter(s => s.folder !== folderName);
+      
+      const draggedSnippet = folderSnippets.find(s => s.id === draggedId);
+      const targetSnippet = folderSnippets.find(s => s.id === targetId);
+      
+      if (!draggedSnippet || !targetSnippet) return;
+      
+      const draggedIdx = folderSnippets.indexOf(draggedSnippet);
+      const targetIdx = folderSnippets.indexOf(targetSnippet);
+
+      folderSnippets.splice(draggedIdx, 1);
+      const newIdx = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
+      folderSnippets.splice(newIdx, 0, draggedSnippet);
+      
+      const currentOrder = await ipcRenderer.invoke('get-master-order');
+      const existingFolderOrder = [...new Set(currentOrder.map(item => item.folder))];
+      
+      const allSnippetsReordered = [...otherSnippets, ...folderSnippets];
+      const folderOrder = new Map(existingFolderOrder.map((f, i) => [f, i]));
+      
+      allSnippetsReordered.sort((a, b) => {
+        const orderA = folderOrder.get(a.folder) ?? 999;
+        const orderB = folderOrder.get(b.folder) ?? 999;
+        if (orderA !== orderB) return orderA - orderB;
+        
+        if (a.folder === folderName && b.folder === folderName) {
+          return folderSnippets.indexOf(a) - folderSnippets.indexOf(b);
+        }
+        return 0;
+      });
+      
+      const orderData = allSnippetsReordered.map(s => ({ id: s.id, folder: s.folder }));
+      await ipcRenderer.invoke('save-master-order', orderData);
+      
+      await loadData();
+      render();
+    }
+
+    async function reorderPersonalSnippet(draggedId, targetId, folderName) {
+      const folderSnippets = personalSnippets.filter(s => s.folder === folderName);
+      
+      const draggedSnippet = folderSnippets.find(s => s.id === draggedId);
+      const targetSnippet = folderSnippets.find(s => s.id === targetId);
+      
+      if (!draggedSnippet || !targetSnippet) return;
+      
+      const draggedIdx = folderSnippets.indexOf(draggedSnippet);
+      const targetIdx = folderSnippets.indexOf(targetSnippet);
+
+      folderSnippets.splice(draggedIdx, 1);
+      const newIdx = draggedIdx < targetIdx ? targetIdx - 1 : targetIdx;
+      folderSnippets.splice(newIdx, 0, draggedSnippet);
+      
+      personalSnippets = personalSnippets.filter(s => s.folder !== folderName).concat(folderSnippets);
+      
+      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      await loadData();
+      render();
+    }
+
+    async function moveSnippetToEnd(draggedId, folderName, isMaster) {
+      if (isMaster) {
+        const folderSnippets = masterSnippets.filter(s => s.folder === folderName);
+        const otherSnippets = masterSnippets.filter(s => s.folder !== folderName);
+        
+        const draggedSnippet = folderSnippets.find(s => s.id === draggedId);
+        if (!draggedSnippet) return;
+        
+        const draggedIdx = folderSnippets.indexOf(draggedSnippet);
+        folderSnippets.splice(draggedIdx, 1);
+        folderSnippets.push(draggedSnippet);
+        
+        const currentOrder = await ipcRenderer.invoke('get-master-order');
+        const existingFolderOrder = [...new Set(currentOrder.map(item => item.folder))];
+        
+        const allSnippetsReordered = [...otherSnippets, ...folderSnippets];
+        const folderOrder = new Map(existingFolderOrder.map((f, i) => [f, i]));
+        
+        allSnippetsReordered.sort((a, b) => {
+          const orderA = folderOrder.get(a.folder) ?? 999;
+          const orderB = folderOrder.get(b.folder) ?? 999;
+          if (orderA !== orderB) return orderA - orderB;
+          
+          if (a.folder === folderName && b.folder === folderName) {
+            return folderSnippets.indexOf(a) - folderSnippets.indexOf(b);
+          }
+          return 0;
+        });
+        
+        const orderData = allSnippetsReordered.map(s => ({ id: s.id, folder: s.folder }));
+        await ipcRenderer.invoke('save-master-order', orderData);
+      } else {
+        const folderSnippets = personalSnippets.filter(s => s.folder === folderName);
+        
+        const draggedSnippet = folderSnippets.find(s => s.id === draggedId);
+        if (!draggedSnippet) return;
+        
+        const draggedIdx = folderSnippets.indexOf(draggedSnippet);
+        folderSnippets.splice(draggedIdx, 1);
+        folderSnippets.push(draggedSnippet);
+        
+        personalSnippets = personalSnippets.filter(s => s.folder !== folderName).concat(folderSnippets);
+        
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
+      
+      await loadData();
+      render();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      // リネーム中は無視
+      if (document.activeElement.classList.contains('rename-input')) {
+        return;
+      }
+
+      // ペインがsidebar以外の場合
+      if (currentPane !== 'sidebar') {
+        handleEditorKeydown(e);
+        return;
+      }
+
+      const allItems = [];
+      
+      // マスタフォルダはmasterSnippetsから直接取得
+      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
+      masterFolders.forEach(folder => {
+        allItems.push({ type: 'folder', name: folder });
+        if (expandedFolders.has(folder)) {
+          masterSnippets.filter(s => s.folder === folder).forEach(snippet => {
+            allItems.push({ type: 'snippet', id: snippet.id, name: snippet.title });
+          });
+        }
+      });
+      
+      // 個別フォルダはfoldersをそのまま使用
+      const personalFolders = folders;
+      personalFolders.forEach(folder => {
+        allItems.push({ type: 'folder', name: folder });
+        if (expandedFolders.has(folder)) {
+          personalSnippets.filter(s => s.folder === folder).forEach(snippet => {
+            allItems.push({ type: 'snippet', id: snippet.id, name: snippet.title });
+          });
+        }
+      });
+
+      let currentIndex = -1;
+      if (selectedFolder) {
+        currentIndex = allItems.findIndex(item => item.type === 'folder' && item.name === selectedFolder);
+      } else if (selectedSnippet) {
+        currentIndex = allItems.findIndex(item => item.type === 'snippet' && item.id === selectedSnippet.id);
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        let nextIndex = currentIndex + 1;
+        if (nextIndex >= allItems.length) {
+          nextIndex = 0;
+        }
+        if (nextIndex >= 0 && nextIndex < allItems.length) {
+          const nextItem = allItems[nextIndex];
+          if (nextItem.type === 'folder') {
+            selectFolder(nextItem.name);
+          } else {
+            selectSnippet(nextItem.id);
+          }
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        let prevIndex = currentIndex - 1;
+        if (prevIndex < 0) {
+          prevIndex = allItems.length - 1;
+        }
+        if (prevIndex >= 0 && prevIndex < allItems.length) {
+          const prevItem = allItems[prevIndex];
+          if (prevItem.type === 'folder') {
+            selectFolder(prevItem.name);
+          } else {
+            selectSnippet(prevItem.id);
+          }
+        }
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (selectedFolder) {
+          // フォルダが閉じてたら開く、開いてたらcontentへ
+          if (!expandedFolders.has(selectedFolder)) {
+            toggleFolder(selectedFolder);
+          }
+        } else if (selectedSnippet && !selectedSnippet.isMaster) {
+          // 個別スニペット選択中はcontentへ（マスタは除く）
+          focusPane('content');
+        }
+      } else if (e.key === 'ArrowLeft' && selectedFolder) {
+        e.preventDefault();
+        if (expandedFolders.has(selectedFolder)) {
+          toggleFolder(selectedFolder);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedFolder) {
+          toggleFolder(selectedFolder);
+        } else if (selectedSnippet && !selectedSnippet.isMaster) {
+          startRenameSnippet(selectedSnippet.id);
+        }
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        deleteSelected();
+      }
+    });
+
+
+
+    function moveToNextItem() {
+      const allItems = [];
+      
+      // マスタフォルダはmasterSnippetsから直接取得
+      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
+      masterFolders.forEach(folder => {
+        allItems.push({ type: 'folder', name: folder });
+        if (expandedFolders.has(folder)) {
+          masterSnippets.filter(s => s.folder === folder).forEach(snippet => {
+            allItems.push({ type: 'snippet', id: snippet.id, name: snippet.title });
+          });
+        }
+      });
+      
+      // 個別フォルダはfoldersをそのまま使用
+      const personalFolders = folders;
+      personalFolders.forEach(folder => {
+        allItems.push({ type: 'folder', name: folder });
+        if (expandedFolders.has(folder)) {
+          personalSnippets.filter(s => s.folder === folder).forEach(snippet => {
+            allItems.push({ type: 'snippet', id: snippet.id, name: snippet.title });
+          });
+        }
+      });
+
+      let currentIndex = -1;
+      if (selectedFolder) {
+        currentIndex = allItems.findIndex(item => item.type === 'folder' && item.name === selectedFolder);
+      } else if (selectedSnippet) {
+        currentIndex = allItems.findIndex(item => item.type === 'snippet' && item.id === selectedSnippet.id);
+      }
+
+      const nextIndex = Math.min(currentIndex + 1, allItems.length - 1);
+      if (nextIndex >= 0 && nextIndex < allItems.length && nextIndex !== currentIndex) {
+        const nextItem = allItems[nextIndex];
+        if (nextItem.type === 'folder') {
+          selectFolder(nextItem.name);
+        } else {
+          selectSnippet(nextItem.id);
+        }
       }
     }
 
