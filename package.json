@@ -4,15 +4,15 @@
   "description": "Mac/Windows対応のクリップボード管理ツール",
   "main": "app/main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --debug",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:all": "electron-builder --win --mac",
-    "publish": "electron-builder --publish always",
-    "publish:win": "electron-builder --win --publish always",
-    "publish:mac": "electron-builder --mac --publish always"
+  "start": "electron .",
+  "dev": "electron . --debug",
+  "build": "electron-builder",
+  "build:win": "electron-builder --win",
+  "build:mac": "electron-builder --mac",
+  "build:all": "electron-builder --win --mac",
+  "publish": "electron-builder --mac --win --publish always",
+  "publish:win": "electron-builder --win --publish always",
+  "publish:mac": "electron-builder --mac --publish always"
   },
   "keywords": [
     "clipboard",
