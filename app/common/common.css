@@ -60,7 +60,6 @@ body {
   padding: var(--menu-item-padding);
   cursor: pointer;
   border-bottom: 1px solid #f0f0f0;
-  transition: background var(--transition-speed);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -116,7 +115,6 @@ body {
   border-radius: var(--border-radius);
   cursor: pointer;
   font-size: var(--font-size-normal);
-  transition: opacity var(--transition-speed);
   -webkit-app-region: no-drag;
 }
 
@@ -180,7 +178,6 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background var(--transition-speed);
   -webkit-app-region: no-drag;
   font-size: var(--font-size-small);
   color: var(--text-color);
@@ -266,7 +263,6 @@ body {
   padding: 3px 10px;
   cursor: pointer;
   border-bottom: 1px solid #f0f0f0;
-  transition: background var(--transition-speed);
   -webkit-app-region: no-drag;
 }
 

@@ -33,7 +33,6 @@
     "electron-builder": "^24.13.3"
   },
   "optionalDependencies": {
-    "robotjs": "^0.6.0"
   },
   "build": {
     "appId": "com.snipee.app",

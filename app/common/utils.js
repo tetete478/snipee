@@ -207,7 +207,7 @@ function updateVisualSelection(items, selectedIndex) {
   items.forEach((item, index) => {
     if (index === selectedIndex) {
       item.classList.add('selected');
-      item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      item.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     } else {
       item.classList.remove('selected');
     }
@@ -272,7 +272,7 @@ class KeyboardNavigator {
     const current = this.selectableItems[this.selectedIndex];
     if (current) {
       current.classList.add(this.selectedClass);
-      current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      current.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   }
   
@@ -311,6 +311,19 @@ class KeyboardNavigator {
   getSubmenuSelectedItem() {
     return this.submenuItems[this.submenuSelectedIndex] || null;
   }
+
+  // サブメニューの視覚更新
+  updateSubmenuVisual() {
+    const submenuItemElements = document.querySelectorAll('.submenu-item');
+    submenuItemElements.forEach((item, index) => {
+      if (index === this.submenuSelectedIndex) {
+        item.classList.add('selected');
+        item.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      } else {
+        item.classList.remove('selected');
+      }
+    });
+  }
   
   // キーイベント処理
   handleKeyDown(e) {
@@ -334,11 +347,13 @@ class KeyboardNavigator {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         this.submenuMoveDown();
+        this.updateSubmenuVisual();
         return true;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         this.submenuMoveUp();
+        this.updateSubmenuVisual();
         return true;
       }
       if (e.key === 'Enter' && this.onSubmenuEnter) {
@@ -366,7 +381,7 @@ class KeyboardNavigator {
       return true;
     }
     
-    // 上下移動
+    // 上下移動（メインメニュー）
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       this.moveDown();

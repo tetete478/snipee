@@ -167,13 +167,22 @@
     async function loadAllItems() {
       const data = await ipcRenderer.invoke('get-all-items');
       
-      allItems.history = data.history || [];
       allItems.personal = (data.personalSnippets || []).map(s => ({ ...s, type: 'personal' }));
       allItems.master = (data.masterSnippets || []).map(s => ({ ...s, type: 'master' }));
-      const pinnedData = await ipcRenderer.invoke('get-pinned-items');
-      pinnedItems = pinnedData || [];
 
       render();
+      
+      // コンテンツ読み込み完了後にリサイズ
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const bodyRect = document.body.getBoundingClientRect();
+      const actualWidth = Math.ceil(bodyRect.width);
+      const actualHeight = Math.ceil(bodyRect.height);
+      
+      await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
+      
+      // リサイズ完了を通知(ウィンドウを表示してOK)
+      ipcRenderer.send('window-ready');
     }
 
     function setupEventListeners() {
@@ -205,8 +214,8 @@
       });
       nav.attach();
 
-      ipcRenderer.on('clipboard-updated', () => {
-        loadAllItems();
+      ipcRenderer.on('pre-load-data', async () => {
+        await loadAllItems();
       });
 
       ipcRenderer.on('personal-snippets-updated', () => {
@@ -366,6 +375,8 @@
           updateSubmenuSelection();
           return;
         }
+        
+
 
         if (e.key === 'ArrowUp') {
           e.preventDefault();
@@ -463,21 +474,21 @@
         }
       }
     }
-
-    function showInlineSubmenu(targetElement, items) {
+    
+    async function showInlineSubmenu(targetElement, items) {
       const submenu = document.getElementById('inline-submenu');
       const bounds = targetElement.getBoundingClientRect();
       
-      const itemHeight = 22;
-      const estimatedHeight = items.length * itemHeight;
-      const viewportHeight = window.innerHeight;
+      // まず最大サイズでウィンドウを拡大
+      await ipcRenderer.invoke('resize-window', { width: 460, height: 650 });
+      
       const margin = 10;
       
-      // サブメニューを上の方から表示（ウィンドウの上端から少し下）
+      // サブメニューを上の方から表示(ウィンドウの上端から少し下)
       let top = margin;
       
-      // 常にスクロール可能に設定（maxHeightで制限）
-      const maxHeight = viewportHeight - margin * 2;
+      // 最大高さを設定(スクロール用)
+      const maxHeight = 650 - margin * 2;
       submenu.style.maxHeight = maxHeight + 'px';
       submenu.style.overflowY = 'auto';
       
@@ -521,12 +532,36 @@
           await loadAllItems();
         });
       });
+
+      // サブメニュー表示後、実際のコンテンツサイズに合わせてリサイズ
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const containerRect = document.querySelector('.container').getBoundingClientRect();
+      const submenuRect = submenu.getBoundingClientRect();
+
+      // 幅: メインコンテナ幅 + サブメニュー幅
+      const actualWidth = Math.ceil(containerRect.width + submenuRect.width);
+      // 高さ: 両方の高さの大きい方（余裕を持たせて+20px）
+      const actualHeight = Math.ceil(Math.max(containerRect.height, submenuRect.height + 20));
+
+      await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
     }
 
-    function hideInlineSubmenu() {
+    async function hideInlineSubmenu() {
       const submenu = document.getElementById('inline-submenu');
       submenu.classList.remove('visible');
       nav.closeSubmenu();
+      
+      // 少し待ってからコンテンツサイズを計算
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      // ホーム画面（.container）の幅のみを取得
+      const containerRect = document.querySelector('.container').getBoundingClientRect();
+      const actualWidth = Math.ceil(containerRect.width);
+      const actualHeight = Math.ceil(containerRect.height);
+      
+      // 実際のコンテンツサイズに合わせてリサイズ
+      await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
     }
 
     async function pasteSubmenuItem(content) {
@@ -534,7 +569,12 @@
       
       hideInlineSubmenu();
       await ipcRenderer.invoke('hide-window');
-      await ipcRenderer.invoke('paste-text', decodedContent);
+      
+      const result = await ipcRenderer.invoke('paste-text', decodedContent);
+      
+      if (!result.success && result.error !== 'permission_denied') {
+        ipcRenderer.send('log', '自動ペースト失敗、クリップボードにコピー済み');
+      }
     }
 
     window.addEventListener('focus', () => {

@@ -5,15 +5,8 @@ const axios = require('axios');
 const xml2js = require('xml2js');
 const { autoUpdater } = require('electron-updater');
 
-// robotjsをロード(Windowsのみ)
-let robot = null;
-if (process.platform === 'win32') {
-  try {
-    robot = require('robotjs');
-  } catch (error) {
-    // robotjs利用不可
-  }
-}
+// Windows自動ペースト用
+const { exec, execSync } = require('child_process');
 
 // ストアの初期化
 const store = new Store();
@@ -28,6 +21,7 @@ let snippetWindow;
 let permissionWindow;
 let tray = null;
 let snippetEditorWindow = null;
+let previousActiveApp = null;  // 元のアクティブアプリを記憶
 
 // アクセシビリティ権限チェック
 function hasAccessibilityPermission() {
@@ -71,41 +65,24 @@ function createMainWindow() {
   });
 }
 
-// クリップボードウィンドウ作成
-function createClipboardWindow() {
-  clipboardWindow = new BrowserWindow({
-    width: 460,
-    height: 650,
-    show: false,
-    frame: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    transparent: true,
-    hasShadow: false,
-    visibleOnAllWorkspaces: true,
-    fullscreenable: false,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+// 汎用ウィンドウ作成関数
+function createGenericWindow(type) {
+  const config = {
+    clipboard: {
+      htmlFile: 'index.html',
+      positionKey: 'clipboardWindowPosition'
+    },
+    snippet: {
+      htmlFile: 'snippets.html',
+      positionKey: 'snippetWindowPosition'
     }
-  });
+  };
 
-  clipboardWindow.loadFile(path.join(__dirname, 'index.html'));
+  const { htmlFile, positionKey } = config[type];
 
-  clipboardWindow.on('moved', () => {
-    if (clipboardWindow) {
-      const bounds = clipboardWindow.getBounds();
-      store.set('clipboardWindowPosition', { x: bounds.x, y: bounds.y });
-    }
-  });
-}
-
-// スニペットウィンドウ作成
-function createSnippetWindow() {
-  snippetWindow = new BrowserWindow({
-    width: 460,
-    height: 650,
+  const window = new BrowserWindow({
+    width: 230,
+    height: 600,
     show: false,
     frame: false,
     alwaysOnTop: true,
@@ -122,14 +99,25 @@ function createSnippetWindow() {
     }
   });
 
-  snippetWindow.loadFile(path.join(__dirname, 'snippets.html'));
+  window.loadFile(path.join(__dirname, htmlFile));
 
-  snippetWindow.on('moved', () => {
-    if (snippetWindow) {
-      const bounds = snippetWindow.getBounds();
-      store.set('snippetWindowPosition', { x: bounds.x, y: bounds.y });
+  window.on('moved', () => {
+    if (window && !window.isDestroyed()) {
+      const bounds = window.getBounds();
+      store.set(positionKey, { x: bounds.x, y: bounds.y });
     }
   });
+
+  return window;
+}
+
+// ラッパー関数
+function createClipboardWindow() {
+  clipboardWindow = createGenericWindow('clipboard');
+}
+
+function createSnippetWindow() {
+  snippetWindow = createGenericWindow('snippet');
 }
 
 // スニペット編集ウィンドウ作成
@@ -184,10 +172,34 @@ function registerGlobalShortcuts() {
   };
 
   registerWithRetry(mainHotkey, () => {
+    // ホットキーが押された瞬間にアクティブアプリを取得
+    if (process.platform === 'darwin') {
+      try {
+        const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
+        
+        // Snipee以外なら記憶
+        if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
+          previousActiveApp = bundleId;
+        }
+      } catch (error) {
+        // エラーは無視
+      }
+    }
+    
     showClipboardWindow();
   });
 
   registerWithRetry(snippetHotkey, () => {
+    // アクティブアプリを記憶
+    if (process.platform === 'darwin') {
+      try {
+        const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
+        if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
+          previousActiveApp = bundleId;
+        }
+      } catch (error) {}
+    }
+    
     showSnippetWindow();
   });
 }
@@ -299,100 +311,66 @@ function addToClipboardHistory(text) {
   }
 }
 
-// クリップボードウィンドウを表示
+// 汎用ウィンドウ表示関数
+function showGenericWindow(type) {
+  const windowMap = {
+    clipboard: { window: clipboardWindow, create: createClipboardWindow },
+    snippet: { window: snippetWindow, create: createSnippetWindow }
+  };
+
+  const { window, create } = windowMap[type];
+  let currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
+
+  if (!currentWindow || currentWindow.isDestroyed()) {
+    create();
+    currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
+  }
+
+  if (currentWindow.isVisible()) {
+    currentWindow.hide();
+  } else {
+    positionAndShowWindow(type, currentWindow);
+  }
+}
+
+// ラッパー関数
 function showClipboardWindow() {
-  if (!clipboardWindow || clipboardWindow.isDestroyed()) {
-    createClipboardWindow();
-  }
-
-  if (clipboardWindow.isVisible()) {
-    clipboardWindow.hide();
-  } else {
-    positionAndShowClipboard();
-  }
+  showGenericWindow('clipboard');
 }
 
-function positionAndShowClipboard() {
-  const { screen } = require('electron');
-  
-  if (process.platform === 'darwin') {
-    clipboardWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    clipboardWindow.setAlwaysOnTop(true, 'floating');
-  }
-  
-  const positionMode = store.get('windowPositionMode', 'cursor');
-
-  if (positionMode === 'previous') {
-    const savedPosition = store.get('clipboardWindowPosition');
-    if (savedPosition) {
-      clipboardWindow.setPosition(savedPosition.x, savedPosition.y);
-    } else {
-      const display = screen.getPrimaryDisplay();
-      const x = Math.floor((display.bounds.width - 460) / 2);
-      const y = Math.floor((display.bounds.height - 650) / 2);
-      clipboardWindow.setPosition(x, y);
-    }
-  } else {
-    const point = screen.getCursorScreenPoint();
-    const display = screen.getDisplayNearestPoint(point);
-    
-    let x = point.x - 210;
-    let y = point.y - 100;
-
-    if (x + 460 > display.bounds.x + display.bounds.width) {
-      x = display.bounds.x + display.bounds.width - 470;
-    }
-    
-    if (y + 650 > display.bounds.y + display.bounds.height) {
-      y = display.bounds.y + display.bounds.height - 660;
-    }
-
-    clipboardWindow.setPosition(Math.floor(x), Math.floor(y));
-  }
-  
-  clipboardWindow.show();
-  clipboardWindow.focus();
-}
-
-// スニペットウィンドウを表示
 function showSnippetWindow() {
-  if (!snippetWindow || snippetWindow.isDestroyed()) {
-    createSnippetWindow();
-  }
-
-  if (snippetWindow.isVisible()) {
-    snippetWindow.hide();
-  } else {
-    positionAndShowSnippet();
-  }
+  showGenericWindow('snippet');
 }
 
-function positionAndShowSnippet() {
+
+// 汎用ポジショニング&表示関数
+function positionAndShowWindow(type, window) {
   const { screen } = require('electron');
   
   if (process.platform === 'darwin') {
-    snippetWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    snippetWindow.setAlwaysOnTop(true, 'floating');
+    window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    window.setAlwaysOnTop(true, 'floating');
   }
   
+  const positionKey = type === 'clipboard' ? 'clipboardWindowPosition' : 'snippetWindowPosition';
   const positionMode = store.get('windowPositionMode', 'cursor');
 
   if (positionMode === 'previous') {
-    const savedPosition = store.get('snippetWindowPosition');
+    const savedPosition = store.get(positionKey);
     if (savedPosition) {
-      snippetWindow.setPosition(savedPosition.x, savedPosition.y);
+      window.setPosition(savedPosition.x, savedPosition.y);
     } else {
       const display = screen.getPrimaryDisplay();
       const x = Math.floor((display.bounds.width - 460) / 2);
       const y = Math.floor((display.bounds.height - 650) / 2);
-      snippetWindow.setPosition(x, y);
+      window.setPosition(x, y);
     }
   } else {
     const point = screen.getCursorScreenPoint();
     const display = screen.getDisplayNearestPoint(point);
     
-    let x = point.x - 210;
-    let y = point.y - 100;
+    let x = point.x + 25;
+    let y = point.y + 100;
 
     if (x + 460 > display.bounds.x + display.bounds.width) {
       x = display.bounds.x + display.bounds.width - 470;
@@ -402,11 +380,11 @@ function positionAndShowSnippet() {
       y = display.bounds.y + display.bounds.height - 660;
     }
 
-    snippetWindow.setPosition(Math.floor(x), Math.floor(y));
+    window.setPosition(Math.floor(x), Math.floor(y));
   }
-  
-  snippetWindow.show();
-  snippetWindow.focus();
+
+  window.show();
+  window.focus();
 }
 
 // Google Driveから共有スニペットを取得
@@ -545,6 +523,23 @@ async function syncSnippets() {
 
 // アプリ起動
 app.whenReady().then(() => {
+  // window-ready イベントハンドラ（グローバルに1回だけ登録）
+  ipcMain.on('window-ready', (event) => {
+    const sender = event.sender;
+    
+    // どのウィンドウからのイベントか判定
+    // ウィンドウが非表示の場合のみ表示（初回表示時のみ）
+    if (clipboardWindow && !clipboardWindow.isDestroyed() && sender === clipboardWindow.webContents) {
+      if (!clipboardWindow.isVisible()) {
+        clipboardWindow.show();
+      }
+    } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
+      if (!snippetWindow.isVisible()) {
+        snippetWindow.show();
+      }
+    }
+  });
+
   // ホットキー登録
   setTimeout(() => {
     registerGlobalShortcuts();
@@ -556,7 +551,6 @@ app.whenReady().then(() => {
   }
   
   createMainWindow();
-  createClipboardWindow();
   createTray();
 
   // 初回起動時のデフォルトスニペット設定
@@ -844,14 +838,28 @@ ipcMain.handle('paste-text', async (event, text) => {
     snippetWindow.hide();
   }
 
-  await new Promise(resolve => setTimeout(resolve, 200));
+  // 短い待機（ウィンドウを閉じる）
+  await new Promise(resolve => setTimeout(resolve, 10));
 
-  if (process.platform === 'win32' && robot) {
-    try {
-      robot.keyTap('v', ['control']);
-    } catch (error) {
-      // Auto-paste failed
-    }
+  // Mac: 元のアプリをアクティブにする
+  if (process.platform === 'darwin' && previousActiveApp) {
+    await new Promise((resolve) => {
+      exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`, (error) => {
+        resolve();
+      });
+    });
+    // アプリがアクティブになるのを待つ
+    await new Promise(resolve => setTimeout(resolve, 30));
+  }
+
+  // Windows: PowerShell SendKeys
+  if (process.platform === 'win32') {
+    exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"');
+  }
+
+  // Mac: AppleScript
+  if (process.platform === 'darwin') {
+    exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
   }
 
   return true;
@@ -964,6 +972,35 @@ ipcMain.handle('get-master-order', async () => {
   } catch (error) {
     return [];
   }
+});
+
+ipcMain.handle('resize-window', (event, size) => {
+  const sender = event.sender;
+  
+  // どのウィンドウからの呼び出しか自動判定
+  if (clipboardWindow && !clipboardWindow.isDestroyed() && sender === clipboardWindow.webContents) {
+    const currentBounds = clipboardWindow.getBounds();
+    clipboardWindow.setBounds({
+      x: currentBounds.x,
+      y: currentBounds.y,
+      width: size.width,
+      height: size.height
+    });
+  } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
+    const currentBounds = snippetWindow.getBounds();
+    snippetWindow.setBounds({
+      x: currentBounds.x,
+      y: currentBounds.y,
+      width: size.width,
+      height: size.height
+    });
+  }
+  
+  return true;
+});
+
+ipcMain.on('window-ready', () => {
+  // この通知は現在のところ使わない（show()は既に positionAndShowXXX で実行済み）
 });
 
 // アプリ終了時
