@@ -1,6 +1,29 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, clipboard, Tray, Menu, systemPreferences, shell, dialog } = require('electron');
+
+// 単一インスタンスを保証
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  // 通知を表示
+  const { Notification } = require('electron');
+  if (Notification.isSupported()) {
+    new Notification({
+      title: 'Snipee',
+      body: 'Snipeeは既に起動しています。タスクトレイのアイコンから操作してください。'
+    }).show();
+  }
+  
+  // クリップボードウィンドウを表示
+  showClipboardWindow();
+});
+
 const path = require('path');
 const Store = require('electron-store');
+
 const axios = require('axios');
 const xml2js = require('xml2js');
 const { autoUpdater } = require('electron-updater');

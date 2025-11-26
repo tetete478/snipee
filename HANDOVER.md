@@ -1,6 +1,6 @@
 # Snipee 開発引き継ぎドキュメント
 
-**バージョン**: v1.5.5（テスト中）  
+**バージョン**: v1.5.5  
 **最終更新**: 2025-11-27  
 **GitHub**: https://github.com/tetete478/snipee
 
@@ -76,7 +76,6 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 4. 「Generate token」→ トークンをコピー
 
 #### 2. 環境変数に設定
-
 ```bash
 # 一時的（今回のセッションだけ）
 export GH_TOKEN=ghp_ここにトークン
@@ -90,7 +89,6 @@ echo $GH_TOKEN
 ```
 
 ### 新バージョンのリリース手順
-
 ```bash
 # 1. プロジェクトディレクトリに移動
 cd /path/to/snipee
@@ -118,7 +116,6 @@ npm run publish:mac    # Mac版のみ
 3. Draft（下書き）状態なら「Edit」→「Publish release」をクリック
 
 ### ユーザー側の体験
-
 ```
 1. Snipeeを普通に起動
      ↓
@@ -146,7 +143,6 @@ npm run publish:mac    # Mac版のみ
 ---
 
 ## 📂 プロジェクト構造
-
 ```
 snipee/
 ├── main.js                    # メインプロセス
@@ -162,7 +158,7 @@ snipee/
 │       └── utils.js           # 共通JavaScript関数（KeyboardNavigatorクラス含む）
 ├── HANDOVER.md               # このファイル
 ├── UPDATE_LOG.md             # 更新履歴（ユーザー向け）
-└── manuals/                  # ユーザーマニュアル（4ファイル）
+└── manuals/                  # ユーザーマニュアル（Google Drive）
     ├── 01_インストール.docx
     ├── 02_スニペットを貼り付ける.docx
     ├── 03_クリップボード履歴を使う.docx
@@ -171,7 +167,7 @@ snipee/
 
 ---
 
-## 🎯 現在の状態（v1.5.5 テスト中）
+## 🎯 現在の状態（v1.5.5 正式リリース）
 
 ### ✅ 実装済み機能
 
@@ -211,7 +207,6 @@ snipee/
 - **Bundle ID方式**: ホットキー押下時に元アプリのBundle IDを記憶
 - **確実なアプリ復帰**: `tell application id "xxx" to activate` で元アプリに戻る
 - **実装箇所**: `main.js` の `registerGlobalShortcuts()`, `paste-text` ハンドラ
-
 ```javascript
 // ホットキー押下時にBundle IDを取得
 const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
@@ -255,6 +250,8 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 - キーボード完全操作
 - インラインサブメニュー（単一 HTML 内）
 - Steve Jobs 風ミニマリストデザイン（グレーテーマ）
+- 簡易ホーム・サブメニューに枠線（視認性向上）
+- スクロールバー幅統一（4px）
 
 #### 自動アップデート
 
@@ -275,6 +272,12 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
   - Windows: `Ctrl+Alt+C/V`
 - カスタマイズ可能
 - リトライ機能実装
+
+#### マニュアル（v1.5.5で実装完了）
+
+- **Mac/Windows両対応の完全版マニュアル4部作**
+- 設定画面の「一般」タブからリンクでアクセス可能
+- Google Driveでホスト
 
 ### ⚠️ 既知の制限
 
@@ -373,40 +376,9 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ---
 
-#### 2. マニュアルを設定画面に追加
-
-**内容**: 設定画面の「一般」タブにマニュアルへのリンクを追加
-
-**実装案**:
-- 「マニュアルを開く」ボタンを追加
-- クリックでマニュアルフォルダを開く or Webリンクを開く
-
-**作業見積もり**: 0.5セッション
-
----
-
-#### 3. スニペット編集画面のUI改善
-
-**改善内容**:
-- フォントサイズの調整（現状小さすぎる箇所あり）
-- 幅の調整（コンテンツエリアが狭い）
-- 全体的なレイアウト見直し
-
-**作業見積もり**: 0.5セッション
-
----
-
-#### 4. 簡易ホーム（index.html）の枠線導入
-
-**内容**: クリップボード履歴の各アイテムに枠線を追加して視認性向上
-
-**作業見積もり**: 0.5セッション
-
----
-
 ### 🟡 優先度：中
 
-#### 5. Windows 環境での動作確認
+#### 2. Windows 環境での動作確認
 
 - 全機能テスト（自動ペースト、ホットキー、UI）
 - 各種 Windows アプリでの互換性チェック
@@ -415,7 +387,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ---
 
-#### 6. ホットキー登録可能な組み合わせの確認・ドキュメント化
+#### 3. ホットキー登録可能な組み合わせの確認・ドキュメント化
 
 - 登録可能なホットキーの組み合わせを整理
 - 制限事項（IME、他アプリとの競合など）を明確化
@@ -423,7 +395,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ---
 
-#### 7. XML スニペット仕様の説明ドキュメント
+#### 4. XML スニペット仕様の説明ドキュメント
 
 - Clipy 互換 XML 形式の詳細
 - フォルダ階層、改行、特殊文字の扱い
@@ -433,7 +405,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ### 🟢 優先度：低
 
-#### 8. タグ管理機能（Phase 3）
+#### 5. タグ管理機能（Phase 3）
 
 **目的**: フォルダとは独立した分類軸を追加
 
@@ -445,7 +417,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ---
 
-#### 9. 履歴専門 Window（Phase 3）
+#### 6. 履歴専門 Window（Phase 3）
 
 **目的**: クリップボード履歴に特化した専用画面
 
@@ -462,7 +434,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ---
 
-#### 10. リリース前のバグ探し（Phase 4）
+#### 7. リリース前のバグ探し（Phase 4）
 
 **手動テストシナリオ**:
 
@@ -484,7 +456,6 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 #### 1. 重複コードの共通化 ✅
 
 **実装内容**:
-
 ```
 app/common/
 ├── variables.css   # 色、フォントサイズ、余白などの定数
@@ -556,7 +527,6 @@ app/common/
 - Electron バージョンとの互換性問題
 
 **新実装**:
-
 ```javascript
 exec(
   "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
@@ -572,7 +542,6 @@ exec(
 #### 2. Mac 自動ペースト実装 ✅（v1.5.5）
 
 **実装方式**: Bundle ID + AppleScript
-
 ```javascript
 // ホットキー押下時にBundle IDを取得・記憶
 const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
@@ -629,13 +598,24 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 - 名前入力欄追加（変数機能用）
 - ウィンドウ表示位置設定
 - フォルダ非表示設定
+- マニュアルへのリンク追加
 
 #### 8. ユーザーマニュアル作成 ✅（v1.5.5）
 
-- 01_インストール.docx
-- 02_スニペットを貼り付ける.docx
-- 03_クリップボード履歴を使う.docx
-- 04_困ったとき.docx
+- 01_インストール.docx（Mac/Windows両対応）
+- 02_スニペットを貼り付ける.docx（Mac/Windows両対応）
+- 03_クリップボード履歴を使う.docx（Mac/Windows両対応）
+- 04_困ったとき.docx（Mac/Windows両対応）
+- Google Driveにホスト、設定画面からリンク
+
+#### 9. UI改善 ✅（v1.5.5）
+
+- 簡易ホーム・サブメニューに枠線追加（シャドウ→ボーダーに変更）
+- スクロールバー幅統一（4px）
+- グレー系カラーテーマ調整
+- スニペット編集画面のフォントサイズ調整（12px）
+- 説明パネル幅拡大（160px → 190px）
+- リサイズ時の不要な再計算を防止
 
 **Phase 2 完了日**: 2025-11-27（v1.5.5）
 
@@ -729,7 +709,7 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 
 - **HANDOVER.md**: このファイル（開発者向け）
 - **UPDATE_LOG.md**: 更新履歴（ユーザー向け）
-- **manuals/**: ユーザーマニュアル（4ファイル）
+- **manuals/**: ユーザーマニュアル（Google Drive）
 
 ---
 
@@ -745,4 +725,4 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 
 **開発者**: てるや  
 **最終更新**: 2025-11-27  
-**現在のバージョン**: v1.5.5（テスト中）
+**現在のバージョン**: v1.5.5
