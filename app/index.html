@@ -164,25 +164,26 @@
       await loadAllItems();
     }
 
-    async function loadAllItems() {
+    async function loadAllItems(sendReady = true) {
       const data = await ipcRenderer.invoke('get-all-items');
       
       allItems.personal = (data.personalSnippets || []).map(s => ({ ...s, type: 'personal' }));
       allItems.master = (data.masterSnippets || []).map(s => ({ ...s, type: 'master' }));
 
       render();
-      
-      // コンテンツ読み込み完了後にリサイズ
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const bodyRect = document.body.getBoundingClientRect();
-      const actualWidth = Math.ceil(bodyRect.width);
-      const actualHeight = Math.ceil(bodyRect.height);
-      
-      await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
-      
-      // リサイズ完了を通知(ウィンドウを表示してOK)
-      ipcRenderer.send('window-ready');
+  
+      // 初回のみリサイズ（sendReady=trueの時のみ）
+      if (sendReady) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const bodyRect = document.body.getBoundingClientRect();
+        const actualWidth = Math.ceil(bodyRect.width);
+        const actualHeight = Math.ceil(bodyRect.height);
+        
+        await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
+        
+        ipcRenderer.send('window-ready');
+      }
     }
 
     function setupEventListeners() {
@@ -215,11 +216,11 @@
       nav.attach();
 
       ipcRenderer.on('pre-load-data', async () => {
-        await loadAllItems();
+        await loadAllItems(false);
       });
 
       ipcRenderer.on('personal-snippets-updated', () => {
-        loadAllItems();
+        loadAllItems(false);
       });
     }
 
@@ -539,8 +540,8 @@
       const containerRect = document.querySelector('.container').getBoundingClientRect();
       const submenuRect = submenu.getBoundingClientRect();
 
-      // 幅: メインコンテナ幅 + サブメニュー幅
-      const actualWidth = Math.ceil(containerRect.width + submenuRect.width);
+      // 幅: メインコンテナ幅 + サブメニュー幅 + シャドウ用余白
+      const actualWidth = Math.ceil(containerRect.width + submenuRect.width + 15);
       // 高さ: 両方の高さの大きい方（余裕を持たせて+20px）
       const actualHeight = Math.ceil(Math.max(containerRect.height, submenuRect.height + 20));
 
@@ -578,7 +579,7 @@
     }
 
     window.addEventListener('focus', () => {
-      loadAllItems();
+      loadAllItems(false);
     });
 
     init();

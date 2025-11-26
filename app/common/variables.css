@@ -5,14 +5,14 @@
   /* カラー（グレー系に統一） */
   --primary-color: #8a8a8a;
   --primary-hover: #555555;
-  --bg-color: #f7f7f7;
-  --bg-color-light: #fafafa;
+  --bg-color: #f0f0f0;
+  --bg-color-light: #f5f5f5;
   --text-color: #2c2c2c;
   --text-muted: #7a7a7a;
-  --border-color: #e5e5e5;
+  --border-color: #d0d0d0;
   --hover-bg: #ebebeb;
   --selected-bg: #d4d4d4;
-  --section-header-bg: #efefef;
+  --section-header-bg: #e0e0e0;
   --section-header-text: #7a7a7a;
   --danger-color: #b0b0b0;
   --danger-hover: #ffebee;
@@ -33,5 +33,5 @@
   --border-radius: 4px;
   --border-radius-large: 8px;
   --transition-speed: 0.15s;
-  --shadow-default: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-default: none;
 }

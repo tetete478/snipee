@@ -261,7 +261,7 @@
       padding: 12px;
       border: none;
       border-radius: 0;
-      font-size: var(--font-size-normal);
+      font-size: 12px;
       font-family: var(--font-family);
       resize: none;
       line-height: 1.3;
@@ -336,7 +336,7 @@
     }
 
     .description-panel {
-      width: 160px;
+      width: 190px;
       background: #fafafa;
       display: flex;
       flex-direction: column;
@@ -389,7 +389,7 @@
       padding: 12px;
       border: none;
       border-radius: 0;
-      font-size: var(--font-size-normal);
+      font-size: 12px;
       font-family: var(--font-family);
       resize: none;
       line-height: 1.3;
@@ -458,6 +458,14 @@
         <span>🗑</span>
         <span>削除</span>
       </button>
+      <button class="toolbar-btn" onclick="showExportDialog()">
+        <span>📤</span>
+        <span>XMLエクスポート</span>
+      </button>
+      <button class="toolbar-btn" onclick="showMasterPasswordDialog()" id="master-edit-btn" style="display: none;">
+        <span>🔒</span>
+        <span>マスタ編集モード</span>
+      </button>
     </div>
 
     <div class="main-content">
@@ -469,6 +477,44 @@
             <div>スニペットを選択してください</div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- エクスポートモーダル -->
+  <div id="export-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 24px; border-radius: 12px; width: 360px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+      <h3 style="margin: 0 0 16px 0; font-size: 16px;">XMLエクスポート</h3>
+      <p style="margin: 0 0 16px 0; font-size: 13px; color: #666;">エクスポートするフォルダを選択してください：</p>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; padding: 8px; background: #f5f5f7; border-radius: 6px;">
+          <input type="checkbox" id="export-select-all" onchange="toggleSelectAll()">
+          <span>すべて選択</span>
+        </label>
+      </div>
+      
+      <div id="export-folder-list" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px;">
+        <!-- フォルダ一覧がここに動的に生成される -->
+      </div>
+      
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="hideExportDialog()" style="padding: 8px 16px; border: 1px solid #d2d2d7; background: white; border-radius: 6px; cursor: pointer;">キャンセル</button>
+        <button onclick="executeExport()" style="padding: 8px 16px; border: none; background: #007aff; color: white; border-radius: 6px; cursor: pointer;">エクスポート</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- マスタ編集パスワードダイアログ -->
+  <div id="master-password-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; padding: 24px; border-radius: 12px; width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+      <h3 style="margin: 0 0 16px 0; font-size: 16px;">🔐 マスタ編集モード</h3>
+      <p style="margin: 0 0 16px 0; font-size: 13px; color: #666;">管理者パスワードを入力してください：</p>
+      <input type="password" id="master-password-input" style="width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;" onkeydown="if(event.key==='Enter'){verifyMasterPassword();}">
+      <div id="master-password-error" style="color: #ff3b30; font-size: 12px; margin-bottom: 12px; display: none;">パスワードが違います</div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button onclick="hideMasterPasswordDialog()" style="padding: 8px 16px; border: 1px solid #d2d2d7; background: white; border-radius: 6px; cursor: pointer;">キャンセル</button>
+        <button onclick="verifyMasterPassword()" style="padding: 8px 16px; border: none; background: #007aff; color: white; border-radius: 6px; cursor: pointer;">解除</button>
       </div>
     </div>
   </div>
@@ -486,10 +532,12 @@
     let expandedFolders = new Set();
     let selectedFolder = null;
     let selectedSnippet = null;
+    let isMasterEditMode = false;  // マスタ編集モード
 
     async function init() {
       await loadData();
       render();
+      updateMasterEditButton();
     }
 
     async function loadData() {
@@ -514,6 +562,7 @@
       masterSnippets = masterSnippets.map(s => ({ ...s, isMaster: true }));
       
       allSnippets = [...masterSnippets, ...personalSnippets];
+      updateMasterEditButton();
     }
 
     function render() {
@@ -645,7 +694,8 @@
       }
 
       const isMaster = selectedSnippet.isMaster === true;
-      const readonlyAttr = isMaster ? 'readonly' : '';
+      const canEdit = !isMaster || isMasterEditMode;
+      const readonlyAttr = canEdit ? '' : 'readonly';
       
       const editor = document.getElementById('editor-area');
       editor.innerHTML = `
@@ -653,18 +703,18 @@
         <div class="editor-header">
           <span class="editor-title">${escapeHtml(selectedSnippet.title || '無題')}</span>
           <span class="master-badge">マスタスニペット</span>
-          <span class="readonly-badge">内容: 読み取り専用</span>
+          ${canEdit ? '<span class="readonly-badge" style="background: #34c759;">編集可能</span>' : '<span class="readonly-badge">内容: 読み取り専用</span>'}
         </div>
         ` : ''}
         <div class="editor-container">
           <div class="main-editor">
-            <textarea class="form-textarea" id="snippet-content" ${readonlyAttr} ${isMaster ? '' : 'oninput="autoSave()"'}>${escapeHtml(selectedSnippet.content || '')}</textarea>
+            <textarea class="form-textarea" id="snippet-content" ${readonlyAttr} ${canEdit ? 'oninput="autoSave()"' : ''} onkeydown="event.stopPropagation()">${escapeHtml(selectedSnippet.content || '')}</textarea>
             <button class="description-toggle" onclick="toggleDescription()">
               ${isDescriptionOpen ? '▶' : '◀'}
             </button>
           </div>
           <div class="description-panel ${isDescriptionOpen ? '' : 'collapsed'}">
-            <textarea class="description-textarea" id="snippet-description" oninput="autoSaveDescription()" placeholder="このスニペットの説明を入力...（個人用メモ）">${escapeHtml(selectedSnippet.description || '')}</textarea>
+            <textarea class="description-textarea" id="snippet-description" oninput="autoSaveDescription()" onkeydown="event.stopPropagation()" placeholder="このスニペットの説明を入力...（個人用メモ）">${escapeHtml(selectedSnippet.description || '')}</textarea>
           </div>
         </div>
       `;
@@ -701,9 +751,18 @@
     }
 
     async function autoSave() {
-      if (!selectedSnippet || selectedSnippet.isMaster) return;
+      if (!selectedSnippet) return;
+      if (selectedSnippet.isMaster && !isMasterEditMode) return;
+      
       selectedSnippet.content = document.getElementById('snippet-content')?.value || '';
-      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      
+      if (selectedSnippet.isMaster) {
+        // マスタスニペットの保存
+        await ipcRenderer.invoke('update-master-snippet', selectedSnippet);
+      } else {
+        // 個別スニペットの保存
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
     }
 
     async function autoSaveDescription() {
@@ -1186,7 +1245,32 @@
         return;
       }
 
-      // ペインがsidebar以外の場合
+      // INPUT要素（パスワード入力など）にフォーカスがある場合は無視
+      if (document.activeElement.tagName === 'INPUT') {
+        return;
+      }
+
+      // テキストエリアにフォーカスがある場合の処理
+      const activeId = document.activeElement.id;
+      if (activeId === 'snippet-content' || activeId === 'snippet-description') {
+        // Enterキーは改行入力なので、デフォルト動作を許可
+        if (e.key === 'Enter') {
+          return;
+        }
+        
+        // Escapeキーでサイドバーに戻る
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          focusPane('sidebar');
+          return;
+        }
+        
+        // その他のキー（矢印キーなど）はhandleEditorKeydownで処理
+        handleEditorKeydown(e);
+        return;
+      }
+
+      // ペインがsidebar以外の場合（キーボードで明示的に移動した場合）
       if (currentPane !== 'sidebar') {
         handleEditorKeydown(e);
         return;
@@ -1326,6 +1410,250 @@
     }
 
     init();
+
+    // ========================================
+    // エクスポート機能
+    // ========================================
+    function showExportDialog() {
+      const modal = document.getElementById('export-modal');
+      const folderList = document.getElementById('export-folder-list');
+      
+      // マスタフォルダ一覧
+      const masterFolderNames = [...new Set(masterSnippets.map(s => s.folder))];
+      // 個別フォルダ一覧
+      const personalFolderNames = [...folders];
+      
+      let html = '';
+      
+      // マスタスニペットセクション
+      if (masterFolderNames.length > 0) {
+        html += `<div style="font-size: 11px; font-weight: 600; color: #86868b; margin: 8px 0 4px 0;">マスタスニペット</div>`;
+        masterFolderNames.forEach(folder => {
+          const count = masterSnippets.filter(s => s.folder === folder).length;
+          html += `
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 8px; border-radius: 4px;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='transparent'">
+              <input type="checkbox" class="export-folder-checkbox" data-folder="${escapeAttr(folder)}" data-type="master" onchange="updateSelectAllState()">
+              <span style="flex: 1;">${escapeHtml(folder)}</span>
+              <span style="font-size: 11px; color: #86868b;">${count}件</span>
+            </label>
+          `;
+        });
+      }
+      
+      // 個別スニペットセクション
+      if (personalFolderNames.length > 0) {
+        html += `<div style="font-size: 11px; font-weight: 600; color: #86868b; margin: 12px 0 4px 0;">個別スニペット</div>`;
+        personalFolderNames.forEach(folder => {
+          const count = personalSnippets.filter(s => s.folder === folder).length;
+          html += `
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 8px; border-radius: 4px;" onmouseover="this.style.background='#f5f5f7'" onmouseout="this.style.background='transparent'">
+              <input type="checkbox" class="export-folder-checkbox" data-folder="${escapeAttr(folder)}" data-type="personal" onchange="updateSelectAllState()">
+              <span style="flex: 1;">${escapeHtml(folder)}</span>
+              <span style="font-size: 11px; color: #86868b;">${count}件</span>
+            </label>
+          `;
+        });
+      }
+      
+      if (masterFolderNames.length === 0 && personalFolderNames.length === 0) {
+        html = '<div style="color: #86868b; text-align: center; padding: 20px;">エクスポートできるスニペットがありません</div>';
+      }
+      
+      folderList.innerHTML = html;
+      
+      // 「すべて選択」の状態をリセット
+      document.getElementById('export-select-all').checked = false;
+      
+      modal.style.display = 'flex';
+    }
+
+    function hideExportDialog() {
+      document.getElementById('export-modal').style.display = 'none';
+    }
+
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('export-select-all').checked;
+      document.querySelectorAll('.export-folder-checkbox').forEach(cb => {
+        cb.checked = selectAll;
+      });
+    }
+
+    function updateSelectAllState() {
+      const checkboxes = document.querySelectorAll('.export-folder-checkbox');
+      const allChecked = [...checkboxes].every(cb => cb.checked);
+      document.getElementById('export-select-all').checked = allChecked;
+    }
+
+    async function executeExport() {
+      // 選択されたフォルダを取得
+      const selectedFolders = [];
+      document.querySelectorAll('.export-folder-checkbox:checked').forEach(cb => {
+        selectedFolders.push({
+          folder: cb.dataset.folder,
+          type: cb.dataset.type
+        });
+      });
+      
+      if (selectedFolders.length === 0) {
+        alert('エクスポートするフォルダを選択してください');
+        return;
+      }
+      
+      // 選択されたフォルダのスニペットを収集
+      let snippetsToExport = [];
+      
+      selectedFolders.forEach(({ folder, type }) => {
+        if (type === 'master') {
+          snippetsToExport.push(...masterSnippets.filter(s => s.folder === folder));
+        } else {
+          snippetsToExport.push(...personalSnippets.filter(s => s.folder === folder));
+        }
+      });
+      
+      if (snippetsToExport.length === 0) {
+        alert('エクスポートするスニペットがありません');
+        return;
+      }
+      
+      // ファイル名を決定
+      let filename = 'snippets.xml';
+      if (selectedFolders.length === 1) {
+        filename = `${selectedFolders[0].folder}.xml`;
+      } else {
+        const hasMaster = selectedFolders.some(f => f.type === 'master');
+        const hasPersonal = selectedFolders.some(f => f.type === 'personal');
+        if (hasMaster && !hasPersonal) {
+          filename = 'master-snippets.xml';
+        } else if (!hasMaster && hasPersonal) {
+          filename = 'personal-snippets.xml';
+        } else {
+          filename = 'selected-snippets.xml';
+        }
+      }
+      
+      // XMLを生成
+      const xml = generateClipyXML(snippetsToExport);
+      
+      // 保存
+      const result = await ipcRenderer.invoke('export-snippets-xml', { xml, filename });
+      
+      if (result.success) {
+        alert(`エクスポート完了: ${result.path}\n（${snippetsToExport.length}件のスニペット）`);
+      } else if (result.cancelled) {
+        // キャンセルは何もしない
+        return;
+      } else {
+        alert(`エクスポート失敗: ${result.error}`);
+      }
+      
+      hideExportDialog();
+    }
+
+    function generateClipyXML(snippets) {
+      // フォルダごとにグループ化
+      const folderGroups = {};
+      snippets.forEach(s => {
+        const folderName = s.folder || '未分類';
+        if (!folderGroups[folderName]) {
+          folderGroups[folderName] = [];
+        }
+        folderGroups[folderName].push(s);
+      });
+      
+      // XML生成
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<folders>\n';
+      
+      Object.entries(folderGroups).forEach(([folderName, folderSnippets]) => {
+        xml += `  <folder>\n`;
+        xml += `    <title>${escapeXml(folderName)}</title>\n`;
+        xml += `    <snippets>\n`;
+        
+        folderSnippets.forEach(snippet => {
+          xml += `      <snippet>\n`;
+          if (snippet.id) {
+            xml += `        <id>${escapeXml(snippet.id)}</id>\n`;
+          }
+          xml += `        <title>${escapeXml(snippet.title || '')}</title>\n`;
+          xml += `        <content>${escapeXml(snippet.content || '')}</content>\n`;
+          if (snippet.description) {
+            xml += `        <description>${escapeXml(snippet.description)}</description>\n`;
+          }
+          xml += `      </snippet>\n`;
+        });
+        
+        xml += `    </snippets>\n`;
+        xml += `  </folder>\n`;
+      });
+      
+      xml += '</folders>';
+      
+      return xml;
+    }
+    
+    function escapeXml(str) {
+      if (!str) return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    // ========================================
+    // マスタ編集モード
+    // ========================================
+    function updateMasterEditButton() {
+      const btn = document.getElementById('master-edit-btn');
+      if (masterSnippets.length > 0) {
+        btn.style.display = 'flex';
+        if (isMasterEditMode) {
+          btn.innerHTML = '<span>🔓</span><span>編集モード: ON</span>';
+          btn.style.background = '#e8f5e9';
+          btn.style.borderColor = '#34c759';
+        } else {
+          btn.innerHTML = '<span>🔒</span><span>マスタ編集モード</span>';
+          btn.style.background = '';
+          btn.style.borderColor = '';
+        }
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    function showMasterPasswordDialog() {
+      if (isMasterEditMode) {
+        // 既に編集モードならOFFに
+        isMasterEditMode = false;
+        updateMasterEditButton();
+        if (selectedSnippet) showEditor();
+        return;
+      }
+      
+      document.getElementById('master-password-modal').style.display = 'flex';
+      document.getElementById('master-password-input').value = '';
+      document.getElementById('master-password-error').style.display = 'none';
+      setTimeout(() => document.getElementById('master-password-input').focus(), 100);
+    }
+
+    function hideMasterPasswordDialog() {
+      document.getElementById('master-password-modal').style.display = 'none';
+    }
+
+    async function verifyMasterPassword() {
+      const password = document.getElementById('master-password-input').value;
+      const isValid = await ipcRenderer.invoke('verify-master-password', password);
+      
+      if (isValid) {
+        isMasterEditMode = true;
+        hideMasterPasswordDialog();
+        updateMasterEditButton();
+        if (selectedSnippet) showEditor();
+      } else {
+        document.getElementById('master-password-error').style.display = 'block';
+        document.getElementById('master-password-input').select();
+      }
+    }
   </script>
 </body>
 </html>

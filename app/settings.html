@@ -425,14 +425,46 @@
           
           <div class="link-list">
             <div class="link-item">
-              <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/blob/main/MANUAL.md'); return false;">
-                📚 使い方マニュアル
+              <a href="#" onclick="openExternal('https://docs.google.com/document/d/19ozUsoWsoq7Vt9lC2hH7ZmRQaU_HPOed/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
+                📥 インストールガイド
               </a>
             </div>
             <div class="link-item">
-              <a href="#" onclick="openExternal('https://github.com/tetete478/snipee/issues'); return false;">
-                🐛 バグ報告・機能リクエスト
+              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1ShxU1i7eDGGHDAsq24cwn5cl6F0i8X-_/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
+                📋 スニペットを貼り付ける
               </a>
+            </div>
+            <div class="link-item">
+              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1HA-y_kQaQ6zoLpXR4bylGP1DBGP6US-f/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
+                📎 クリップボード履歴を使う
+              </a>
+            </div>
+            <div class="link-item">
+              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1xHKgNhkBlOJk8HnpK5qap6MYMhquqOxc/edit?usp=sharing&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
+                ❓ 困ったとき（FAQ）
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🆕 ユーザー情報セクション -->
+        <div class="section">
+          <div class="section-header">
+            <h2>👤 ユーザー情報</h2>
+          </div>
+          <div class="section-description">
+            スニペット内の変数に使用される情報を設定します。
+          </div>
+          
+          <div class="form-group">
+            <label>名前</label>
+            <input 
+              type="text" 
+              id="user-name" 
+              placeholder="山田太郎"
+            />
+            <div class="help-text">
+              スニペット内の {名前} 変数に使用されます
             </div>
           </div>
         </div>
@@ -618,6 +650,10 @@
       await loadFolders();
       loadWindowPositionSetting();
 
+      // 🆕 名前を読み込み
+      const userName = store.get('userName', '');
+      document.getElementById('user-name').value = userName;
+
       // モーダル背景クリックで閉じる
       document.getElementById('hotkey-modal').addEventListener('click', (e) => {
         if (e.target.id === 'hotkey-modal') {
@@ -771,6 +807,12 @@
       nav.selectedIndex = 0;
       nav.updateVisual();
     }
+
+    // 🆕 名前の保存
+    document.getElementById('user-name').addEventListener('change', (e) => {
+      store.set('userName', e.target.value);
+      showAlert('✅ 名前を保存しました', 'success', 'sync-alert');
+    });
 
     async function loadHotkeys() {
       const mainHotkey = await ipcRenderer.invoke('get-current-hotkey', 'main');

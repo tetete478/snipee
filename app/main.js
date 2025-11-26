@@ -122,6 +122,13 @@ function createSnippetWindow() {
 
 // スニペット編集ウィンドウ作成
 function createSnippetEditorWindow() {
+  // 🆕 既存のウィンドウがあれば再利用
+  if (snippetEditorWindow && !snippetEditorWindow.isDestroyed()) {
+    snippetEditorWindow.show();
+    snippetEditorWindow.focus();
+    return;
+  }
+
   snippetEditorWindow = new BrowserWindow({
     width: 720,
     height: 600,
@@ -141,9 +148,6 @@ function createSnippetEditorWindow() {
   });
 
   snippetEditorWindow.on('closed', () => {
-    if (snippetWindow && !snippetWindow.isDestroyed()) {
-      snippetWindow.hide();
-    }
     snippetEditorWindow = null;
   });
 }
@@ -320,6 +324,17 @@ function showGenericWindow(type) {
 
   const { window, create } = windowMap[type];
   let currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
+
+  // 🆕 他方のウィンドウを閉じる
+  if (type === 'clipboard') {
+    if (snippetWindow && !snippetWindow.isDestroyed() && snippetWindow.isVisible()) {
+      snippetWindow.hide();
+    }
+  } else {
+    if (clipboardWindow && !clipboardWindow.isDestroyed() && clipboardWindow.isVisible()) {
+      clipboardWindow.hide();
+    }
+  }
 
   if (!currentWindow || currentWindow.isDestroyed()) {
     create();
@@ -525,20 +540,18 @@ async function syncSnippets() {
 app.whenReady().then(() => {
   // window-ready イベントハンドラ（グローバルに1回だけ登録）
   ipcMain.on('window-ready', (event) => {
-    const sender = event.sender;
-    
-    // どのウィンドウからのイベントか判定
-    // ウィンドウが非表示の場合のみ表示（初回表示時のみ）
-    if (clipboardWindow && !clipboardWindow.isDestroyed() && sender === clipboardWindow.webContents) {
-      if (!clipboardWindow.isVisible()) {
-        clipboardWindow.show();
-      }
-    } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
-      if (!snippetWindow.isVisible()) {
-        snippetWindow.show();
-      }
+  const sender = event.sender;
+  
+  if (clipboardWindow && !clipboardWindow.isDestroyed() && sender === clipboardWindow.webContents) {
+    if (!clipboardWindow.isVisible()) {
+      clipboardWindow.show();
     }
-  });
+  } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
+    if (!snippetWindow.isVisible()) {
+      snippetWindow.show();
+    }
+  }
+});
 
   // ホットキー登録
   setTimeout(() => {
@@ -588,7 +601,6 @@ app.whenReady().then(() => {
 
   // Google Drive同期(非同期実行)
   syncSnippets();
-  setInterval(syncSnippets, 5 * 60 * 1000);
 });
 
 // IPCハンドラー
@@ -783,11 +795,22 @@ ipcMain.handle('quit-app', () => {
 });
 
 ipcMain.handle('show-settings', () => {
+  // hide()ではなくdestroy()で完全に閉じる
+  if (clipboardWindow && !clipboardWindow.isDestroyed()) {
+    clipboardWindow.destroy();
+    clipboardWindow = null;
+  }
+  
+  if (snippetWindow && !snippetWindow.isDestroyed()) {
+    snippetWindow.destroy();
+    snippetWindow = null;
+  }
+  
+  // 設定画面を表示
   if (mainWindow) {
     mainWindow.show();
     mainWindow.focus();
   }
-  return true;
 });
 
 ipcMain.handle('hide-settings-window', () => {
@@ -827,8 +850,11 @@ ipcMain.on('clipboard-mouse-leave', () => {
 });
 
 ipcMain.handle('paste-text', async (event, text) => {
-  clipboard.writeText(text);
-  lastClipboardText = text;
+  // 🆕 変数を置換
+  const processedText = replaceVariables(text);
+  
+  clipboard.writeText(processedText);
+  lastClipboardText = processedText;
 
   if (clipboardWindow) {
     clipboardWindow.hide();
@@ -892,12 +918,15 @@ ipcMain.handle('save-personal-snippets', (event, snippets) => {
 });
 
 ipcMain.handle('open-snippet-editor', () => {
+  // hide()ではなくdestroy()で完全に閉じる
   if (clipboardWindow && !clipboardWindow.isDestroyed()) {
-    clipboardWindow.hide();
+    clipboardWindow.destroy();
+    clipboardWindow = null;
   }
   
   if (snippetWindow && !snippetWindow.isDestroyed()) {
-    snippetWindow.hide();
+    snippetWindow.destroy();
+    snippetWindow = null;
   }
   
   if (!snippetEditorWindow || snippetEditorWindow.isDestroyed()) {
@@ -999,8 +1028,44 @@ ipcMain.handle('resize-window', (event, size) => {
   return true;
 });
 
-ipcMain.on('window-ready', () => {
-  // この通知は現在のところ使わない（show()は既に positionAndShowXXX で実行済み）
+ipcMain.handle('export-snippets-xml', async (event, { xml, filename }) => {
+  try {
+    const { dialog } = require('electron');
+    const fs = require('fs');
+    
+    const result = await dialog.showSaveDialog({
+      defaultPath: filename,
+      filters: [
+        { name: 'XML Files', extensions: ['xml'] }
+      ]
+    });
+    
+    if (result.canceled) {
+      return { success: false, cancelled: true };
+    }
+    
+    fs.writeFileSync(result.filePath, xml, 'utf-8');
+    
+    return { success: true, path: result.filePath };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// マスタ編集パスワード
+const MASTER_EDIT_PASSWORD = '1108';
+
+ipcMain.handle('verify-master-password', (event, password) => {
+  return password === MASTER_EDIT_PASSWORD;
+});
+
+// 設定の取得・保存
+ipcMain.on('get-config', (event, key) => {
+  event.returnValue = store.get(key);
+});
+
+ipcMain.on('save-config', (event, key, value) => {
+  store.set(key, value);
 });
 
 // アプリ終了時
@@ -1031,13 +1096,114 @@ function generateSnippetId(folder, title, content) {
   return `snippet_${Math.abs(hash).toString(36)}`;
 }
 
+
+// ========================================
+// 変数置換機能
+// ========================================
+
+/**
+ * 日付をフォーマット
+ */
+function formatDate(date, format) {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  
+  if (format === 'MM/DD') {
+    return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`;
+  }
+  
+  if (format === 'M月D日') {
+    return `${month}月${day}日`;
+  }
+  
+  return date.toLocaleDateString('ja-JP');
+}
+
+/**
+ * 曜日を取得（短縮形）
+ */
+function getWeekdayShort(date) {
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  return `（${weekdays[date.getDay()]}）`;
+}
+
+/**
+ * N日後の日付を取得（1日を除外）
+ */
+function addDaysExcluding1st(date, days, alternativeDays) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  
+  // 1日だったら代替日数を使用
+  if (result.getDate() === 1) {
+    const alternative = new Date(date);
+    alternative.setDate(alternative.getDate() + alternativeDays);
+    return alternative;
+  }
+  
+  return result;
+}
+
+/**
+ * 日付と曜日をフォーマット
+ */
+function formatDateWithWeekday(date) {
+  return formatDate(date, 'M月D日') + getWeekdayShort(date);
+}
+
+/**
+ * タイムスタンプをフォーマット
+ */
+function formatTimestamp(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * スニペット内の変数を実際の値に置換
+ */
+function replaceVariables(text) {
+  const now = new Date();
+  const userName = store.get('userName', '');
+  
+  // {今日:MM/DD}
+  text = text.replace(/\{今日:MM\/DD\}/g, formatDate(now, 'MM/DD'));
+  
+  // {明日:MM/DD}
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  text = text.replace(/\{明日:MM\/DD\}/g, formatDate(tomorrow, 'MM/DD'));
+  
+  // {2日後:M月D日:曜日短（毎月1日は除外して3日後）}
+  text = text.replace(
+    /\{2日後:M月D日:曜日短（毎月1日は除外して3日後）\}/g,
+    formatDateWithWeekday(addDaysExcluding1st(now, 2, 3)) 
+  );
+  
+  // {3日後:M月D日:曜日短（毎月1日は除外して4日後）}
+  text = text.replace(
+    /\{3日後:M月D日:曜日短（毎月1日は除外して4日後）\}/g,
+    formatDateWithWeekday(addDaysExcluding1st(now, 3, 4))
+  );
+  
+  // {タイムスタンプ}
+  text = text.replace(/\{タイムスタンプ\}/g, formatTimestamp(now));
+  
+  // {名前}
+  text = text.replace(/\{名前\}/g, userName);
+  
+  return text;
+}
+
 // =====================================
 // 自動アップデート
 // =====================================
-autoUpdater.on('update-available', () => {
-  console.log('アップデートがあります');
-});
-
 autoUpdater.on('update-downloaded', () => {
   dialog.showMessageBox({
     type: 'info',
@@ -1049,8 +1215,4 @@ autoUpdater.on('update-downloaded', () => {
       autoUpdater.quitAndInstall();
     }
   });
-});
-
-autoUpdater.on('error', (error) => {
-  console.error('アップデートエラー:', error);
 });
