@@ -910,7 +910,7 @@ ipcMain.handle('paste-text', async (event, text) => {
     
     // 非同期で実行（完了を待たない）
     exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${focusScript}"`);
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   // ペースト（Mac/Windows共通 - robotjs使用）
