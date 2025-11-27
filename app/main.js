@@ -212,9 +212,9 @@ function registerGlobalShortcuts() {
       } catch (error) {}
     } else if (process.platform === 'win32') {
       try {
-        // ウィンドウタイトルを取得（JScript用）
-        const title = execSync('powershell -NoProfile -Command "(Get-Process | Where-Object {$_.MainWindowHandle -eq (Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();\' -Name W -Namespace N -PassThru)::GetForegroundWindow()}).MainWindowTitle"', { encoding: 'utf8' }).trim();
-        if (title) previousActiveApp = title;
+        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
+        previousActiveApp = hwnd;
       } catch (error) {}
     }
     
@@ -231,9 +231,9 @@ function registerGlobalShortcuts() {
       } catch (error) {}
     } else if (process.platform === 'win32') {
       try {
-        // ウィンドウタイトルを取得（JScript用）
-        const title = execSync('powershell -NoProfile -Command "(Get-Process | Where-Object {$_.MainWindowHandle -eq (Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();\' -Name W -Namespace N -PassThru)::GetForegroundWindow()}).MainWindowTitle"', { encoding: 'utf8' }).trim();
-        if (title) previousActiveApp = title;
+        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
+        previousActiveApp = hwnd;
       } catch (error) {}
     }
     
@@ -903,11 +903,14 @@ ipcMain.handle('paste-text', async (event, text) => {
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: JScriptでフォーカス復帰
+  // Windows: フォーカスを戻す（PowerShell - 非同期）
   if (process.platform === 'win32' && previousActiveApp) {
-    const safeTitle = previousActiveApp.replace(/"/g, '\\"');
-    exec(`mshta javascript:new ActiveXObject("WScript.Shell").AppActivate("${safeTitle}");close();`);
-    await new Promise(resolve => setTimeout(resolve, 50));
+    const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+    const focusScript = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru; [Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
+    
+    // 非同期で実行（完了を待たない）
+    exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${focusScript}"`);
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   // ペースト（Mac/Windows共通 - robotjs使用）
