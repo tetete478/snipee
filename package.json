@@ -1,6 +1,6 @@
 {
   "name": "snipee",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "Mac/Windows対応のクリップボード管理ツール",
   "main": "app/main.js",
   "scripts": {
