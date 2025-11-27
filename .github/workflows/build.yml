@@ -1,48 +1,33 @@
-name: Build Snipee
+name: Build and Publish
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch:  # 手動実行を許可
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
-  build:
+  publish:
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
-
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build app
-        run: npm run build
+      - name: Rebuild native modules
+        run: npx electron-rebuild
+
+      - name: Publish
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: snipee-windows
-          path: dist/*.exe
-
-      - name: Upload Mac artifacts
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: snipee-mac
-          path: dist/*.dmg
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run publish

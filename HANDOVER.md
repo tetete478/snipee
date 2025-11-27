@@ -1,7 +1,7 @@
 # Snipee 開発引き継ぎドキュメント
 
 **バージョン**: v1.5.5  
-**最終更新**: 2025-11-27  
+**最終更新**: 2025-11-28  
 **GitHub**: https://github.com/tetete478/snipee
 
 ---
@@ -56,10 +56,12 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - **フレームワーク**: Electron
 - **データ保存**: electron-store
 - **XML 解析**: xml2js（Clipy 互換）
-- **自動ペースト（Windows）**: PowerShell SendKeys（ネイティブモジュール不要）
+- **自動ペースト（Windows）**: PowerShell（SetForegroundWindow + Altキートリック）+ robotjs
 - **自動ペースト（Mac）**: AppleScript + Bundle ID 方式（元アプリに確実に戻る）
+- **キー入力**: robotjs（Mac/Windows共通）
 - **自動アップデート**: electron-updater + GitHub Releases
 - **ビルド**: electron-builder
+- **CI/CD**: GitHub Actions（Mac/Windows並行ビルド）
 
 ---
 
@@ -273,8 +275,10 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 #### 自動ペースト
 
-- **Windows**: PowerShell SendKeys で実装
-- **Mac**: AppleScript + Bundle ID 方式で実装
+- **Windows**: PowerShell（SetForegroundWindow + Altキートリック）+ robotjs ✅ 動作確認済み
+  - HWND取得 → SetForegroundWindow → robotjs Ctrl+V
+  - ⚠️ 速度問題あり（PowerShell起動に300-500ms）
+- **Mac**: AppleScript + Bundle ID 方式で実装 ✅ 動作確認済み
 
 #### ホットキー
 
@@ -293,6 +297,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 ### ⚠️ 既知の制限
 
 - IME 有効時のホットキー不安定
+- Windows版の自動ペーストが遅い（PowerShell起動オーバーヘッド約300-500ms）
 
 ---
 
@@ -344,11 +349,11 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 **理由**: ブラウザ開発者ツールは使わない（ユーザーに見せたくない）  
 **実装**: main.js で `ipcMain.on('log', (event, msg) => console.log(msg))`
 
-### 8. ✅ ネイティブモジュールは避ける
+### 8. ✅ ネイティブモジュールはGitHub Actionsでビルド
 
-**失敗**: robotjs でビルド問題、Electron バージョン互換性問題  
-**解決**: PowerShell（Windows）/ AppleScript（Mac）で OS 標準機能を使用  
-**教訓**: ネイティブモジュールは依存関係が複雑になるため、OS 標準機能で代替できないか検討
+**課題**: robotjsはネイティブモジュールでクロスコンパイル不可
+**解決**: GitHub Actionsで各プラットフォーム（Windows/Mac）ごとにビルド
+**教訓**: ネイティブモジュールを使う場合はCI/CDで各環境ビルドが必須
 
 ### 9. ✅ DRY 原則（Don't Repeat Yourself）の徹底
 
@@ -391,10 +396,11 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ### 🟡 優先度：中
 
-#### 2. Windows 環境での動作確認
+#### 2. Windows 環境での総合テスト
 
 - 全機能テスト（自動ペースト、ホットキー、UI）
 - 各種 Windows アプリでの互換性チェック
+- 速度の体感確認（許容範囲か）
 
 **作業見積もり**: 1 セッション
 
@@ -535,26 +541,45 @@ app/common/
 
 ### Phase 2: 自動ペースト・変数機能（完了 - v1.5.5）
 
-#### 1. Windows 自動ペーストを PowerShell に変更 ✅（v1.5.4）
+#### 1. Windows 自動ペーストを PowerShell + robotjs に変更 ✅（v1.5.5）
 
 **変更理由**:
 
-- robotjs はネイティブモジュールでビルド問題が発生しやすい
-- Electron バージョンとの互換性問題
+- PowerShell SendKeysが不安定
+- フォーカス復帰が必要（UIPI制限対策）
 
 **新実装**:
 
 ```javascript
-exec(
-  "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
-);
+// 1. ホットキー押下時にHWND取得
+const hwnd = execSync(`powershell -NoProfile -Command "...GetForegroundWindow()..."`);
+
+// 2. ペースト時にフォーカス復帰（Altキートリック）
+exec(`powershell -NoProfile -Command "...SetForegroundWindow()..."`);
+
+// 3. robotjsでCtrl+V
+robot.keyTap('v', 'control');
 ```
 
 **メリット**:
 
-- ネイティブモジュール不要
-- Windows 標準機能で確実
-- ビルド問題なし
+- SetForegroundWindow + Altキートリックで確実にフォーカス復帰
+- robotjsでMac/Windows共通のキー入力コード
+
+**デメリット**:
+
+- PowerShell起動オーバーヘッドで遅い（300-500ms）
+
+#### 1.5. GitHub Actions CI/CD構築 ✅（v1.5.5）
+
+**ファイル**: `.github/workflows/build.yml`
+
+**機能**:
+- Windows/Mac並行ビルド
+- electron-rebuild自動実行（robotjs対応）
+- Artifactsに自動アップロード
+- 手動実行可能（workflow_dispatch）
+- mainブランチpushでビルド開始
 
 #### 2. Mac 自動ペースト実装 ✅（v1.5.5）
 
@@ -728,30 +753,72 @@ exec(
 - 同期は起動時のみなので、編集後にアプリを終了しない
 - 編集後は XML エクスポート → Google Drive に上書き
 
-#### 2. Windows 自動ペーストの改善 🔴
+#### 2. Windows 自動ペースト速度改善 🟡
 
-**現状**: Windows 版で自動ペーストが動作しない
+**現状**: 動作確認済みだが遅い（約300-500ms）
 
 **現在の実装**:
-
 ```javascript
-exec(
-  "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
-);
+// 1. ホットキー押下時にHWND取得（PowerShell）
+const hwnd = execSync(`powershell -NoProfile -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name WinAPI -Namespace Win32 -PassThru)::GetForegroundWindow()"`);
+
+// 2. ペースト時にフォーカス復帰（PowerShell + Altキートリック）
+exec(`powershell -NoProfile -Command "Add-Type -MemberDefinition '...' -Name WinAPI; [Win32.WinAPI]::keybd_event(0x12,0,0,0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${hwnd}); [Win32.WinAPI]::keybd_event(0x12,0,2,0)"`);
+
+// 3. robotjsでCtrl+V
+robot.keyTap('v', 'control');
 ```
 
-**問題点**:
+**ボトルネック**:
+- PowerShell起動: 200-500ms（毎回Add-Typeコンパイル）
+- 待機時間: 30ms
+- robotjs: 即時
 
-- PowerShell SendKeys が正常に動作しない
-- 元のアプリへのフォーカス復帰が不安定
+**試行済み（失敗）**:
+- 非同期実行 → Altキー干渉でペースト失敗
+- VBScript AppActivate → フォーカス復帰不安定
+- hide()のみ → Windowsは自動でフォーカス戻さない
 
-**調査が必要な項目**:
+**今後の改善案**:
+- PowerShell内でSendKeysまで完結（robotjs不使用）
+- JScript版試行
+- 常駐ヘルパープロセス
 
-- PowerShell の実行タイミング
-- フォーカス復帰の方法（Windows 版）
-- 代替手段の検討（AutoHotkey、nircmd 等）
+**作業見積もり**: 1〜2セッション
 
-**作業見積もり**: 1〜2 セッション
+#### 2.5. Windows 自動ペースト速度改善（ffi-napi検討） 🟡
+
+**現状の問題**:
+- ホットキー押下時: PowerShellでHWND取得（200-500ms）
+- ペースト時: PowerShellでSetForegroundWindow（200-500ms）
+- **合計: 400-1000msのオーバーヘッド**
+
+**改善案: ffi-napi導入**
+```javascript
+const ffi = require('ffi-napi');
+const user32 = ffi.Library('user32', {
+  'GetForegroundWindow': ['pointer', []],
+  'SetForegroundWindow': ['bool', ['pointer']],
+  'keybd_event': ['void', ['uchar', 'uchar', 'uint32', 'pointer']]
+});
+
+// 即時実行（PowerShell起動なし）
+const hwnd = user32.GetForegroundWindow();
+user32.SetForegroundWindow(hwnd);
+```
+
+**比較**:
+
+| 方法 | HWND取得 | フォーカス復帰 | 合計 |
+|-----|---------|--------------|------|
+| PowerShell（現在） | 200-500ms | 200-500ms | 400-1000ms |
+| ffi-napi | ~1ms | ~1ms | ~2ms |
+
+**注意点**:
+- ffi-napiはネイティブモジュール → GitHub Actionsでビルド必要
+- robotjsと同様のビルド設定で対応可能
+
+**作業見積もり**: 1セッション
 
 ---
 
@@ -774,5 +841,5 @@ exec(
 ---
 
 **開発者**: てるや  
-**最終更新**: 2025-11-27  
+**最終更新**: 2025-11-28  
 **現在のバージョン**: v1.5.5
