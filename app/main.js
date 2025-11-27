@@ -212,9 +212,9 @@ function registerGlobalShortcuts() {
       } catch (error) {}
     } else if (process.platform === 'win32') {
       try {
-        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
-        previousActiveApp = hwnd;
+        // ウィンドウタイトルを取得（JScript用）
+        const title = execSync('powershell -NoProfile -Command "(Get-Process | Where-Object {$_.MainWindowHandle -eq (Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();\' -Name W -Namespace N -PassThru)::GetForegroundWindow()}).MainWindowTitle"', { encoding: 'utf8' }).trim();
+        if (title) previousActiveApp = title;
       } catch (error) {}
     }
     
@@ -231,9 +231,9 @@ function registerGlobalShortcuts() {
       } catch (error) {}
     } else if (process.platform === 'win32') {
       try {
-        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
-        previousActiveApp = hwnd;
+        // ウィンドウタイトルを取得（JScript用）
+        const title = execSync('powershell -NoProfile -Command "(Get-Process | Where-Object {$_.MainWindowHandle -eq (Add-Type -MemberDefinition \'[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();\' -Name W -Namespace N -PassThru)::GetForegroundWindow()}).MainWindowTitle"', { encoding: 'utf8' }).trim();
+        if (title) previousActiveApp = title;
       } catch (error) {}
     }
     
@@ -903,8 +903,10 @@ ipcMain.handle('paste-text', async (event, text) => {
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: hide()後に少し待つだけ（OSが自動でフォーカス戻す）
-  if (process.platform === 'win32') {
+  // Windows: JScriptでフォーカス復帰
+  if (process.platform === 'win32' && previousActiveApp) {
+    const safeTitle = previousActiveApp.replace(/"/g, '\\"');
+    exec(`mshta javascript:new ActiveXObject("WScript.Shell").AppActivate("${safeTitle}");close();`);
     await new Promise(resolve => setTimeout(resolve, 50));
   }
 
