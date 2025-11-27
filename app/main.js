@@ -903,15 +903,9 @@ ipcMain.handle('paste-text', async (event, text) => {
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: フォーカスを戻す（PowerShell）
-  if (process.platform === 'win32' && previousActiveApp) {
-    const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-    const focusScript = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru; [Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
-    
-    await new Promise((resolve) => {
-      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${focusScript}"`, () => resolve());
-    });
-    await new Promise(resolve => setTimeout(resolve, 30));
+  // Windows: hide()後に少し待つだけ（OSが自動でフォーカス戻す）
+  if (process.platform === 'win32') {
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
 
   // ペースト（Mac/Windows共通 - robotjs使用）

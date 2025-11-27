@@ -2,10 +2,11 @@ name: Build Snipee
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
   pull_request:
     branches: [main, master]
-  workflow_dispatch: # 手動実行を許可
+  workflow_dispatch:  # 手動実行を許可
 
 jobs:
   build:
