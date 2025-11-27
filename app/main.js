@@ -23,6 +23,7 @@ app.on('second-instance', () => {
 
 const path = require('path');
 const Store = require('electron-store');
+const fs = require('fs');
 
 const axios = require('axios');
 const xml2js = require('xml2js');
@@ -145,7 +146,7 @@ function createSnippetWindow() {
 
 // スニペット編集ウィンドウ作成
 function createSnippetEditorWindow() {
-  // 🆕 既存のウィンドウがあれば再利用
+  // 既存のウィンドウがあれば再利用
   if (snippetEditorWindow && !snippetEditorWindow.isDestroyed()) {
     snippetEditorWindow.show();
     snippetEditorWindow.focus();
@@ -199,31 +200,37 @@ function registerGlobalShortcuts() {
   };
 
   registerWithRetry(mainHotkey, () => {
-    // ホットキーが押された瞬間にアクティブアプリを取得
     if (process.platform === 'darwin') {
       try {
         const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
-        
-        // Snipee以外なら記憶
         if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
           previousActiveApp = bundleId;
         }
-      } catch (error) {
-        // エラーは無視
-      }
+      } catch (error) {}
+    } else if (process.platform === 'win32') {
+      try {
+        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
+        previousActiveApp = hwnd;
+      } catch (error) {}
     }
     
     showClipboardWindow();
   });
 
   registerWithRetry(snippetHotkey, () => {
-    // アクティブアプリを記憶
     if (process.platform === 'darwin') {
       try {
         const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
         if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
           previousActiveApp = bundleId;
         }
+      } catch (error) {}
+    } else if (process.platform === 'win32') {
+      try {
+        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
+        previousActiveApp = hwnd;
       } catch (error) {}
     }
     
@@ -348,7 +355,7 @@ function showGenericWindow(type) {
   const { window, create } = windowMap[type];
   let currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
 
-  // 🆕 他方のウィンドウを閉じる
+  // 他方のウィンドウを閉じる
   if (type === 'clipboard') {
     if (snippetWindow && !snippetWindow.isDestroyed() && snippetWindow.isVisible()) {
       snippetWindow.hide();
@@ -873,7 +880,7 @@ ipcMain.on('clipboard-mouse-leave', () => {
 });
 
 ipcMain.handle('paste-text', async (event, text) => {
-  // 🆕 変数を置換
+  // 変数を置換
   const processedText = replaceVariables(text);
   
   clipboard.writeText(processedText);
@@ -901,9 +908,27 @@ ipcMain.handle('paste-text', async (event, text) => {
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: PowerShell SendKeys
+  // Windows: フォーカスを戻してからSendKeys
   if (process.platform === 'win32') {
-    exec('powershell -command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait(\'^v\')"');
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+    
+    if (previousActiveApp) {
+      // MemberDefinition形式（HWND取得と同じエスケープ）
+      const addTypeCmd = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru`;
+      const focusCmd = `[Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); $r = [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
+      const pasteCmd = `Start-Sleep -Milliseconds 100; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')`;
+      
+      const script = `${addTypeCmd}; ${focusCmd}; ${pasteCmd}`;
+      
+      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${script}"`);
+    } else {
+      // HWNDがない場合は単純にペースト
+      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"`);
+    }
+    
+    return { success: true };
   }
 
   // Mac: AppleScript
@@ -911,7 +936,7 @@ ipcMain.handle('paste-text', async (event, text) => {
     exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
   }
 
-  return true;
+  return { success: true };
 });
 
 // 個別スニペット管理

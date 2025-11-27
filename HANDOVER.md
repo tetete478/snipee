@@ -22,7 +22,7 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - **自動アップデート機能**（GitHub Releases 経由）
 - **変数機能**（日付、名前などの動的挿入）
 - **マスタ編集モード**（パスワード認証でマスタスニペット編集）
-- **XMLエクスポート機能**（Clipy互換形式で出力）
+- **XML エクスポート機能**（Clipy 互換形式で出力）
 
 ### 配布方針（最重要）
 
@@ -33,19 +33,21 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 
 ### ワークフロー
 
-**従来のフロー（Clipy経由）** ※もう使わなくてOK:
+**従来のフロー（Clipy 経由）** ※もう使わなくて OK:
+
 1. てるやが Clipy で個人用スニペット管理
 2. Clipy からスニペットを**XML 形式**でエクスポート
 3. Google Drive にアップロード
 4. チームメンバーが Snipee で同期して使用
 
-**新フロー（Snipee完結）** ⭐推奨:
-1. Snipeeでマスタ編集モードON（パスワード: `1108`）
-2. スニペットの追加・編集・削除を実行
-3. XMLエクスポート → Google Driveに上書き
-4. チームメンバーがSnipee起動時に自動同期
+**新フロー（Snipee 完結）** ⭐ 推奨:
 
-**⚡ Clipyはもう使わなくてOK！Snipeeだけで完結！**
+1. Snipee でマスタ編集モード ON（パスワード: `1108`）
+2. スニペットの追加・編集・削除を実行
+3. XML エクスポート → Google Drive に上書き
+4. チームメンバーが Snipee 起動時に自動同期
+
+**⚡ Clipy はもう使わなくて OK！Snipee だけで完結！**
 
 ---
 
@@ -55,7 +57,7 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - **データ保存**: electron-store
 - **XML 解析**: xml2js（Clipy 互換）
 - **自動ペースト（Windows）**: PowerShell SendKeys（ネイティブモジュール不要）
-- **自動ペースト（Mac）**: AppleScript + Bundle ID方式（元アプリに確実に戻る）
+- **自動ペースト（Mac）**: AppleScript + Bundle ID 方式（元アプリに確実に戻る）
 - **自動アップデート**: electron-updater + GitHub Releases
 - **ビルド**: electron-builder
 
@@ -76,6 +78,7 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 4. 「Generate token」→ トークンをコピー
 
 #### 2. 環境変数に設定
+
 ```bash
 # 一時的（今回のセッションだけ）
 export GH_TOKEN=ghp_ここにトークン
@@ -89,6 +92,7 @@ echo $GH_TOKEN
 ```
 
 ### 新バージョンのリリース手順
+
 ```bash
 # 1. プロジェクトディレクトリに移動
 cd /path/to/snipee
@@ -116,6 +120,7 @@ npm run publish:mac    # Mac版のみ
 3. Draft（下書き）状態なら「Edit」→「Publish release」をクリック
 
 ### ユーザー側の体験
+
 ```
 1. Snipeeを普通に起動
      ↓
@@ -143,6 +148,7 @@ npm run publish:mac    # Mac版のみ
 ---
 
 ## 📂 プロジェクト構造
+
 ```
 snipee/
 ├── main.js                    # メインプロセス
@@ -171,55 +177,60 @@ snipee/
 
 ### ✅ 実装済み機能
 
-#### 変数機能（v1.5.5で実装完了）
+#### 変数機能（v1.5.5 で実装完了）
 
 スニペット内に以下の変数を記述すると、貼り付け時に自動置換される：
 
-| 変数 | 出力例 | 説明 |
-|------|--------|------|
-| `{今日:MM/DD}` | `11/27` | 今日の日付 |
-| `{明日:MM/DD}` | `11/28` | 明日の日付 |
-| `{2日後:M月D日:曜日短（毎月1日は除外して3日後）}` | `11月29日（金）` | 2日後（1日なら3日後に自動調整） |
-| `{3日後:M月D日:曜日短（毎月1日は除外して4日後）}` | `11月30日（土）` | 3日後（1日なら4日後に自動調整） |
-| `{タイムスタンプ}` | `2024/11/27 14:30:45` | 年月日＋時分秒 |
-| `{名前}` | `小松` | 設定画面で登録した名前 |
+| 変数                                              | 出力例                | 説明                                |
+| ------------------------------------------------- | --------------------- | ----------------------------------- |
+| `{今日:MM/DD}`                                    | `11/27`               | 今日の日付                          |
+| `{明日:MM/DD}`                                    | `11/28`               | 明日の日付                          |
+| `{2日後:M月D日:曜日短（毎月1日は除外して3日後）}` | `11月29日（金）`      | 2 日後（1 日なら 3 日後に自動調整） |
+| `{3日後:M月D日:曜日短（毎月1日は除外して4日後）}` | `11月30日（土）`      | 3 日後（1 日なら 4 日後に自動調整） |
+| `{タイムスタンプ}`                                | `2024/11/27 14:30:45` | 年月日＋時分秒                      |
+| `{名前}`                                          | `小松`                | 設定画面で登録した名前              |
 
 **実装箇所**: `main.js` の `replaceVariables()` 関数
 
-#### マスタ編集モード（v1.5.5で実装）
+#### マスタ編集モード（v1.5.5 で実装）
 
 - **パスワード認証**: `1108` で有効化
 - **編集可能な操作**:
   - マスタスニペットの内容・説明の編集 ✅
-  - マスタスニペットの削除 ⚠️ 未完成（後述のTODO参照）
-  - マスタフォルダへのスニペット追加 ⚠️ 未完成（後述のTODO参照）
-  - マスタフォルダの追加・削除 ⚠️ 未完成（後述のTODO参照）
+  - マスタスニペットの削除 ⚠️ 未完成（後述の TODO 参照）
+  - マスタフォルダへのスニペット追加 ⚠️ 未完成（後述の TODO 参照）
+  - マスタフォルダの追加・削除 ⚠️ 未完成（後述の TODO 参照）
 - **実装箇所**: `snippet-editor.html` の `showMasterPasswordDialog()`, `verifyMasterPassword()`
 
-#### XMLエクスポート機能（v1.5.5で実装完了）
+#### XML エクスポート機能（v1.5.5 で実装完了）
 
-- **Clipy互換形式**で出力
+- **Clipy 互換形式**で出力
 - **チェックボックス式フォルダ選択**: エクスポートするフォルダを選択可能
 - **実装箇所**: `snippet-editor.html` の `showExportDialog()`, `executeExport()`, `generateClipyXML()`
 
-#### Mac自動ペースト（v1.5.5で実装完了）
+#### Mac 自動ペースト（v1.5.5 で実装完了）
 
-- **Bundle ID方式**: ホットキー押下時に元アプリのBundle IDを記憶
+- **Bundle ID 方式**: ホットキー押下時に元アプリの Bundle ID を記憶
 - **確実なアプリ復帰**: `tell application id "xxx" to activate` で元アプリに戻る
 - **実装箇所**: `main.js` の `registerGlobalShortcuts()`, `paste-text` ハンドラ
+
 ```javascript
 // ホットキー押下時にBundle IDを取得
-const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
+const bundleId = execSync(
+  "osascript -e 'tell application \"System Events\" to get bundle identifier of first application process whose frontmost is true'"
+)
+  .toString()
+  .trim();
 
 // ペースト時に元アプリをアクティブ化
 exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 ```
 
-#### Google Drive同期
+#### Google Drive 同期
 
-- **同期タイミング**: アプリ起動時のみ（5分ごとの定期同期は削除済み）
+- **同期タイミング**: アプリ起動時のみ（5 分ごとの定期同期は削除済み）
 - **手動同期**: 設定画面の「今すぐ同期」ボタン
-- **XMLの並び順**: そのまま反映される
+- **XML の並び順**: そのまま反映される
 
 #### コード品質・メンテナンス性
 
@@ -263,7 +274,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 #### 自動ペースト
 
 - **Windows**: PowerShell SendKeys で実装
-- **Mac**: AppleScript + Bundle ID方式で実装
+- **Mac**: AppleScript + Bundle ID 方式で実装
 
 #### ホットキー
 
@@ -273,11 +284,11 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 - カスタマイズ可能
 - リトライ機能実装
 
-#### マニュアル（v1.5.5で実装完了）
+#### マニュアル（v1.5.5 で実装完了）
 
-- **Mac/Windows両対応の完全版マニュアル4部作**
+- **Mac/Windows 両対応の完全版マニュアル 4 部作**
 - 設定画面の「一般」タブからリンクでアクセス可能
-- Google Driveでホスト
+- Google Drive でホスト
 
 ### ⚠️ 既知の制限
 
@@ -345,11 +356,11 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 **実践**: 共通化できるコードは必ず `common/` ディレクトリに移動  
 **教訓**: コードレビュー時に「これ、他のファイルにもありませんか？」を必ず確認
 
-### 10. ✅ Mac自動ペーストはBundle ID方式で
+### 10. ✅ Mac 自動ペーストは Bundle ID 方式で
 
 **失敗**: アプリ名で復帰しようとすると、同名の別アプリに切り替わることがある  
-**解決**: Bundle IDを使って正確に元アプリを特定  
-**教訓**: macOSではアプリ名よりBundle IDの方が信頼できる
+**解決**: Bundle ID を使って正確に元アプリを特定  
+**教訓**: macOS ではアプリ名より Bundle ID の方が信頼できる
 
 ---
 
@@ -359,20 +370,22 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 #### 1. マスタ編集モードの完全実装 ⚠️
 
-**現状**: マスタ編集モードONにしても、削除・追加が正しく動作しない
+**現状**: マスタ編集モード ON にしても、削除・追加が正しく動作しない
 
 **問題点**:
+
 - マスタスニペット削除 → 動作しない or エラー
 - マスタフォルダへのスニペット追加 → **個別スニペットの方に追加されてしまう**
 - マスタフォルダの追加 → **個別フォルダとして追加されてしまう**
 - マスタフォルダの削除 → 動作しない or エラー
 
 **修正方針**:
+
 - `addSnippet()` でマスタフォルダ判定時に `save-master-snippet` を呼ぶ
 - `addFolder()` でマスタ編集モード時に別の保存先を使う
 - `deleteSnippet()`, `deleteFolder()` でマスタ判定を正しく行う
 
-**作業見積もり**: 1セッション
+**作業見積もり**: 1 セッション
 
 ---
 
@@ -410,6 +423,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 **目的**: フォルダとは独立した分類軸を追加
 
 **タグの種類**:
+
 - **マスタスニペットタグ**: 管理者が設定、チーム全体で共有
 - **個別スニペットタグ**: 個人が自由に設定、ローカル保存
 
@@ -422,6 +436,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 **目的**: クリップボード履歴に特化した専用画面
 
 **機能**:
+
 - より広い画面（例：600x700）
 - 検索機能（履歴内を全文検索）
 - 日付でフィルタ
@@ -456,6 +471,7 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 #### 1. 重複コードの共通化 ✅
 
 **実装内容**:
+
 ```
 app/common/
 ├── variables.css   # 色、フォントサイズ、余白などの定数
@@ -527,6 +543,7 @@ app/common/
 - Electron バージョンとの互換性問題
 
 **新実装**:
+
 ```javascript
 exec(
   "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
@@ -542,35 +559,42 @@ exec(
 #### 2. Mac 自動ペースト実装 ✅（v1.5.5）
 
 **実装方式**: Bundle ID + AppleScript
+
 ```javascript
 // ホットキー押下時にBundle IDを取得・記憶
-const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
+const bundleId = execSync(
+  "osascript -e 'tell application \"System Events\" to get bundle identifier of first application process whose frontmost is true'"
+)
+  .toString()
+  .trim();
 previousActiveApp = bundleId;
 
 // ペースト時に元アプリをアクティブ化
 exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 // Cmd+Vを送信
-exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
+exec(
+  'osascript -e \'tell application "System Events" to keystroke "v" using command down\''
+);
 ```
 
 **メリット**:
 
-- アプリ名ではなくBundle IDで特定するため確実
-- 追加ツール不要、macOS標準機能のみ
+- アプリ名ではなく Bundle ID で特定するため確実
+- 追加ツール不要、macOS 標準機能のみ
 
 #### 3. 変数機能実装 ✅（v1.5.5）
 
 **実装した変数**:
 
-| 変数 | 出力例 | 説明 |
-|------|--------|------|
-| `{今日:MM/DD}` | `11/27` | 今日の日付 |
-| `{明日:MM/DD}` | `11/28` | 明日の日付 |
-| `{2日後:M月D日:曜日短（毎月1日は除外して3日後）}` | `11月29日（金）` | 2日後（1日除外） |
-| `{3日後:M月D日:曜日短（毎月1日は除外して4日後）}` | `11月30日（土）` | 3日後（1日除外） |
-| `{タイムスタンプ}` | `2024/11/27 14:30:45` | 年月日＋時分秒 |
-| `{名前}` | `小松` | 設定画面で登録した名前 |
+| 変数                                              | 出力例                | 説明                   |
+| ------------------------------------------------- | --------------------- | ---------------------- |
+| `{今日:MM/DD}`                                    | `11/27`               | 今日の日付             |
+| `{明日:MM/DD}`                                    | `11/28`               | 明日の日付             |
+| `{2日後:M月D日:曜日短（毎月1日は除外して3日後）}` | `11月29日（金）`      | 2 日後（1 日除外）     |
+| `{3日後:M月D日:曜日短（毎月1日は除外して4日後）}` | `11月30日（土）`      | 3 日後（1 日除外）     |
+| `{タイムスタンプ}`                                | `2024/11/27 14:30:45` | 年月日＋時分秒         |
+| `{名前}`                                          | `小松`                | 設定画面で登録した名前 |
 
 **実装箇所**: `main.js` の `replaceVariables()` 関数
 
@@ -578,23 +602,23 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 
 - パスワード認証（`1108`）
 - マスタスニペットの内容・説明編集
-- XMLエクスポート機能
-- Backspaceバグ修正
+- XML エクスポート機能
+- Backspace バグ修正
 
-#### 5. XMLエクスポート機能 ✅（v1.5.5）
+#### 5. XML エクスポート機能 ✅（v1.5.5）
 
 - チェックボックス式フォルダ選択
-- Clipy互換形式で出力
+- Clipy 互換形式で出力
 - `generateClipyXML()` 関数で生成
 
-#### 6. Google Drive同期の改善 ✅（v1.5.5）
+#### 6. Google Drive 同期の改善 ✅（v1.5.5）
 
-- 5分ごとの定期同期を削除（起動時のみに変更）
+- 5 分ごとの定期同期を削除（起動時のみに変更）
 - ローカル編集が上書きされる問題を解決
 
 #### 7. 設定画面（settings.html）完成 ✅（v1.5.5）
 
-- 3タブ構成（一般、ホットキー、スニペット）
+- 3 タブ構成（一般、ホットキー、スニペット）
 - 名前入力欄追加（変数機能用）
 - ウィンドウ表示位置設定
 - フォルダ非表示設定
@@ -602,15 +626,15 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 
 #### 8. ユーザーマニュアル作成 ✅（v1.5.5）
 
-- 01_インストール.docx（Mac/Windows両対応）
-- 02_スニペットを貼り付ける.docx（Mac/Windows両対応）
-- 03_クリップボード履歴を使う.docx（Mac/Windows両対応）
-- 04_困ったとき.docx（Mac/Windows両対応）
-- Google Driveにホスト、設定画面からリンク
+- 01\_インストール.docx（Mac/Windows 両対応）
+- 02\_スニペットを貼り付ける.docx（Mac/Windows 両対応）
+- 03\_クリップボード履歴を使う.docx（Mac/Windows 両対応）
+- 04\_困ったとき.docx（Mac/Windows 両対応）
+- Google Drive にホスト、設定画面からリンク
 
-#### 9. UI改善 ✅（v1.5.5）
+#### 9. UI 改善 ✅（v1.5.5）
 
-- 簡易ホーム・サブメニューに枠線追加（シャドウ→ボーダーに変更）
+- 簡易ホーム・サブメニューに枠線追加（シャドウ → ボーダーに変更）
 - スクロールバー幅統一（4px）
 - グレー系カラーテーマ調整
 - スニペット編集画面のフォントサイズ調整（12px）
@@ -697,11 +721,37 @@ exec('osascript -e \'tell application "System Events" to keystroke "v" using com
 
 ### マスタ編集が保存されない
 
-**原因**: Google Drive同期で上書きされる
+**原因**: Google Drive 同期で上書きされる
 
-**対処**: 
+**対処**:
+
 - 同期は起動時のみなので、編集後にアプリを終了しない
-- 編集後はXMLエクスポート → Google Driveに上書き
+- 編集後は XML エクスポート → Google Drive に上書き
+
+#### 2. Windows 自動ペーストの改善 🔴
+
+**現状**: Windows 版で自動ペーストが動作しない
+
+**現在の実装**:
+
+```javascript
+exec(
+  "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
+);
+```
+
+**問題点**:
+
+- PowerShell SendKeys が正常に動作しない
+- 元のアプリへのフォーカス復帰が不安定
+
+**調査が必要な項目**:
+
+- PowerShell の実行タイミング
+- フォーカス復帰の方法（Windows 版）
+- 代替手段の検討（AutoHotkey、nircmd 等）
+
+**作業見積もり**: 1〜2 セッション
 
 ---
 
