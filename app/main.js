@@ -32,6 +32,9 @@ const { autoUpdater } = require('electron-updater');
 // Windows自動ペースト用
 const { exec, execSync } = require('child_process');
 
+// robotjs（キー入力用 - Mac/Windows共通）
+const robot = require('robotjs');
+
 // ストアの初期化
 const store = new Store();
 
@@ -886,55 +889,34 @@ ipcMain.handle('paste-text', async (event, text) => {
   clipboard.writeText(processedText);
   lastClipboardText = processedText;
 
-  if (clipboardWindow) {
-    clipboardWindow.hide();
-  }
+  if (clipboardWindow) clipboardWindow.hide();
+  if (snippetWindow) snippetWindow.hide();
 
-  if (snippetWindow) {
-    snippetWindow.hide();
-  }
-
-  // 短い待機（ウィンドウを閉じる）
+  // ウィンドウ閉じ待ち
   await new Promise(resolve => setTimeout(resolve, 10));
 
   // Mac: 元のアプリをアクティブにする
   if (process.platform === 'darwin' && previousActiveApp) {
     await new Promise((resolve) => {
-      exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`, (error) => {
-        resolve();
-      });
+      exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`, () => resolve());
     });
-    // アプリがアクティブになるのを待つ
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: フォーカスを戻してからSendKeys
-  if (process.platform === 'win32') {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+  // Windows: フォーカスを戻す（PowerShell）
+  if (process.platform === 'win32' && previousActiveApp) {
     const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+    const focusScript = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru; [Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
     
-    if (previousActiveApp) {
-      // MemberDefinition形式（HWND取得と同じエスケープ）
-      const addTypeCmd = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru`;
-      const focusCmd = `[Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); $r = [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
-      const pasteCmd = `Start-Sleep -Milliseconds 100; Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')`;
-      
-      const script = `${addTypeCmd}; ${focusCmd}; ${pasteCmd}`;
-      
-      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${script}"`);
-    } else {
-      // HWNDがない場合は単純にペースト
-      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')"`);
-    }
-    
-    return { success: true };
+    await new Promise((resolve) => {
+      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${focusScript}"`, () => resolve());
+    });
+    await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Mac: AppleScript
-  if (process.platform === 'darwin') {
-    exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
-  }
+  // ペースト（Mac/Windows共通 - robotjs使用）
+  const modifier = process.platform === 'darwin' ? 'command' : 'control';
+  robot.keyTap('v', modifier);
 
   return { success: true };
 });
