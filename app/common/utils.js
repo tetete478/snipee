@@ -238,6 +238,8 @@ class KeyboardNavigator {
     this.onLeft = options.onLeft || null;
     this.onSubmenuEnter = options.onSubmenuEnter || null;
     this.onNumberKey = options.onNumberKey || null;
+    this.onFocusChange = options.onFocusChange || null;
+    
     
     // 入力中の無効化
     this.disableOnInput = options.disableOnInput !== false;
@@ -257,6 +259,7 @@ class KeyboardNavigator {
     if (this.selectableItems.length === 0) return;
     this.selectedIndex = (this.selectedIndex - 1 + this.selectableItems.length) % this.selectableItems.length;
     this.updateVisual();
+    if (this.onFocusChange) this.onFocusChange(this.getSelectedItem());
   }
   
   // 下に移動
@@ -264,6 +267,7 @@ class KeyboardNavigator {
     if (this.selectableItems.length === 0) return;
     this.selectedIndex = (this.selectedIndex + 1) % this.selectableItems.length;
     this.updateVisual();
+    if (this.onFocusChange) this.onFocusChange(this.getSelectedItem());
   }
   
   // 視覚的更新

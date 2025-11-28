@@ -37,7 +37,7 @@ jobs:
       - name: Publish Mac
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx electron-builder --mac --publish always
+        run: npx electron-builder --mac --x64 --arm64 --publish always
 
   publish-windows:
     runs-on: windows-latest

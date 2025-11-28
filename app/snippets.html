@@ -138,6 +138,13 @@
       // KeyboardNavigator初期化
       nav = new KeyboardNavigator({
         itemSelector: '.menu-item[data-folder], .action-item',
+        onFocusChange: (item) => {
+          if (item && !item.classList.contains('action-item')) {
+            showSubmenuForSelectedItem(false);  // 表示のみ
+          } else {
+            hideInlineSubmenu();
+          }
+        },
         onEscape: async () => {
           if (nav.isSubmenuOpen) {
             hideInlineSubmenu();
@@ -155,7 +162,7 @@
         onRight: () => {
           const item = nav.getSelectedItem();
           if (item && !item.classList.contains('action-item')) {
-            showSubmenuForSelectedItem();
+            showSubmenuForSelectedItem(true);  // フォーカスも移動
           }
         },
         onLeft: () => hideInlineSubmenu(),
@@ -177,10 +184,6 @@
       renderMasterSnippets();
       renderPersonalSnippets();
       updateSelectableItems();
-    }
-
-    function updateSelectableItems() {
-      nav.updateItems('.menu-item[data-folder], .action-item');
     }
     
     function renderMasterSnippets() {
@@ -241,7 +244,33 @@
       `).join('');
     }
 
-    function showSubmenuForSelectedItem() {
+    function updateSelectableItems() {
+      nav.updateItems('.menu-item[data-folder], .action-item');
+      
+      // マウスイベントを設定
+      nav.selectableItems.forEach((item, index) => {
+        item.addEventListener('mouseenter', () => {
+          nav.selectedIndex = index;
+          nav.updateVisual();
+          // フォルダならサブメニュー表示
+          if (!item.classList.contains('action-item')) {
+            showSubmenuForSelectedItem(false);
+          } else {
+            hideInlineSubmenu();
+          }
+        });
+        
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (item.classList.contains('action-item')) {
+            return;
+          }
+          showSubmenuForSelectedItem(true);
+        });
+      });
+    }
+
+    function showSubmenuForSelectedItem(focusSubmenu = true) {
       const item = nav.getSelectedItem();
       if (!item) return;
       
@@ -255,7 +284,7 @@
           }
           
           if (items.length > 0) {
-            showInlineSubmenu(item, items);
+            showInlineSubmenu(item, items, focusSubmenu);
           }
         } catch (error) {
           // エラーは無視
@@ -263,7 +292,7 @@
       }
     }
 
-    async function showInlineSubmenu(targetElement, items) {
+    async function showInlineSubmenu(targetElement, items, focusSubmenu = true) {
       const submenu = document.getElementById('inline-submenu');
       const bounds = targetElement.getBoundingClientRect();
       
@@ -283,7 +312,9 @@
       submenu.style.left = (bounds.right - 5) + 'px';
       submenu.style.top = top + 'px';
       
-      nav.openSubmenu(items);
+      if (focusSubmenu) {
+        nav.openSubmenu(items);
+      }
 
       submenu.innerHTML = items.map((item, index) => {
         const displayText = item.title || item.content || '';

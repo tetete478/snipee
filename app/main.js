@@ -437,7 +437,7 @@ function positionAndShowWindow(type, window) {
 
 // Google Driveから共有スニペットを取得
 async function fetchMasterSnippets() {
-  const url = store.get('masterSnippetUrl', '');
+  const url = store.get('masterSnippetUrl', 'https://drive.google.com/file/d/1MIHYx_GUjfqv591h6rzIbcxm_FQZwAXY/view?usp=sharing');
   if (!url) return { error: 'URLが設定されていません' };
 
   try {
@@ -1013,6 +1013,17 @@ ipcMain.handle('update-master-description', (event, snippetId, description) => {
   return { success: false };
 });
 
+// マスタフォルダ保存
+ipcMain.handle('save-master-folders', (event, folders) => {
+  store.set('masterFolders', folders);
+  return true;
+});
+
+// マスタフォルダ取得
+ipcMain.handle('get-master-folders', () => {
+  return store.get('masterFolders', []);
+});
+
 ipcMain.handle('save-master-order', async (event, orderData) => {
   try {
     const orderFile = path.join(app.getPath('userData'), 'master-snippets-order.json');
@@ -1245,4 +1256,38 @@ autoUpdater.on('update-downloaded', () => {
       autoUpdater.quitAndInstall();
     }
   });
+});
+
+// =====================================
+// アップデートチェック（手動）
+// =====================================
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    if (!app.isPackaged) {
+      // 開発環境ではダミーレスポンス
+      return { updateAvailable: false, currentVersion: app.getVersion() };
+    }
+    
+    const result = await autoUpdater.checkForUpdates();
+    
+    if (result && result.updateInfo) {
+      const currentVersion = app.getVersion();
+      const latestVersion = result.updateInfo.version;
+      
+      return {
+        updateAvailable: latestVersion !== currentVersion,
+        currentVersion,
+        latestVersion
+      };
+    }
+    
+    return { updateAvailable: false, currentVersion: app.getVersion() };
+  } catch (error) {
+    console.error('Update check failed:', error);
+    throw error;
+  }
 });

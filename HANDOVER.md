@@ -1,6 +1,6 @@
 # Snipee 開発引き継ぎドキュメント
 
-**バージョン**: v1.5.5  
+**バージョン**: v1.5.10  
 **最終更新**: 2025-11-28  
 **GitHub**: https://github.com/tetete478/snipee
 
@@ -56,16 +56,16 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - **フレームワーク**: Electron
 - **データ保存**: electron-store
 - **XML 解析**: xml2js（Clipy 互換）
-- **自動ペースト（Windows）**: PowerShell（SetForegroundWindow + Altキートリック）+ robotjs
+- **自動ペースト（Windows）**: PowerShell（SetForegroundWindow + Alt キートリック）+ robotjs
 - **自動ペースト（Mac）**: AppleScript + Bundle ID 方式（元アプリに確実に戻る）
-- **キー入力**: robotjs（Mac/Windows共通）
+- **キー入力**: robotjs（Mac/Windows 共通）
 - **自動アップデート**: electron-updater + GitHub Releases
 - **ビルド**: electron-builder
-- **CI/CD**: GitHub Actions（Mac/Windows並行ビルド）
+- **CI/CD**: GitHub Actions（タグプッシュで自動ビルド＆リリース）
 
 ---
 
-## 🚀 リリース手順（自動アップデート）
+## 🚀 リリース手順（GitHub Actions 自動ビルド）
 
 ### 初回セットアップ（1 回だけ）
 
@@ -79,19 +79,15 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
    - Scopes: ✅ `repo` にチェック
 4. 「Generate token」→ トークンをコピー
 
-#### 2. 環境変数に設定
+#### 2. GitHub Secrets に登録
 
-```bash
-# 一時的（今回のセッションだけ）
-export GH_TOKEN=ghp_ここにトークン
-
-# 永続的（おすすめ）
-echo 'export GH_TOKEN=ghp_ここにトークン' >> ~/.zshrc
-source ~/.zshrc
-
-# 確認
-echo $GH_TOKEN
-```
+1. GitHub → リポジトリ → **Settings**
+2. 左メニュー → **Secrets and variables** → **Actions**
+3. **New repository secret** をクリック
+4. 入力:
+   - Name: `GH_TOKEN`
+   - Secret: （作成したトークン）
+5. **Add secret**
 
 ### 新バージョンのリリース手順
 
@@ -101,25 +97,49 @@ cd /path/to/snipee
 
 # 2. ソースコードをコミット＆プッシュ
 git add .
-git commit -m "v1.5.5: 変更内容"
+git commit -m "変更内容"
 git push
 
 # 3. バージョンを上げる（自動でgit commit & tagも作成）
-npm version patch   # 1.5.4 → 1.5.5（バグ修正）
-npm version minor   # 1.5.4 → 1.6.0（機能追加）
-npm version major   # 1.5.4 → 2.0.0（大きな変更）
+npm version patch   # 1.5.9 → 1.5.10（バグ修正）
+npm version minor   # 1.5.9 → 1.6.0（機能追加）
+npm version major   # 1.5.9 → 2.0.0（大きな変更）
 
-# 4. ビルド＆GitHub Releasesにアップロード
-npm run publish        # Mac + Windows 両方
-npm run publish:win    # Windows版のみ
-npm run publish:mac    # Mac版のみ
+# 4. タグをプッシュ → GitHub Actions が自動でビルド＆リリース
+git push origin main --tags
+```
+
+### 自動で実行されること（GitHub Actions）
+
+```
+タグをプッシュ（v1.5.10など）
+     ↓
+GitHub Actions が起動
+     ↓
+Mac / Windows 並行ビルド
+     ↓
+GitHub Releases に自動アップロード
+  - Snipee Setup X.X.X.exe
+  - Snipee-X.X.X-arm64.dmg
+  - latest.yml（Windows自動アップデート用）
+  - latest-mac.yml（Mac自動アップデート用）
 ```
 
 ### リリース後の確認
 
-1. https://github.com/tetete478/snipee/releases にアクセス
-2. 新しいバージョンがアップロードされているか確認
-3. Draft（下書き）状態なら「Edit」→「Publish release」をクリック
+1. GitHub → **Actions** タブで両方のジョブが成功しているか確認
+2. https://github.com/tetete478/snipee/releases にアクセス
+3. 新しいバージョンがアップロードされているか確認
+4. Draft（下書き）状態なら「Edit」→「Publish release」をクリック
+
+### ローカルでの開発（npm start）
+
+**注意**: robotjs はネイティブモジュールなので、ローカル開発時は再ビルドが必要
+
+```bash
+npx electron-rebuild
+npm start
+```
 
 ### ユーザー側の体験
 
@@ -141,11 +161,13 @@ npm run publish:mac    # Mac版のみ
 
 ### トラブルシューティング
 
-| 問題                            | 原因             | 解決策                                |
-| ------------------------------- | ---------------- | ------------------------------------- |
-| `npm run publish` が失敗        | GH_TOKEN 未設定  | `echo $GH_TOKEN` で確認、設定し直す   |
-| Releases にアップロードされない | トークン権限不足 | トークン作成時に `repo` にチェック    |
-| ユーザーに更新通知が来ない      | Draft 状態のまま | GitHub Releases で「Publish release」 |
+| 問題                            | 原因             | 解決策                                  |
+| ------------------------------- | ---------------- | --------------------------------------- |
+| GitHub Actions が起動しない     | タグ形式が不正   | `v` で始まるタグを使う（例: `v1.5.10`） |
+| Actions でビルド失敗            | Secrets 未設定   | Settings → Secrets に `GH_TOKEN` を登録 |
+| Releases にアップロードされない | トークン権限不足 | トークン作成時に `repo` にチェック      |
+| ユーザーに更新通知が来ない      | Draft 状態のまま | GitHub Releases で「Publish release」   |
+| ローカル `npm start` でエラー   | robotjs 未ビルド | `npx electron-rebuild` を実行           |
 
 ---
 
@@ -275,10 +297,8 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 #### 自動ペースト
 
-- **Windows**: PowerShell（SetForegroundWindow + Altキートリック）+ robotjs ✅ 動作確認済み
-  - HWND取得 → SetForegroundWindow → robotjs Ctrl+V
-  - ⚠️ 速度問題あり（PowerShell起動に300-500ms）
-- **Mac**: AppleScript + Bundle ID 方式で実装 ✅ 動作確認済み
+- **Windows**: PowerShell SendKeys で実装
+- **Mac**: AppleScript + Bundle ID 方式で実装
 
 #### ホットキー
 
@@ -297,7 +317,6 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 ### ⚠️ 既知の制限
 
 - IME 有効時のホットキー不安定
-- Windows版の自動ペーストが遅い（PowerShell起動オーバーヘッド約300-500ms）
 
 ---
 
@@ -349,11 +368,11 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 **理由**: ブラウザ開発者ツールは使わない（ユーザーに見せたくない）  
 **実装**: main.js で `ipcMain.on('log', (event, msg) => console.log(msg))`
 
-### 8. ✅ ネイティブモジュールはGitHub Actionsでビルド
+### 8. ✅ ネイティブモジュールは避ける
 
-**課題**: robotjsはネイティブモジュールでクロスコンパイル不可
-**解決**: GitHub Actionsで各プラットフォーム（Windows/Mac）ごとにビルド
-**教訓**: ネイティブモジュールを使う場合はCI/CDで各環境ビルドが必須
+**失敗**: robotjs でビルド問題、Electron バージョン互換性問題  
+**解決**: PowerShell（Windows）/ AppleScript（Mac）で OS 標準機能を使用  
+**教訓**: ネイティブモジュールは依存関係が複雑になるため、OS 標準機能で代替できないか検討
 
 ### 9. ✅ DRY 原則（Don't Repeat Yourself）の徹底
 
@@ -396,11 +415,10 @@ exec(`osascript -e 'tell application id "${previousActiveApp}" to activate'`);
 
 ### 🟡 優先度：中
 
-#### 2. Windows 環境での総合テスト
+#### 2. Windows 環境での動作確認
 
 - 全機能テスト（自動ペースト、ホットキー、UI）
 - 各種 Windows アプリでの互換性チェック
-- 速度の体感確認（許容範囲か）
 
 **作業見積もり**: 1 セッション
 
@@ -539,47 +557,50 @@ app/common/
 
 ---
 
-### Phase 2: 自動ペースト・変数機能（完了 - v1.5.5）
+### Phase 2: 自動ペースト・変数機能（完了 - v1.5.10）
 
-#### 1. Windows 自動ペーストを PowerShell + robotjs に変更 ✅（v1.5.5）
+#### 1. Windows 自動ペーストを PowerShell + robotjs に変更 ✅（v1.5.10）
 
 **変更理由**:
 
-- PowerShell SendKeysが不安定
-- フォーカス復帰が必要（UIPI制限対策）
+- PowerShell SendKeys が不安定
+- フォーカス復帰が必要（UIPI 制限対策）
 
 **新実装**:
 
 ```javascript
 // 1. ホットキー押下時にHWND取得
-const hwnd = execSync(`powershell -NoProfile -Command "...GetForegroundWindow()..."`);
+const hwnd = execSync(
+  `powershell -NoProfile -Command "...GetForegroundWindow()..."`
+);
 
 // 2. ペースト時にフォーカス復帰（Altキートリック）
 exec(`powershell -NoProfile -Command "...SetForegroundWindow()..."`);
 
 // 3. robotjsでCtrl+V
-robot.keyTap('v', 'control');
+robot.keyTap("v", "control");
 ```
 
 **メリット**:
 
-- SetForegroundWindow + Altキートリックで確実にフォーカス復帰
-- robotjsでMac/Windows共通のキー入力コード
+- SetForegroundWindow + Alt キートリックで確実にフォーカス復帰
+- robotjs で Mac/Windows 共通のキー入力コード
 
 **デメリット**:
 
-- PowerShell起動オーバーヘッドで遅い（300-500ms）
+- PowerShell 起動オーバーヘッドで遅い（300-500ms）
 
-#### 1.5. GitHub Actions CI/CD構築 ✅（v1.5.5）
+#### 1.5. GitHub Actions CI/CD 構築 ✅（v1.5.10）
 
 **ファイル**: `.github/workflows/build.yml`
 
 **機能**:
-- Windows/Mac並行ビルド
-- electron-rebuild自動実行（robotjs対応）
-- Artifactsに自動アップロード
+
+- Windows/Mac を別ジョブで並行ビルド（クロスコンパイル問題を回避）
+- タグプッシュ（v\*）で自動発火
+- electron-rebuild 自動実行（robotjs 対応）
+- GitHub Releases に自動アップロード（latest.yml 含む）
 - 手動実行可能（workflow_dispatch）
-- mainブランチpushでビルド開始
 
 #### 2. Mac 自動ペースト実装 ✅（v1.5.5）
 
@@ -666,7 +687,7 @@ exec(
 - 説明パネル幅拡大（160px → 190px）
 - リサイズ時の不要な再計算を防止
 
-**Phase 2 完了日**: 2025-11-27（v1.5.5）
+**Phase 2 完了日**: 2025-11-28（v1.5.10）
 
 ---
 
@@ -753,72 +774,30 @@ exec(
 - 同期は起動時のみなので、編集後にアプリを終了しない
 - 編集後は XML エクスポート → Google Drive に上書き
 
-#### 2. Windows 自動ペースト速度改善 🟡
+#### 2. Windows 自動ペーストの改善 🔴
 
-**現状**: 動作確認済みだが遅い（約300-500ms）
+**現状**: Windows 版で自動ペーストが動作しない
 
 **現在の実装**:
+
 ```javascript
-// 1. ホットキー押下時にHWND取得（PowerShell）
-const hwnd = execSync(`powershell -NoProfile -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name WinAPI -Namespace Win32 -PassThru)::GetForegroundWindow()"`);
-
-// 2. ペースト時にフォーカス復帰（PowerShell + Altキートリック）
-exec(`powershell -NoProfile -Command "Add-Type -MemberDefinition '...' -Name WinAPI; [Win32.WinAPI]::keybd_event(0x12,0,0,0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${hwnd}); [Win32.WinAPI]::keybd_event(0x12,0,2,0)"`);
-
-// 3. robotjsでCtrl+V
-robot.keyTap('v', 'control');
+exec(
+  "powershell -command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^v')\""
+);
 ```
 
-**ボトルネック**:
-- PowerShell起動: 200-500ms（毎回Add-Typeコンパイル）
-- 待機時間: 30ms
-- robotjs: 即時
+**問題点**:
 
-**試行済み（失敗）**:
-- 非同期実行 → Altキー干渉でペースト失敗
-- VBScript AppActivate → フォーカス復帰不安定
-- hide()のみ → Windowsは自動でフォーカス戻さない
+- PowerShell SendKeys が正常に動作しない
+- 元のアプリへのフォーカス復帰が不安定
 
-**今後の改善案**:
-- PowerShell内でSendKeysまで完結（robotjs不使用）
-- JScript版試行
-- 常駐ヘルパープロセス
+**調査が必要な項目**:
 
-**作業見積もり**: 1〜2セッション
+- PowerShell の実行タイミング
+- フォーカス復帰の方法（Windows 版）
+- 代替手段の検討（AutoHotkey、nircmd 等）
 
-#### 2.5. Windows 自動ペースト速度改善（ffi-napi検討） 🟡
-
-**現状の問題**:
-- ホットキー押下時: PowerShellでHWND取得（200-500ms）
-- ペースト時: PowerShellでSetForegroundWindow（200-500ms）
-- **合計: 400-1000msのオーバーヘッド**
-
-**改善案: ffi-napi導入**
-```javascript
-const ffi = require('ffi-napi');
-const user32 = ffi.Library('user32', {
-  'GetForegroundWindow': ['pointer', []],
-  'SetForegroundWindow': ['bool', ['pointer']],
-  'keybd_event': ['void', ['uchar', 'uchar', 'uint32', 'pointer']]
-});
-
-// 即時実行（PowerShell起動なし）
-const hwnd = user32.GetForegroundWindow();
-user32.SetForegroundWindow(hwnd);
-```
-
-**比較**:
-
-| 方法 | HWND取得 | フォーカス復帰 | 合計 |
-|-----|---------|--------------|------|
-| PowerShell（現在） | 200-500ms | 200-500ms | 400-1000ms |
-| ffi-napi | ~1ms | ~1ms | ~2ms |
-
-**注意点**:
-- ffi-napiはネイティブモジュール → GitHub Actionsでビルド必要
-- robotjsと同様のビルド設定で対応可能
-
-**作業見積もり**: 1セッション
+**作業見積もり**: 1〜2 セッション
 
 ---
 
@@ -842,4 +821,4 @@ user32.SetForegroundWindow(hwnd);
 
 **開発者**: てるや  
 **最終更新**: 2025-11-28  
-**現在のバージョン**: v1.5.5
+**現在のバージョン**: v1.5.10

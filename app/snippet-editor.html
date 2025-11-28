@@ -446,25 +446,20 @@
 <body>
   <div class="container">
     <div class="toolbar">
-      <button class="toolbar-btn" onclick="addFolder()">
-        <span>📁</span>
-        <span>フォルダ追加</span>
+      <button class="toolbar-btn" onclick="addFolder()" title="フォルダ追加">
+        <span>📁+</span>
       </button>
-      <button class="toolbar-btn" onclick="addSnippet()">
-        <span>📄</span>
-        <span>スニペット追加</span>
+      <button class="toolbar-btn" onclick="addSnippet()" title="スニペット追加">
+        <span>📄+</span>
       </button>
-      <button class="toolbar-btn" onclick="deleteSelected()">
+      <button class="toolbar-btn" onclick="deleteSelected()" title="削除">
         <span>🗑</span>
-        <span>削除</span>
       </button>
-      <button class="toolbar-btn" onclick="showExportDialog()">
-        <span>📤</span>
-        <span>XMLエクスポート</span>
+      <button class="toolbar-btn" onclick="showExportDialog()" title="XMLエクスポート">
+        <span>📤 Export</span>
       </button>
-      <button class="toolbar-btn" onclick="showMasterPasswordDialog()" id="master-edit-btn" style="display: none;">
-        <span>🔒</span>
-        <span>マスタ編集モード</span>
+      <button class="toolbar-btn" onclick="showMasterPasswordDialog()" id="master-edit-btn" style="display: none;" title="マスタ編集モード">
+        <span>🔒 編集</span>
       </button>
     </div>
 
@@ -526,6 +521,7 @@
 
     let folders = [];
     let masterSnippets = [];
+    let masterFolders = [];  // マスタフォルダ（独立管理）
     let personalSnippets = [];
     let allSnippets = [];
     let currentPane = 'sidebar'; // 'sidebar' | 'content' | 'description'
@@ -559,6 +555,7 @@
         });
       }
       
+      masterFolders = await ipcRenderer.invoke('get-master-folders');
       masterSnippets = masterSnippets.map(s => ({ ...s, isMaster: true }));
       
       allSnippets = [...masterSnippets, ...personalSnippets];
@@ -572,15 +569,15 @@
     function renderSidebar() {
       const sidebar = document.getElementById('sidebar');
       
-      // ✅ マスタスニペットから直接フォルダリストを生成
-      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
+      // ✅ マスタフォルダ（独立管理） + スニペットから取得したフォルダを結合
+      const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
       
       // ✅ 個別スニペットのフォルダだけを使う
       const personalFolders = folders;
       
-      const masterSection = masterFolders.length > 0 ? `
+      const masterSection = allMasterFolders.length > 0 ? `
         <div class="section-header">マスタスニペット</div>
-        ${masterFolders.map(folder => {
+        ${allMasterFolders.map(folder => {
           const folderSnippets = masterSnippets.filter(s => s.folder === folder);
           const isExpanded = expandedFolders.has(folder);
           const isSelected = selectedFolder === folder;
@@ -783,32 +780,77 @@
       const newFolderName = '新しいフォルダ';
       let folderName = newFolderName;
       let counter = 1;
-      while (folders.includes(folderName)) {
-        folderName = `${newFolderName} ${counter}`;
-        counter++;
-      }
+      
+      // マスタ編集モードの場合はマスタフォルダに追加
+      if (isMasterEditMode) {
+        const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
+        while (allMasterFolders.includes(folderName) || folders.includes(folderName)) {
+          folderName = `${newFolderName} ${counter}`;
+          counter++;
+        }
+        
+        // マスタフォルダリストに追加（スニペットは作らない）
+        masterFolders.push(folderName);
+        await ipcRenderer.invoke('save-master-folders', masterFolders);
+        expandedFolders.add(folderName);
+        selectedFolder = folderName;
+        await loadData();
+        render();
+      } else {
+        while (folders.includes(folderName)) {
+          folderName = `${newFolderName} ${counter}`;
+          counter++;
+        }
 
-      folders.push(folderName);
-      expandedFolders.add(folderName);
-      await ipcRenderer.invoke('save-personal-folders', folders);
-      selectedFolder = folderName;
-      render();
-      setTimeout(() => startRenameFolder(folderName), 100);
+        folders.push(folderName);
+        expandedFolders.add(folderName);
+        await ipcRenderer.invoke('save-personal-folders', folders);
+        selectedFolder = folderName;
+        render();
+        setTimeout(() => startRenameFolder(folderName), 100);
+      }
     }
 
     async function deleteFolder(folderName) {
-      const folderSnippets = personalSnippets.filter(s => s.folder === folderName);
-      const message = folderSnippets.length > 0 
-        ? `フォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のスニペットも削除されます）`
-        : `フォルダ「${folderName}」を削除しますか？`;
+      // マスタフォルダかどうか判定
+      const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
+      const isMasterFolder = allMasterFolders.includes(folderName);
       
-      if (!confirm(message)) return;
+      if (isMasterFolder && !isMasterEditMode) {
+        alert('マスタフォルダは削除できません\n（マスタ編集モードで削除できます）');
+        return;
+      }
+      
+      if (isMasterFolder) {
+        // マスタフォルダの削除
+        const folderSnippets = masterSnippets.filter(s => s.folder === folderName);
+        const message = `マスタフォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のマスタスニペットも削除されます）`;
+        
+        if (!confirm(message)) return;
+        
+        // フォルダ内のマスタスニペットを全て削除
+        for (const snippet of folderSnippets) {
+          await ipcRenderer.invoke('delete-master-snippet', snippet.id);
+        }
+        
+        // masterFoldersからも削除（空フォルダ対応）
+        masterFolders = masterFolders.filter(f => f !== folderName);
+        await ipcRenderer.invoke('save-master-folders', masterFolders);
+      } else {
+        // 個別フォルダの削除
+        const folderSnippets = personalSnippets.filter(s => s.folder === folderName);
+        const message = folderSnippets.length > 0 
+          ? `フォルダ「${folderName}」を削除しますか？\n（${folderSnippets.length}個のスニペットも削除されます）`
+          : `フォルダ「${folderName}」を削除しますか？`;
+        
+        if (!confirm(message)) return;
 
-      folders = folders.filter(f => f !== folderName);
-      personalSnippets = personalSnippets.filter(s => s.folder !== folderName);
+        folders = folders.filter(f => f !== folderName);
+        personalSnippets = personalSnippets.filter(s => s.folder !== folderName);
 
-      await ipcRenderer.invoke('save-personal-folders', folders);
-      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+        await ipcRenderer.invoke('save-personal-folders', folders);
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
 
       selectedFolder = null;
       await loadData();
@@ -824,38 +866,75 @@
         return;
       }
       
-      const newSnippet = {
-        id: Date.now().toString(),
-        title: '新しいスニペット',
-        content: '',
-        description: '', 
-        folder: targetFolder,
-        isMaster: false
-      };
+      // 選択されたフォルダがマスタフォルダかどうか判定（空フォルダも含む）
+      const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
+      const isTargetMasterFolder = allMasterFolders.includes(targetFolder);
+      
+      // マスタ編集モードでマスタフォルダが選択されている場合
+      if (isMasterEditMode && isTargetMasterFolder) {
+        const newSnippet = {
+          id: Date.now().toString(),
+          title: '新しいスニペット',
+          content: '',
+          description: '',
+          folder: targetFolder
+        };
+        
+        await ipcRenderer.invoke('save-master-snippet', newSnippet);
+        
+        selectedSnippet = { ...newSnippet, isMaster: true };
+        selectedFolder = null;
+        expandedFolders.add(targetFolder);
+        await loadData();
+        render();
+        showEditor();
+      } else {
+        // 個別スニペットとして追加
+        // マスタフォルダには追加させない
+        if (isTargetMasterFolder) {
+          alert('マスタフォルダには個別スニペットを追加できません\n（マスタ編集モードで追加してください）');
+          return;
+        }
+        
+        const newSnippet = {
+          id: Date.now().toString(),
+          title: '新しいスニペット',
+          content: '',
+          description: '', 
+          folder: targetFolder,
+          isMaster: false
+        };
 
-      personalSnippets.push(newSnippet);
-      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+        personalSnippets.push(newSnippet);
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
 
-      selectedSnippet = newSnippet;
-      selectedFolder = null;
-      expandedFolders.add(targetFolder);
-      await loadData();
-      render();
-      showEditor();
+        selectedSnippet = newSnippet;
+        selectedFolder = null;
+        expandedFolders.add(targetFolder);
+        await loadData();
+        render();
+        showEditor();
+      }
     }
 
     async function deleteSnippet(snippetId) {
       const snippet = allSnippets.find(s => s.id === snippetId);
       
-      if (snippet.isMaster) {
-        alert('マスタスニペットは削除できません');
+      if (snippet.isMaster && !isMasterEditMode) {
+        alert('マスタスニペットは削除できません\n（マスタ編集モードで削除できます）');
         return;
       }
       
       if (!confirm('このスニペットを削除しますか？')) return;
 
-      personalSnippets = personalSnippets.filter(s => s.id !== snippetId);
-      await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      if (snippet.isMaster) {
+        // マスタスニペットを削除
+        await ipcRenderer.invoke('delete-master-snippet', snippetId);
+      } else {
+        // 個別スニペットを削除
+        personalSnippets = personalSnippets.filter(s => s.id !== snippetId);
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
+      }
 
       if (selectedSnippet?.id === snippetId) {
         selectedSnippet = null;
@@ -972,16 +1051,13 @@
       const trimmedName = newName.trim();
       if (trimmedName) {
         snippet.title = trimmedName;
+        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
       }
       
       await loadData();
       render();
       if (selectedSnippet?.id === snippetId) {
         showEditor();
-      }
-      
-      if (trimmedName) {
-        await ipcRenderer.invoke('save-personal-snippets', personalSnippets);
       }
 
       moveToNextItem();
@@ -1278,9 +1354,9 @@
 
       const allItems = [];
       
-      // マスタフォルダはmasterSnippetsから直接取得
-      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
-      masterFolders.forEach(folder => {
+      // マスタフォルダ（空フォルダも含む）
+      const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
+      allMasterFolders.forEach(folder => {
         allItems.push({ type: 'folder', name: folder });
         if (expandedFolders.has(folder)) {
           masterSnippets.filter(s => s.folder === folder).forEach(snippet => {
@@ -1369,9 +1445,9 @@
     function moveToNextItem() {
       const allItems = [];
       
-      // マスタフォルダはmasterSnippetsから直接取得
-      const masterFolders = [...new Set(masterSnippets.map(s => s.folder))];
-      masterFolders.forEach(folder => {
+      // マスタフォルダ（空フォルダも含む）
+      const allMasterFolders = [...new Set([...masterFolders, ...masterSnippets.map(s => s.folder)])];
+      allMasterFolders.forEach(folder => {
         allItems.push({ type: 'folder', name: folder });
         if (expandedFolders.has(folder)) {
           masterSnippets.filter(s => s.folder === folder).forEach(snippet => {
@@ -1605,14 +1681,14 @@
     // ========================================
     function updateMasterEditButton() {
       const btn = document.getElementById('master-edit-btn');
-      if (masterSnippets.length > 0) {
+      if (masterSnippets.length > 0 || masterFolders.length > 0) {
         btn.style.display = 'flex';
         if (isMasterEditMode) {
-          btn.innerHTML = '<span>🔓</span><span>編集モード: ON</span>';
+          btn.innerHTML = '<span>🔓 編集中</span>';
           btn.style.background = '#e8f5e9';
           btn.style.borderColor = '#34c759';
         } else {
-          btn.innerHTML = '<span>🔒</span><span>マスタ編集モード</span>';
+          btn.innerHTML = '<span>🔒 マスタ編集</span>';
           btn.style.background = '';
           btn.style.borderColor = '';
         }
