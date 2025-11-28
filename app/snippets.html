@@ -321,7 +321,7 @@
         const truncatedText = displayText.length > 25 ? displayText.substring(0, 25) + '...' : displayText;
         
         return `
-          <div class="submenu-item ${index === 0 ? 'selected' : ''}" data-index="${index}">
+          <div class="submenu-item ${focusSubmenu && index === 0 ? 'selected' : ''}" data-index="${index}">
             <div class="submenu-item-title">📄 ${index + 1}. ${escapeHtml(truncatedText)}</div>
           </div>
         `;

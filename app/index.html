@@ -398,85 +398,6 @@
       }
     }
 
-    async function handleKeyboard(e) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        hideInlineSubmenu();
-        await ipcRenderer.invoke('hide-window');
-        return;
-      }
-
-      if (isSubmenuOpen) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          submenuSelectedIndex = (submenuSelectedIndex + 1) % submenuItems.length;
-          updateSubmenuSelection();
-          return;
-        }
-        
-
-
-        if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          submenuSelectedIndex = (submenuSelectedIndex - 1 + submenuItems.length) % submenuItems.length;
-          updateSubmenuSelection();
-          return;
-        }
-
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const selectedItem = submenuItems[submenuSelectedIndex];
-          if (selectedItem) {
-            await pasteSubmenuItem(selectedItem.content);
-          }
-          return;
-        }
-      }
-
-      if (e.key >= '1' && e.key <= '9') {
-        e.preventDefault();
-        const index = parseInt(e.key) - 1;
-        if (selectableItems[index]) {
-          selectedIndex = index;
-          updateSelection();
-          await activateSelectedItem();
-        }
-        return;
-      }
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex + 1) % selectableItems.length;
-        updateSelection();
-        return;
-      }
-
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        selectedIndex = (selectedIndex - 1 + selectableItems.length) % selectableItems.length;
-        updateSelection();
-        return;
-      }
-
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        await activateSelectedItem();
-        return;
-      }
-
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        showSubmenuForSelectedItem();
-        return;
-      }
-
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        hideInlineSubmenu();
-        return;
-      }
-    }
-
     function showSubmenuForSelectedItem(focusSubmenu = true) {
       const item = nav.getSelectedItem();
       if (!item) return;
@@ -546,7 +467,7 @@
         const truncatedText = displayText.length > 25 ? displayText.substring(0, 25) + '...' : displayText;
         
         return `
-        <div class="submenu-item ${index === 0 ? 'selected' : ''}" data-index="${index}">
+        <div class="submenu-item ${focusSubmenu && index === 0 ? 'selected' : ''}" data-index="${index}">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <div class="submenu-item-title"><span class="submenu-item-icon">📄</span> ${index + 1}. ${escapeHtml(truncatedText)}</div>
             ${isHistoryItem ? `<span class="pin-button" data-item-id="${item.id}" style="cursor: pointer; font-size: 10px; flex-shrink: 0; color: #666; -webkit-app-region: no-drag;">${pinIcon}</span>` : ''}

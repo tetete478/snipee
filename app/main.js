@@ -50,6 +50,28 @@ let tray = null;
 let snippetEditorWindow = null;
 let previousActiveApp = null;  // 元のアクティブアプリを記憶
 
+// 元のアクティブアプリを記憶
+function captureActiveApp() {
+  if (process.platform === 'darwin') {
+    try {
+      const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
+      if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
+        previousActiveApp = bundleId;
+      }
+    } catch (error) {
+      console.log('Mac: Bundle ID取得スキップ:', error.message);
+    }
+  } else if (process.platform === 'win32') {
+    try {
+      const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+      const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
+      previousActiveApp = hwnd;
+    } catch (error) {
+      console.log('Windows: HWND取得スキップ:', error.message);
+    }
+  }
+}
+
 // アクセシビリティ権限チェック
 function hasAccessibilityPermission() {
   if (process.platform !== 'darwin') return true;
@@ -203,40 +225,12 @@ function registerGlobalShortcuts() {
   };
 
   registerWithRetry(mainHotkey, () => {
-    if (process.platform === 'darwin') {
-      try {
-        const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
-        if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
-          previousActiveApp = bundleId;
-        }
-      } catch (error) {}
-    } else if (process.platform === 'win32') {
-      try {
-        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
-        previousActiveApp = hwnd;
-      } catch (error) {}
-    }
-    
+    captureActiveApp();
     showClipboardWindow();
   });
 
   registerWithRetry(snippetHotkey, () => {
-    if (process.platform === 'darwin') {
-      try {
-        const bundleId = execSync('osascript -e \'tell application "System Events" to get bundle identifier of first application process whose frontmost is true\'').toString().trim();
-        if (bundleId !== 'com.electron.snipee' && bundleId !== 'com.github.Electron') {
-          previousActiveApp = bundleId;
-        }
-      } catch (error) {}
-    } else if (process.platform === 'win32') {
-      try {
-        const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-        const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
-        previousActiveApp = hwnd;
-      } catch (error) {}
-    }
-    
+    captureActiveApp();
     showSnippetWindow();
   });
 }
@@ -856,6 +850,10 @@ ipcMain.handle('hide-settings-window', () => {
 // マウストラッキング
 let isMouseOverClipboard = false;
 let clipboardCloseTimer = null;
+
+ipcMain.on('log', (event, msg) => {
+  console.log(msg);
+});
 
 ipcMain.on('clipboard-mouse-enter', () => {
   isMouseOverClipboard = true;

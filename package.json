@@ -2,6 +2,10 @@
   "name": "snipee",
   "version": "1.5.12",
   "description": "Mac/Windows対応のクリップボード管理ツール",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tetete478/snipee.git"
+  },
   "main": "app/main.js",
   "scripts": {
     "start": "electron .",
