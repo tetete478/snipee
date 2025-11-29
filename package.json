@@ -1,6 +1,6 @@
 {
   "name": "snipee",
-  "version": "1.5.14",
+  "version": "1.5.15",
   "description": "Mac/Windows対応のクリップボード管理ツール",
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
+    "docx": "^9.5.1",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.7",
     "robotjs": "^0.6.0",

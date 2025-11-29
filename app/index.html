@@ -115,9 +115,10 @@
       personal: [],
       master: []
     };
-    
+
     let pinnedItems = [];
-    let nav; // KeyboardNavigator
+    let nav;
+    let historyGroups = [];  // ★ 追加
 
     async function init() {
       setupEventListeners();  // navを先に初期化
@@ -151,7 +152,8 @@
     function setupEventListeners() {
       // KeyboardNavigator初期化
       nav = new KeyboardNavigator({
-        itemSelector: '.menu-item[data-history-group], .menu-item[data-folder], .action-item',
+      // ★ data-history-group を data-group-index に変更
+      itemSelector: '.menu-item[data-group-index], .menu-item[data-folder], .action-item',
         onFocusChange: (item) => {
           if (item && !item.classList.contains('action-item')) {
             showSubmenuForSelectedItem(false);  // 表示のみ、フォーカス移動なし
@@ -199,10 +201,6 @@
       updateSelectableItems();
     }
 
-    function updateSelectableItems() {
-      nav.updateItems('.menu-item[data-history-group], .menu-item[data-folder], .action-item');
-    }
-
     function renderHistory(query = '') {
       const container = document.getElementById('history-section');
       let items = allItems.history;
@@ -221,10 +219,11 @@
 
       const groups = groupHistoryItems(items);
       
+      // ★ data-history-group を data-group-index に変更
       container.innerHTML = groups.map((group, index) => `
         <div class="menu-item" 
             data-group-id="history-${index}"
-            data-history-group='${JSON.stringify(group.items).replace(/'/g, "&apos;")}'>
+            data-group-index="${index}">
           <div class="menu-item-left">
             <span class="menu-item-icon">📄</span>
             <span class="menu-item-text">${group.label}</span>
@@ -235,10 +234,10 @@
     }
 
     function updateSelectableItems() {
-      nav.updateItems('.menu-item[data-history-group], .menu-item[data-folder], .action-item');
-      
-      // マウスイベントを設定
-      nav.selectableItems.forEach((item, index) => {
+        // ★ data-history-group を data-group-index に変更
+        nav.updateItems('.menu-item[data-group-index], .menu-item[data-folder], .action-item');
+        
+        nav.selectableItems.forEach((item, index) => {
         item.addEventListener('mouseenter', () => {
           nav.selectedIndex = index;
           nav.updateVisual();
@@ -265,7 +264,7 @@
     function groupHistoryItems(items) {
       if (items.length === 0) return [];
       
-      const totalCount = allItems.history.length;
+      const totalCount = items.length;
       const groups = [];
       
       const pinned = allItems.history.filter(item => pinnedItems.includes(item.id));
@@ -282,7 +281,7 @@
       for (let i = 0; i < Math.min(totalCount, 45); i += 15) {
         const start = i + 1;
         const end = Math.min(i + 15, totalCount);
-        const groupItems = allItems.history.slice(i, i + 15);
+        const groupItems = items.slice(i, i + 15);
         
         groups.push({
           start,
@@ -292,6 +291,9 @@
           isPinned: false
         });
       }
+      
+      // ★ グローバル変数に保存
+      historyGroups = groups;
       
       return groups;
     }
@@ -371,15 +373,19 @@
         let items = [];
         
         try {
-          if (item.hasAttribute('data-history-group')) {
-            const rawData = item.getAttribute('data-history-group');
-            const historyData = JSON.parse(rawData);
-            items = historyData.map(h => ({
-              id: h.id,
-              type: 'history',
-              title: h.content.substring(0, 30) + (h.content.length > 30 ? '...' : ''),
-              content: h.content
-            }));
+          // ★ data-group-index を使う方式に変更
+          if (item.hasAttribute('data-group-index')) {
+            const groupIndex = parseInt(item.getAttribute('data-group-index'), 10);
+            const group = historyGroups[groupIndex];
+            
+            if (group && group.items) {
+              items = group.items.map(h => ({
+                id: h.id,
+                type: 'history',
+                title: h.content.substring(0, 30) + (h.content.length > 30 ? '...' : ''),
+                content: h.content
+              }));
+            }
           } else if (item.hasAttribute('data-folder')) {
             const rawData = item.getAttribute('data-snippets');
             items = JSON.parse(rawData);
@@ -389,7 +395,7 @@
             showInlineSubmenu(item, items, focusSubmenu);
           }
         } catch (error) {
-          // エラーは無視
+          ipcRenderer.send('log', 'エラー: ' + error.message);
         }
       }
     }
