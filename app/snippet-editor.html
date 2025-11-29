@@ -208,21 +208,6 @@
       user-select: none;
     }
 
-    .snippet-badge {
-      font-size: 9px;
-      padding: 1px 4px;
-      background: #34c759;
-      color: white;
-      border-radius: 3px;
-      margin-left: 4px;
-      user-select: none;
-      pointer-events: none;
-    }
-
-    .snippet-item.selected .snippet-badge {
-      background: rgba(255,255,255,0.3);
-    }
-
     .content-panel {
       flex: 1;
       background: #ffffff;
@@ -292,22 +277,6 @@
       font-size: var(--font-size-large);
       font-weight: 600;
       color: #1d1d1f;
-    }
-
-    .master-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      background: #34c759;
-      color: white;
-      border-radius: 3px;
-    }
-
-    .readonly-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      background: #ff9500;
-      color: white;
-      border-radius: 3px;
     }
 
     .dragging {
@@ -405,29 +374,6 @@
       outline: none;
     }
 
-    .folder-badge {
-      font-size: 8px;
-      padding: 1px 4px;
-      background: #ff6b6b;
-      color: white;
-      border-radius: 2px;
-      margin-left: 6px;
-      user-select: none;
-      pointer-events: none;
-      font-weight: 500;
-      opacity: 0.85;
-    }
-
-    .folder-badge.personal {
-      background: #5a9fd4;
-      opacity: 0.85;
-    }
-
-    .folder-header.selected .folder-badge {
-      background: rgba(255,255,255,0.3);
-      opacity: 1;
-    }
-
     .folder-toggle-area {
       display: flex;
       align-items: center;
@@ -440,6 +386,19 @@
 
     .pane-focused {
       box-shadow: 0 0 0 2px var(--primary-color);
+    }
+
+    /* フォルダバッジ（共通label-badgeを継承） */
+    .folder-badge {
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      margin-left: 6px;
+      pointer-events: none;
+    }
+
+    .folder-header.selected .folder-badge {
+      background: rgba(255,255,255,0.3) !important;
     }
   </style>
 </head>
@@ -590,7 +549,7 @@
                   <span class="folder-icon">📁</span>
                 </div>
                 <span class="folder-name" onclick="toggleFolder('${escapeAttr(folder)}')" title="${escapeAttr(folder)}">${escapeHtml(folder)}</span>
-                <span class="folder-badge">マスタ</span>
+                <span class="label-badge master folder-badge">マスタ</span>
               </div>
               <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
                 ${folderSnippets.map(snippet => `
@@ -624,7 +583,7 @@
                   <span class="folder-icon">📁</span>
                 </div>
                 <span class="folder-name" ondblclick="event.preventDefault(); startRenameFolder('${escapeAttr(folder)}')" title="${escapeAttr(folder)}">${escapeHtml(folder)}</span>
-                <span class="folder-badge personal">個別</span>
+                <span class="label-badge personal folder-badge">個別</span>
               </div>
               <div class="snippet-list ${isExpanded ? 'expanded' : ''}">
                 ${folderSnippets.map(snippet => `
@@ -699,8 +658,8 @@
         ${isMaster ? `
         <div class="editor-header">
           <span class="editor-title">${escapeHtml(selectedSnippet.title || '無題')}</span>
-          <span class="master-badge">マスタスニペット</span>
-          ${canEdit ? '<span class="readonly-badge" style="background: #34c759;">編集可能</span>' : '<span class="readonly-badge">内容: 読み取り専用</span>'}
+          <span class="label-badge master">マスタスニペット</span>
+          ${canEdit ? '<span class="label-badge editable">編集可能</span>' : '<span class="label-badge readonly">読み取り専用</span>'}
         </div>
         ` : ''}
         <div class="editor-container">

@@ -34,4 +34,12 @@
   --border-radius-large: 8px;
   --transition-speed: 0.15s;
   --shadow-default: none;
+
+
+  /* ラベル色（ブルーグレー系） */
+  --label-master: #6b7b8a;
+  --label-personal: #9aa5b0;
+  --label-readonly: #7a8a9a;
+  --label-editable: #5a7a7a;
 }
+

@@ -8,40 +8,6 @@
   <script src="common/utils.js"></script>
   <style>
     /* index.html 固有のスタイルのみ */
-    body {
-      background: transparent;
-      user-select: none;
-    }
-
-    .container {
-      width: 210px;
-      display: flex;
-      flex-direction: column;
-      -webkit-app-region: drag;
-    }
-
-    .content {
-      -webkit-app-region: drag;
-    }
-
-    .section-header {
-      letter-spacing: 0.5px;
-    }
-
-    .menu-item.selected {
-      background: var(--primary-color);
-      color: #ffffff;
-    }
-
-    .menu-item.selected .menu-item-text {
-      color: #ffffff;
-    }
-
-    .action-item.selected {
-      background: var(--primary-color);
-      color: #ffffff;
-    }
-
     .history-preview {
       padding: 6px 12px 6px 36px;
       font-size: 12px;
@@ -88,16 +54,10 @@
     .search-box input:focus {
       border-color: var(--primary-color);
     }
-
-    .pin-icon {
-      color: #ffc107;
-      font-size: 11px;
-      margin-left: 4px;
-    }
   </style>
 </head>
-<body>
-  <div class="container">
+<body class="popup-window">
+  <div class="container popup-container">
     <div class="content" id="main-content">
       <div class="section">
         <div class="section-header">履歴</div>
@@ -439,15 +399,11 @@
       const bounds = targetElement.getBoundingClientRect();
       
       // まず最大サイズでウィンドウを拡大
-      await ipcRenderer.invoke('resize-window', { width: 460, height: 650 });
+      await ipcRenderer.invoke('resize-window', { width: SUBMENU_CONFIG.maxWindowWidth, height: SUBMENU_CONFIG.maxWindowHeight });
       
-      const margin = 10;
+      let top = SUBMENU_CONFIG.margin + SUBMENU_CONFIG.topOffset;
       
-      // サブメニューを上の方から表示(ウィンドウの上端から少し下)
-      let top = margin;
-      
-      // 最大高さを設定(スクロール用)
-      const maxHeight = 650 - margin * 2;
+      const maxHeight = SUBMENU_CONFIG.maxWindowHeight - SUBMENU_CONFIG.margin * 2;
       submenu.style.maxHeight = maxHeight + 'px';
       submenu.style.overflowY = 'auto';
       
@@ -540,6 +496,8 @@
 
     window.addEventListener('focus', () => {
       loadAllItems(false);
+      nav.selectedIndex = 0;
+      nav.updateVisual();
     });
 
     init();

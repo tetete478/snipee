@@ -41,10 +41,12 @@ const store = new Store();
 // デフォルトホットキー設定
 const DEFAULT_CLIPBOARD_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+C' : 'Ctrl+Alt+C';
 const DEFAULT_SNIPPET_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+V' : 'Ctrl+Alt+V';
+const DEFAULT_HISTORY_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+X' : 'Ctrl+Alt+X';
 
 let mainWindow;
 let clipboardWindow;
 let snippetWindow;
+let historyWindow;
 let permissionWindow;
 let tray = null;
 let snippetEditorWindow = null;
@@ -124,6 +126,10 @@ function createGenericWindow(type) {
     snippet: {
       htmlFile: 'snippets.html',
       positionKey: 'snippetWindowPosition'
+    },
+    history: {
+      htmlFile: 'history.html',
+      positionKey: 'historyWindowPosition'
     }
   };
 
@@ -157,6 +163,13 @@ function createGenericWindow(type) {
     }
   });
 
+  // フォーカスを失ったら自動的にhide
+  window.on('blur', () => {
+    if (window && !window.isDestroyed() && window.isVisible()) {
+      window.hide();
+    }
+  });
+
   return window;
 }
 
@@ -167,6 +180,10 @@ function createClipboardWindow() {
 
 function createSnippetWindow() {
   snippetWindow = createGenericWindow('snippet');
+}
+
+function createHistoryWindow() {
+  historyWindow = createGenericWindow('history');
 }
 
 // スニペット編集ウィンドウ作成
@@ -232,6 +249,12 @@ function registerGlobalShortcuts() {
   registerWithRetry(snippetHotkey, () => {
     captureActiveApp();
     showSnippetWindow();
+  });
+
+  const historyHotkey = store.get('customHotkeyHistory', DEFAULT_HISTORY_SHORTCUT);
+  registerWithRetry(historyHotkey, () => {
+    captureActiveApp();
+    showHistoryWindow();
   });
 }
 
@@ -346,26 +369,31 @@ function addToClipboardHistory(text) {
 function showGenericWindow(type) {
   const windowMap = {
     clipboard: { window: clipboardWindow, create: createClipboardWindow },
-    snippet: { window: snippetWindow, create: createSnippetWindow }
+    snippet: { window: snippetWindow, create: createSnippetWindow },
+    history: { window: historyWindow, create: createHistoryWindow }
   };
 
   const { window, create } = windowMap[type];
-  let currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
+  let currentWindow = type === 'clipboard' ? clipboardWindow : 
+                      type === 'snippet' ? snippetWindow : historyWindow;
 
-  // 他方のウィンドウを閉じる
-  if (type === 'clipboard') {
-    if (snippetWindow && !snippetWindow.isDestroyed() && snippetWindow.isVisible()) {
-      snippetWindow.hide();
+  // 他のウィンドウを閉じる
+  const allWindows = [
+    { win: clipboardWindow, type: 'clipboard' },
+    { win: snippetWindow, type: 'snippet' },
+    { win: historyWindow, type: 'history' }
+  ];
+  
+  allWindows.forEach(({ win, type: winType }) => {
+    if (winType !== type && win && !win.isDestroyed() && win.isVisible()) {
+      win.hide();
     }
-  } else {
-    if (clipboardWindow && !clipboardWindow.isDestroyed() && clipboardWindow.isVisible()) {
-      clipboardWindow.hide();
-    }
-  }
+  });
 
   if (!currentWindow || currentWindow.isDestroyed()) {
     create();
-    currentWindow = type === 'clipboard' ? clipboardWindow : snippetWindow;
+    currentWindow = type === 'clipboard' ? clipboardWindow : 
+                    type === 'snippet' ? snippetWindow : historyWindow;
   }
 
   if (currentWindow.isVisible()) {
@@ -384,6 +412,9 @@ function showSnippetWindow() {
   showGenericWindow('snippet');
 }
 
+function showHistoryWindow() {
+  showGenericWindow('history');
+}
 
 // 汎用ポジショニング&表示関数
 function positionAndShowWindow(type, window) {
@@ -394,7 +425,8 @@ function positionAndShowWindow(type, window) {
     window.setAlwaysOnTop(true, 'floating');
   }
   
-  const positionKey = type === 'clipboard' ? 'clipboardWindowPosition' : 'snippetWindowPosition';
+  const positionKey = type === 'clipboard' ? 'clipboardWindowPosition' : 
+                      type === 'snippet' ? 'snippetWindowPosition' : 'historyWindowPosition';
   const positionMode = store.get('windowPositionMode', 'cursor');
 
   if (positionMode === 'previous') {
@@ -576,6 +608,10 @@ app.whenReady().then(() => {
   } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
     if (!snippetWindow.isVisible()) {
       snippetWindow.show();
+    }
+  } else if (historyWindow && !historyWindow.isDestroyed() && sender === historyWindow.webContents) {
+    if (!historyWindow.isVisible()) {
+      historyWindow.show();
     }
   }
 });
@@ -816,13 +852,19 @@ ipcMain.handle('hide-snippet-window', () => {
   return true;
 });
 
+ipcMain.handle('hide-history-window', () => {
+  if (historyWindow) {
+    historyWindow.hide();
+  }
+  return true;
+});
+
 ipcMain.handle('quit-app', () => {
   app.quit();
   return true;
 });
 
 ipcMain.handle('show-settings', () => {
-  // hide()ではなくdestroy()で完全に閉じる
   if (clipboardWindow && !clipboardWindow.isDestroyed()) {
     clipboardWindow.destroy();
     clipboardWindow = null;
@@ -831,6 +873,11 @@ ipcMain.handle('show-settings', () => {
   if (snippetWindow && !snippetWindow.isDestroyed()) {
     snippetWindow.destroy();
     snippetWindow = null;
+  }
+  
+  if (historyWindow && !historyWindow.isDestroyed()) {
+    historyWindow.destroy();
+    historyWindow = null;
   }
   
   // 設定画面を表示
@@ -889,6 +936,7 @@ ipcMain.handle('paste-text', async (event, text) => {
 
   if (clipboardWindow) clipboardWindow.hide();
   if (snippetWindow) snippetWindow.hide();
+  if (historyWindow) historyWindow.hide();
 
   // ウィンドウ閉じ待ち
   await new Promise(resolve => setTimeout(resolve, 10));
@@ -946,7 +994,6 @@ ipcMain.handle('save-personal-snippets', (event, snippets) => {
 });
 
 ipcMain.handle('open-snippet-editor', () => {
-  // hide()ではなくdestroy()で完全に閉じる
   if (clipboardWindow && !clipboardWindow.isDestroyed()) {
     clipboardWindow.destroy();
     clipboardWindow = null;
@@ -955,6 +1002,11 @@ ipcMain.handle('open-snippet-editor', () => {
   if (snippetWindow && !snippetWindow.isDestroyed()) {
     snippetWindow.destroy();
     snippetWindow = null;
+  }
+  
+  if (historyWindow && !historyWindow.isDestroyed()) {
+    historyWindow.destroy();
+    historyWindow = null;
   }
   
   if (!snippetEditorWindow || snippetEditorWindow.isDestroyed()) {
@@ -1045,7 +1097,6 @@ ipcMain.handle('get-master-order', async () => {
 ipcMain.handle('resize-window', (event, size) => {
   const sender = event.sender;
   
-  // どのウィンドウからの呼び出しか自動判定
   if (clipboardWindow && !clipboardWindow.isDestroyed() && sender === clipboardWindow.webContents) {
     const currentBounds = clipboardWindow.getBounds();
     clipboardWindow.setBounds({
@@ -1057,6 +1108,14 @@ ipcMain.handle('resize-window', (event, size) => {
   } else if (snippetWindow && !snippetWindow.isDestroyed() && sender === snippetWindow.webContents) {
     const currentBounds = snippetWindow.getBounds();
     snippetWindow.setBounds({
+      x: currentBounds.x,
+      y: currentBounds.y,
+      width: size.width,
+      height: size.height
+    });
+  } else if (historyWindow && !historyWindow.isDestroyed() && sender === historyWindow.webContents) {
+    const currentBounds = historyWindow.getBounds();
+    historyWindow.setBounds({
       x: currentBounds.x,
       y: currentBounds.y,
       width: size.width,
@@ -1219,16 +1278,26 @@ function replaceVariables(text) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   text = text.replace(/\{明日:MM\/DD\}/g, formatDate(tomorrow, 'MM/DD'));
   
+  // 連動する日程計算（1日をスキップ、かつ重複しない）
+  const schedule1 = addDaysExcluding1st(now, 2, 3);
+  
+  // 日程2は日程1の翌日（ただし1日ならスキップ）
+  const schedule2Base = new Date(schedule1);
+  schedule2Base.setDate(schedule2Base.getDate() + 1);
+  const schedule2 = schedule2Base.getDate() === 1 
+    ? new Date(schedule2Base.setDate(schedule2Base.getDate() + 1))
+    : schedule2Base;
+  
   // {2日後:M月D日:曜日短（毎月1日は除外して3日後）}
   text = text.replace(
     /\{2日後:M月D日:曜日短（毎月1日は除外して3日後）\}/g,
-    formatDateWithWeekday(addDaysExcluding1st(now, 2, 3)) 
+    formatDateWithWeekday(schedule1) 
   );
   
   // {3日後:M月D日:曜日短（毎月1日は除外して4日後）}
   text = text.replace(
     /\{3日後:M月D日:曜日短（毎月1日は除外して4日後）\}/g,
-    formatDateWithWeekday(addDaysExcluding1st(now, 3, 4))
+    formatDateWithWeekday(schedule2)
   );
   
   // {タイムスタンプ}

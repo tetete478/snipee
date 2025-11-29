@@ -2,36 +2,23 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Snipee - スニペット専用</title>
+  <title>Snipee - 履歴専用</title>
   <link rel="stylesheet" href="common/variables.css">
   <link rel="stylesheet" href="common/common.css">
   <script src="common/utils.js"></script>
   <style>
-    /* snippets.html 固有のスタイルのみ */
-    .action-item {
-      padding: 4px 11px;
-      font-size: 12px;
+    /* history.html 固有のスタイルのみ */
+    .popup-container {
+      width: 120px;
     }
   </style>
 </head>
 <body class="popup-window">
   <div class="container popup-container">
     <div class="content" id="main-content">
-      <div class="section" id="master-section">
-        <div class="section-header">📋 マスタスニペット</div>
-        <div id="master-snippet-section"></div>
-      </div>
-
-      <div class="section" id="personal-section">
-        <div class="section-header">✎ 個別スニペット</div>
-        <div id="personal-snippet-section"></div>
-      </div>
-
       <div class="section">
-        <div class="action-item" onclick="openSnippetEditor()">
-          <span class="action-icon">✎</span>
-          <span>スニペット編集</span>
-        </div>
+        <div class="section-header">📋 履歴</div>
+        <div id="history-section"></div>
       </div>
     </div>
   </div>
@@ -41,31 +28,25 @@
   </div>
 
   <script>
-      const { ipcRenderer } = require('electron');
-      const Store = require('electron-store');
-      const store = new Store();
+    const { ipcRenderer } = require('electron');
 
-      let allItems = {
-      personal: [],
-      master: []
-    };
-    
-    let nav; // KeyboardNavigator
+    let historyItems = [];
+    let pinnedItems = [];
+    let nav;
 
     async function init() {
-      setupEventListeners();  // navを先に初期化
+      setupEventListeners();
       await loadAllItems();
     }
 
     async function loadAllItems(sendReady = true) {
       const data = await ipcRenderer.invoke('get-all-items');
       
-      allItems.personal = (data.personalSnippets || []).map(s => ({ ...s, type: 'personal' }));
-      allItems.master = (data.masterSnippets || []).map(s => ({ ...s, type: 'master' }));
+      historyItems = data.history || [];
+      pinnedItems = await ipcRenderer.invoke('get-pinned-items') || [];
 
       render();
   
-      // 初回のみリサイズ（sendReady=trueの時のみ）
       if (sendReady) {
         await new Promise(resolve => setTimeout(resolve, 100));
         
@@ -80,12 +61,11 @@
     }
 
     function setupEventListeners() {
-      // KeyboardNavigator初期化
       nav = new KeyboardNavigator({
-        itemSelector: '.menu-item[data-folder], .action-item',
+        itemSelector: '.menu-item[data-history-group], .action-item',
         onFocusChange: (item) => {
           if (item && !item.classList.contains('action-item')) {
-            showSubmenuForSelectedItem(false);  // 表示のみ
+            showSubmenuForSelectedItem(false);
           } else {
             hideInlineSubmenu();
           }
@@ -94,7 +74,7 @@
           if (nav.isSubmenuOpen) {
             hideInlineSubmenu();
           } else {
-            await ipcRenderer.invoke('hide-snippet-window');
+            await ipcRenderer.invoke('hide-history-window');
           }
         },
         onEnter: (item) => {
@@ -107,7 +87,7 @@
         onRight: () => {
           const item = nav.getSelectedItem();
           if (item && !item.classList.contains('action-item')) {
-            showSubmenuForSelectedItem(true);  // フォーカスも移動
+            showSubmenuForSelectedItem(true);
           }
         },
         onLeft: () => hideInlineSubmenu(),
@@ -116,88 +96,78 @@
       });
       nav.attach();
 
-      ipcRenderer.on('pre-load-data', async () => {
-        await loadAllItems(false);
-      });
-
-      ipcRenderer.on('personal-snippets-updated', () => {
+      ipcRenderer.on('clipboard-updated', () => {
         loadAllItems(false);
       });
     }
 
     function render() {
-      renderMasterSnippets();
-      renderPersonalSnippets();
+      renderHistory();
       updateSelectableItems();
     }
-    
-    function renderMasterSnippets() {
-      const container = document.getElementById('master-snippet-section');
-      const section = document.getElementById('master-section');
-      let items = allItems.master;
 
-      const hiddenFolders = store.get('hiddenFolders', []);
-      items = items.filter(item => !hiddenFolders.includes(item.folder || '未分類'));
+    function renderHistory() {
+      const container = document.getElementById('history-section');
 
-      if (items.length === 0) {
-        section.style.display = 'none';
+      if (historyItems.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">履歴がありません</div></div>';
         return;
       }
 
-      section.style.display = 'block';
-      const folders = groupByFolder(items);
+      const groups = groupHistoryItems(historyItems);
       
-      container.innerHTML = Object.entries(folders).map(([folder, snippets]) => `
+      container.innerHTML = groups.map((group, index) => `
         <div class="menu-item" 
-            data-folder="${folder}" 
-            data-snippets='${JSON.stringify(snippets).replace(/'/g, "&apos;")}'>
+            data-group-id="history-${index}"
+            data-history-group='${JSON.stringify(group.items).replace(/'/g, "&apos;")}'>
           <div class="menu-item-left">
-            <span class="menu-item-icon">📁</span>
-            <span class="menu-item-text">${escapeHtml(folder)}</span>
+            <span class="menu-item-icon">${group.isPinned ? '📌' : '📄'}</span>
+            <span class="menu-item-text">${group.label}</span>
           </div>
           <span class="menu-item-arrow">›</span>
         </div>
       `).join('');
     }
 
-    function renderPersonalSnippets() {
-      const container = document.getElementById('personal-snippet-section');
-      const section = document.getElementById('personal-section');
-      let items = allItems.personal;
-
-      const hiddenFolders = store.get('hiddenFolders', []);
-      items = items.filter(item => !hiddenFolders.includes(item.folder || '未分類'));
-
-      if (items.length === 0) {
-        section.style.display = 'none';
-        return;
-      }
-
-      section.style.display = 'block';
-      const folders = groupByFolder(items);
+    function groupHistoryItems(items) {
+      if (items.length === 0) return [];
       
-      container.innerHTML = Object.entries(folders).map(([folder, snippets]) => `
-        <div class="menu-item" 
-            data-folder="${folder}" 
-            data-snippets='${JSON.stringify(snippets).replace(/'/g, "&apos;")}'>
-          <div class="menu-item-left">
-            <span class="menu-item-icon">📁</span>
-            <span class="menu-item-text">${escapeHtml(folder)}</span>
-          </div>
-          <span class="menu-item-arrow">›</span>
-        </div>
-      `).join('');
+      const totalCount = items.length;
+      const groups = [];
+      
+      const pinned = items.filter(item => pinnedItems.includes(item.id));
+      if (pinned.length > 0) {
+        groups.push({
+          label: '● ピン留め',
+          items: pinned,
+          isPinned: true
+        });
+      }
+      
+      for (let i = 0; i < Math.min(totalCount, 45); i += 15) {
+        const start = i + 1;
+        const end = Math.min(i + 15, totalCount);
+        const groupItems = items.slice(i, i + 15);
+        
+        groups.push({
+          start,
+          end,
+          label: `${start} - ${end}`,
+          items: groupItems,
+          isPinned: false
+        });
+      }
+      
+      return groups;
     }
 
     function updateSelectableItems() {
-      nav.updateItems('.menu-item[data-folder], .action-item');
+      nav.updateItems('.menu-item[data-history-group], .action-item');
       
-      // マウスイベントを設定
       nav.selectableItems.forEach((item, index) => {
         item.addEventListener('mouseenter', () => {
           nav.selectedIndex = index;
           nav.updateVisual();
-          // フォルダならサブメニュー表示
           if (!item.classList.contains('action-item')) {
             showSubmenuForSelectedItem(false);
           } else {
@@ -219,14 +189,21 @@
       const item = nav.getSelectedItem();
       if (!item) return;
       
-      if (item.classList.contains('menu-item')) {
-        let items = [];
-        
+      if (item.classList.contains('action-item')) {
+        hideInlineSubmenu();
+        return;
+      }
+      
+      if (item.classList.contains('menu-item') && item.hasAttribute('data-history-group')) {
         try {
-          if (item.hasAttribute('data-folder')) {
-            const rawData = item.getAttribute('data-snippets');
-            items = JSON.parse(rawData);
-          }
+          const rawData = item.getAttribute('data-history-group');
+          const historyData = JSON.parse(rawData);
+          const items = historyData.map(h => ({
+            id: h.id,
+            type: 'history',
+            title: h.content.substring(0, 30) + (h.content.length > 30 ? '...' : ''),
+            content: h.content
+          }));
           
           if (items.length > 0) {
             showInlineSubmenu(item, items, focusSubmenu);
@@ -236,12 +213,11 @@
         }
       }
     }
-
+    
     async function showInlineSubmenu(targetElement, items, focusSubmenu = true) {
       const submenu = document.getElementById('inline-submenu');
       const bounds = targetElement.getBoundingClientRect();
       
-      // まず最大サイズでウィンドウを拡大
       await ipcRenderer.invoke('resize-window', { width: SUBMENU_CONFIG.maxWindowWidth, height: SUBMENU_CONFIG.maxWindowHeight });
       
       let top = SUBMENU_CONFIG.margin + SUBMENU_CONFIG.topOffset;
@@ -256,35 +232,48 @@
       if (focusSubmenu) {
         nav.openSubmenu(items);
       }
-
+      
       submenu.innerHTML = items.map((item, index) => {
+        const isPinned = pinnedItems.includes(item.id);
+        const pinIcon = isPinned ? '●' : '○';
+        
         const displayText = item.title || item.content || '';
         const truncatedText = displayText.length > 25 ? displayText.substring(0, 25) + '...' : displayText;
         
         return `
-          <div class="submenu-item ${focusSubmenu && index === 0 ? 'selected' : ''}" data-index="${index}">
-            <div class="submenu-item-title">📄 ${index + 1}. ${escapeHtml(truncatedText)}</div>
+        <div class="submenu-item ${focusSubmenu && index === 0 ? 'selected' : ''}" data-index="${index}">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div class="submenu-item-title"><span class="submenu-item-icon">📄</span> ${index + 1}. ${escapeHtml(truncatedText)}</div>
+            <span class="pin-button" data-item-id="${item.id}" style="cursor: pointer; font-size: 10px; flex-shrink: 0; color: #666; -webkit-app-region: no-drag;">${pinIcon}</span>
           </div>
-        `;
+        </div>
+      `;
       }).join('');
       
       submenu.classList.add('visible');
-
+  
       submenu.querySelectorAll('.submenu-item').forEach((element, index) => {
         element.addEventListener('click', async () => {
           await pasteSubmenuItem(items[index].content);
         });
       });
 
-      // サブメニュー表示後、実際のコンテンツサイズに合わせてリサイズ
+      submenu.querySelectorAll('.pin-button').forEach((button) => {
+        button.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const itemId = button.getAttribute('data-item-id');
+          const result = await ipcRenderer.invoke('toggle-pin-item', itemId);
+          pinnedItems = result.pinnedItems;
+          await loadAllItems(false);
+        });
+      });
+
       await new Promise(resolve => setTimeout(resolve, 50));
 
       const containerRect = document.querySelector('.container').getBoundingClientRect();
       const submenuRect = submenu.getBoundingClientRect();
 
-      // 幅: メインコンテナ幅 + サブメニュー幅 + シャドウ用余白
       const actualWidth = Math.ceil(containerRect.width + submenuRect.width + 15);
-      // 高さ: 両方の高さの大きい方（余裕を持たせて+20px）
       const actualHeight = Math.ceil(Math.max(containerRect.height, submenuRect.height + 20));
 
       await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
@@ -295,15 +284,12 @@
       submenu.classList.remove('visible');
       nav.closeSubmenu();
       
-      // 少し待ってからコンテンツサイズを計算
       await new Promise(resolve => setTimeout(resolve, 50));
       
-      // ホーム画面（.container）の幅のみを取得
       const containerRect = document.querySelector('.container').getBoundingClientRect();
       const actualWidth = Math.ceil(containerRect.width);
       const actualHeight = Math.ceil(containerRect.height);
       
-      // 実際のコンテンツサイズに合わせてリサイズ
       await ipcRenderer.invoke('resize-window', { width: actualWidth, height: actualHeight });
     }
 
@@ -311,18 +297,13 @@
       const decodedContent = decodeHtmlEntities(content);
       
       hideInlineSubmenu();
-      await ipcRenderer.invoke('hide-snippet-window');
+      await ipcRenderer.invoke('hide-history-window');
       
       const result = await ipcRenderer.invoke('paste-text', decodedContent);
       
       if (!result.success && result.error !== 'permission_denied') {
         ipcRenderer.send('log', '自動ペースト失敗、クリップボードにコピー済み');
       }
-    }
-
-    async function openSnippetEditor() {
-      await ipcRenderer.invoke('hide-snippet-window');
-      await ipcRenderer.invoke('open-snippet-editor');
     }
 
     window.addEventListener('focus', () => {

@@ -269,7 +269,7 @@ class KeyboardNavigator {
     this.updateVisual();
     if (this.onFocusChange) this.onFocusChange(this.getSelectedItem());
   }
-  
+
   // 視覚的更新
   updateVisual() {
     this.selectableItems.forEach(item => item.classList.remove(this.selectedClass));
@@ -423,4 +423,19 @@ class KeyboardNavigator {
   attach() {
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
   }
+
+  
 }
+
+
+// ===========================
+// サブメニュー設定
+// ===========================
+const SUBMENU_CONFIG = {
+  margin: 10,
+  topOffset: 0,
+  maxWindowWidth: 460,
+  maxWindowHeight: 650
+};
+
+
