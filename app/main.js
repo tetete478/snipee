@@ -50,6 +50,7 @@ let historyWindow;
 let permissionWindow;
 let tray = null;
 let snippetEditorWindow = null;
+let welcomeWindow = null;
 let previousActiveApp = null;  // 元のアクティブアプリを記憶
 
 // 元のアクティブアプリを記憶
@@ -92,7 +93,6 @@ let pinnedItems = store.get('pinnedItems', []);
 let lastClipboardText = '';
 const MAX_HISTORY = 100;
 
-// 設定ウィンドウ作成
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 500,
@@ -114,6 +114,13 @@ function createMainWindow() {
       mainWindow.hide();
     }
   });
+
+  // Mac: 表示のたびに全Workspaceで表示を再設定
+  if (process.platform === 'darwin') {
+    mainWindow.on('show', () => {
+      mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    });
+  }
 }
 
 // 汎用ウィンドウ作成関数
@@ -210,11 +217,41 @@ function createSnippetEditorWindow() {
   snippetEditorWindow.loadFile(path.join(__dirname, 'snippet-editor.html'));
 
   snippetEditorWindow.once('ready-to-show', () => {
+    // Mac: 全Workspaceで表示
+    if (process.platform === 'darwin') {
+      snippetEditorWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
     snippetEditorWindow.show();
   });
 
   snippetEditorWindow.on('closed', () => {
     snippetEditorWindow = null;
+  });
+}
+
+// ウェルカムウィンドウ作成
+function createWelcomeWindow() {
+  welcomeWindow = new BrowserWindow({
+    width: 480,
+    height: 520,
+    show: false,
+    frame: false,
+    resizable: false,
+    center: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  welcomeWindow.loadFile(path.join(__dirname, 'welcome.html'));
+
+  welcomeWindow.once('ready-to-show', () => {
+    welcomeWindow.show();
+  });
+
+  welcomeWindow.on('closed', () => {
+    welcomeWindow = null;
   });
 }
 
@@ -229,10 +266,12 @@ function registerGlobalShortcuts() {
     const attempt = (remaining) => {
       try {
         const success = globalShortcut.register(accelerator, callback);
+        console.log(`ホットキー登録: ${accelerator} -> ${success ? '成功' : '失敗'}`);
         if (!success && remaining > 0) {
           setTimeout(() => attempt(remaining - 1), 500);
         }
       } catch (error) {
+        console.log(`ホットキー登録エラー: ${accelerator} -> ${error.message}`);
         if (remaining > 0) {
           setTimeout(() => attempt(remaining - 1), 500);
         }
@@ -305,6 +344,9 @@ function createTray() {
       label: '設定', 
       click: () => {
         if (mainWindow) {
+          if (process.platform === 'darwin') {
+            mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+          }
           mainWindow.show();
           mainWindow.focus();
         }
@@ -633,6 +675,11 @@ app.whenReady().then(() => {
   createMainWindow();
   createTray();
 
+  // 初回起動時はウェルカム画面を表示
+  if (!store.get('welcomeCompleted', false)) {
+    createWelcomeWindow();
+  }
+
   // 初回起動時のデフォルトスニペット設定
   if (!store.get('initialSnippetsCreated', false)) {
     const defaultFolders = ['Sample1', 'Sample2', 'Sample3'];
@@ -886,6 +933,9 @@ ipcMain.handle('show-settings', () => {
   
   // 設定画面を表示
   if (mainWindow) {
+    if (process.platform === 'darwin') {
+      mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
     mainWindow.show();
     mainWindow.focus();
   }
@@ -1161,6 +1211,13 @@ ipcMain.handle('verify-master-password', (event, password) => {
   return password === MASTER_EDIT_PASSWORD;
 });
 
+ipcMain.handle('close-welcome-window', () => {
+  if (welcomeWindow) {
+    welcomeWindow.close();
+  }
+  return true;
+});
+
 // 設定の取得・保存
 ipcMain.on('get-config', (event, key) => {
   event.returnValue = store.get(key);
@@ -1316,7 +1373,18 @@ function replaceVariables(text) {
 // =====================================
 // 自動アップデート
 // =====================================
+// 設定画面からの手動ダウンロード用フラグ
+let isManualDownload = false;
+
 autoUpdater.on('update-downloaded', () => {
+  // 手動ダウンロードの場合は設定画面に通知
+  if (isManualDownload && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-downloaded');
+    isManualDownload = false;
+    return;
+  }
+  
+  // 自動ダウンロードの場合はダイアログ表示
   dialog.showMessageBox({
     type: 'info',
     title: 'Snipee アップデート',
@@ -1327,6 +1395,24 @@ autoUpdater.on('update-downloaded', () => {
       autoUpdater.quitAndInstall();
     }
   });
+});
+
+// ダウンロード進捗
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('download-progress', progressObj.percent);
+  }
+});
+
+// 手動ダウンロード開始
+ipcMain.on('download-update', () => {
+  isManualDownload = true;
+  autoUpdater.downloadUpdate();
+});
+
+// 再起動してインストール
+ipcMain.on('quit-and-install', () => {
+  autoUpdater.quitAndInstall();
 });
 
 // =====================================

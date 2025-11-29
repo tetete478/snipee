@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ようこそ - Snipee</title>
+  <link rel="stylesheet" href="common/variables.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1d1d1f;
+    }
+
+    .wizard-container {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 440px;
+      height: 480px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .wizard-header {
+      padding: 12px 24px;
+      border-bottom: 1px solid #e5e5ea;
+      text-align: center;
+    }
+
+    .wizard-logo {
+      font-size: 28px;
+      margin-bottom: 2px;
+    }
+
+    .wizard-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+
+    .wizard-content {
+      padding: 16px 24px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .wizard-footer {
+      padding: 12px 24px;
+      border-top: 1px solid #e5e5ea;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafafa;
+    }
+
+    /* ステップインジケーター */
+    .step-indicator {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d1d1d6;
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: #667eea;
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .step-dot.completed {
+      background: #34c759;
+    }
+
+    /* ステップコンテンツ */
+    .step {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1d1d1f;
+    }
+
+    .step-description {
+      font-size: 13px;
+      color: #86868b;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    /* 入力フォーム */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #1d1d1f;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d1d6;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-hint {
+      font-size: 12px;
+      color: #86868b;
+      margin-top: 6px;
+    }
+
+    /* ホットキー表示 */
+    .hotkey-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hotkey-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: #f5f5f7;
+      border-radius: 8px;
+    }
+
+    .hotkey-icon {
+      font-size: 20px;
+      width: 32px;
+      text-align: center;
+    }
+
+    .hotkey-info {
+      flex: 1;
+    }
+
+    .hotkey-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin-bottom: 2px;
+    }
+
+    .hotkey-desc {
+      font-size: 12px;
+      color: #86868b;
+    }
+
+    .hotkey-keys {
+      display: flex;
+      gap: 4px;
+    }
+
+    .key {
+      background: #ffffff;
+      border: 1px solid #d1d1d6;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d1d1f;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* ボタン */
+    .btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd6;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #86868b;
+      border: 1px solid #d1d1d6;
+    }
+
+    .btn-secondary:hover {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+
+    .btn-text {
+      background: transparent;
+      color: #86868b;
+      padding: 10px 16px;
+    }
+
+    .btn-text:hover {
+      color: #1d1d1f;
+    }
+
+    /* 完了画面 */
+    .complete-icon {
+      font-size: 36px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .complete-message {
+      text-align: center;
+      font-size: 14px;
+      color: #86868b;
+      line-height: 1.6;
+    }
+
+    /* Tips表示 */
+    .tips-box {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      border-left: 3px solid #667eea;
+    }
+
+    .tips-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 4px;
+    }
+
+    .tips-content {
+      font-size: 12px;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+
+    .tips-content .key {
+      display: inline-block;
+      background: #ffffff;
+      border: 1px solid #d1d1d6;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #1d1d1f;
+      margin: 0 2px;
+    }
+
+    /* ウェルカム画面 */
+    .welcome-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #1d1d1f;
+    }
+
+    .feature-icon {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <div class="wizard-logo">📋</div>
+      <div class="wizard-title">Snipee</div>
+    </div>
+
+    <div class="wizard-content">
+      <div class="step-indicator">
+        <div class="step-dot active" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+        <div class="step-dot" data-step="4"></div>
+      </div>
+
+      <!-- ステップ1: ようこそ -->
+      <div class="step active" data-step="1">
+        <h2 class="step-title">ようこそ！</h2>
+        <p class="step-description">
+          Snipeeはクリップボード履歴とスニペットを管理するアプリです。<br>
+          チームで共有できるマスタスニペットと、個人用スニペットを使い分けられます。
+        </p>
+        <div class="welcome-features">
+          <div class="feature-item">
+            <span class="feature-icon">📝</span>
+            <span>クリップボード履歴を自動保存</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">📁</span>
+            <span>スニペットをフォルダで整理</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">🔄</span>
+            <span>Google Driveでチーム共有</span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-icon">⌨️</span>
+            <span>ホットキーで素早くアクセス</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ステップ2: 名前入力 -->
+      <div class="step" data-step="2">
+        <h2 class="step-title">お名前を教えてください</h2>
+        <p class="step-description">
+          スニペット内の <code>{名前}</code> 変数に使われます。<br>
+          後から設定画面で変更できます。
+        </p>
+        <div class="form-group">
+          <label class="form-label">お名前</label>
+          <input type="text" class="form-input" id="user-name" placeholder="例: 山田太郎">
+          <p class="form-hint">空白のままでもOKです</p>
+        </div>
+      </div>
+
+      <!-- ステップ3: ホットキー説明 -->
+      <div class="step" data-step="3">
+        <h2 class="step-title">ホットキーを覚えましょう</h2>
+        <p class="step-description">
+          いつでも素早くSnipeeを呼び出せます。
+        </p>
+        <div class="hotkey-list">
+          <div class="hotkey-item">
+            <div class="hotkey-icon">📋</div>
+            <div class="hotkey-info">
+              <div class="hotkey-name">クリップボード + スニペット</div>
+              <div class="hotkey-desc">履歴とスニペットを一覧表示</div>
+            </div>
+            <div class="hotkey-keys" id="hotkey-main"></div>
+          </div>
+          <div class="hotkey-item">
+            <div class="hotkey-icon">📁</div>
+            <div class="hotkey-info">
+              <div class="hotkey-name">スニペット専用</div>
+              <div class="hotkey-desc">スニペットのみを表示</div>
+            </div>
+            <div class="hotkey-keys" id="hotkey-snippet"></div>
+          </div>
+          <div class="hotkey-item">
+            <div class="hotkey-icon">🕐</div>
+            <div class="hotkey-info">
+              <div class="hotkey-name">履歴専用</div>
+              <div class="hotkey-desc">クリップボード履歴のみを表示</div>
+            </div>
+            <div class="hotkey-keys" id="hotkey-history"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ステップ4: 完了 -->
+      <div class="step" data-step="4">
+        <div class="complete-icon">🎉</div>
+        <h2 class="step-title" style="text-align: center;">準備完了！</h2>
+        <p class="complete-message">
+          Snipeeの設定が完了しました。<br><br>
+          タスクトレイのアイコンから設定を変更したり、<br>
+          ホットキーでいつでも呼び出せます。
+        </p>
+        <div class="tips-box">
+          <div class="tips-title">💡 Tips</div>
+          <div class="tips-content" id="close-shortcut-tip"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-footer">
+      <button class="btn btn-text" id="btn-skip" onclick="skipWizard()">スキップ</button>
+      <div>
+        <button class="btn btn-secondary" id="btn-back" onclick="prevStep()" style="visibility: hidden;">戻る</button>
+        <button class="btn btn-primary" id="btn-next" onclick="nextStep()">次へ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    // 初期化
+    async function init() {
+      await loadHotkeys();
+
+      // 閉じるショートカットのTips表示
+      const isMac = process.platform === 'darwin';
+      const closeTip = document.getElementById('close-shortcut-tip');
+      if (isMac) {
+        closeTip.innerHTML = 'ウィンドウは <span class="key">⌘</span><span class="key">W</span> または <span class="key">Esc</span> で閉じられます';
+      } else {
+        closeTip.innerHTML = 'ウィンドウは <span class="key">Ctrl</span><span class="key">W</span> または <span class="key">Esc</span> で閉じられます';
+      }
+
+      updateButtons();
+    }
+
+    // ホットキー表示
+    async function loadHotkeys() {
+      const isMac = process.platform === 'darwin';
+      
+      // デフォルト値を使用（main.jsから取得も可能だが、シンプルにする）
+      const mainKeys = isMac ? ['⌘', 'Ctrl', 'C'] : ['Ctrl', 'Alt', 'C'];
+      const snippetKeys = isMac ? ['⌘', 'Ctrl', 'V'] : ['Ctrl', 'Alt', 'V'];
+      const historyKeys = isMac ? ['⌘', 'Ctrl', 'X'] : ['Ctrl', 'Alt', 'X'];
+
+      document.getElementById('hotkey-main').innerHTML = mainKeys.map(k => `<span class="key">${k}</span>`).join('');
+      document.getElementById('hotkey-snippet').innerHTML = snippetKeys.map(k => `<span class="key">${k}</span>`).join('');
+      document.getElementById('hotkey-history').innerHTML = historyKeys.map(k => `<span class="key">${k}</span>`).join('');
+    }
+
+    // 次のステップへ
+    function nextStep() {
+      if (currentStep === 2) {
+        // 名前を保存
+        const userName = document.getElementById('user-name').value.trim();
+        if (userName) {
+          ipcRenderer.send('save-config', 'userName', userName);
+        }
+      }
+
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateStep();
+      } else {
+        completeWizard();
+      }
+    }
+
+    // 前のステップへ
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateStep();
+      }
+    }
+
+    // スキップ
+    function skipWizard() {
+      completeWizard();
+    }
+
+    // ウィザード完了
+    function completeWizard() {
+      ipcRenderer.send('save-config', 'welcomeCompleted', true);
+      ipcRenderer.invoke('close-welcome-window');
+    }
+
+    // ステップ更新
+    function updateStep() {
+      // ステップ表示切り替え
+      document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('active');
+        if (parseInt(step.dataset.step) === currentStep) {
+          step.classList.add('active');
+        }
+      });
+
+      // インジケーター更新
+      document.querySelectorAll('.step-dot').forEach(dot => {
+        const step = parseInt(dot.dataset.step);
+        dot.classList.remove('active', 'completed');
+        if (step === currentStep) {
+          dot.classList.add('active');
+        } else if (step < currentStep) {
+          dot.classList.add('completed');
+        }
+      });
+
+      updateButtons();
+    }
+
+    // ボタン更新
+    function updateButtons() {
+      const btnBack = document.getElementById('btn-back');
+      const btnNext = document.getElementById('btn-next');
+      const btnSkip = document.getElementById('btn-skip');
+
+      // 戻るボタン
+      btnBack.style.visibility = currentStep > 1 ? 'visible' : 'hidden';
+
+      // 次へボタン
+      if (currentStep === totalSteps) {
+        btnNext.textContent = 'Snipeeを始める';
+      } else {
+        btnNext.textContent = '次へ';
+      }
+
+      // スキップボタン（最後のステップでは非表示）
+      btnSkip.style.display = currentStep === totalSteps ? 'none' : 'inline-block';
+    }
+
+    // キーボード操作
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        nextStep();
+      } else if (e.key === 'Escape') {
+        skipWizard();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+        e.preventDefault();
+        skipWizard();
+      } else if (e.key === 'ArrowRight') {
+        nextStep();
+      } else if (e.key === 'ArrowLeft' && currentStep > 1) {
+        prevStep();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
