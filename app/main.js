@@ -588,6 +588,10 @@ async function syncSnippets() {
   // XMLに存在しないマスタスニペットを削除
   masterSnippets = masterSnippets.filter(s => xmlIds.includes(s.id));
   
+  // XMLに存在するフォルダ一覧でmasterFoldersも更新
+  const xmlFolders = [...new Set(xmlSnippets.map(s => s.folder))];
+  store.set('masterFolders', xmlFolders);
+  
   // 保存
   store.set('masterSnippets', { snippets: masterSnippets });
   store.set('lastSync', new Date().toISOString());
@@ -1336,7 +1340,7 @@ ipcMain.handle('check-for-updates', async () => {
   try {
     if (!app.isPackaged) {
       // 開発環境ではダミーレスポンス
-      return { updateAvailable: false, currentVersion: app.getVersion() };
+      return { updateAvailable: false, currentVersion: app.getVersion(), message: '開発環境です' };
     }
     
     const result = await autoUpdater.checkForUpdates();
@@ -1345,16 +1349,35 @@ ipcMain.handle('check-for-updates', async () => {
       const currentVersion = app.getVersion();
       const latestVersion = result.updateInfo.version;
       
+      if (latestVersion === currentVersion) {
+        return {
+          updateAvailable: false,
+          currentVersion,
+          latestVersion,
+          message: '最新バージョンです！'
+        };
+      }
+      
       return {
-        updateAvailable: latestVersion !== currentVersion,
+        updateAvailable: true,
         currentVersion,
-        latestVersion
+        latestVersion,
+        message: `新しいバージョン v${latestVersion} があります`
       };
     }
     
-    return { updateAvailable: false, currentVersion: app.getVersion() };
+    return { 
+      updateAvailable: false, 
+      currentVersion: app.getVersion(),
+      message: '最新バージョンです！'
+    };
   } catch (error) {
     console.error('Update check failed:', error);
-    throw error;
+    return { 
+      updateAvailable: false, 
+      currentVersion: app.getVersion(),
+      error: true,
+      message: 'アップデートの確認に失敗しました'
+    };
   }
 });
