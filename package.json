@@ -1,6 +1,6 @@
 {
   "name": "snipee",
-  "version": "1.5.17",
+  "version": "1.5.18",
   "description": "Mac/Windows対応のクリップボード管理ツール",
   "repository": {
     "type": "git",
@@ -67,11 +67,28 @@
       "icon": "build/icon.ico"
     },
     "mac": {
-      "target": [
-        "dmg"
-      ],
+      "target": ["dmg"],
       "icon": "build/icon.icns",
       "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "background": "build/dmg-background.png",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
     },
     "nsis": {
       "oneClick": false,
