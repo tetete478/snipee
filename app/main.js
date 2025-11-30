@@ -1376,6 +1376,24 @@ function replaceVariables(text) {
 // 設定画面からの手動ダウンロード用フラグ
 let isManualDownload = false;
 
+// ========== デバッグ用ログ ==========
+autoUpdater.on('checking-for-update', () => {
+  console.log('🔍 アップデートを確認中...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('✅ アップデートあり:', info.version);
+});
+
+autoUpdater.on('update-not-available', () => {
+  console.log('❌ アップデートなし（最新版です）');
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('⚠️ AutoUpdaterエラー:', err);
+});
+// ====================================
+
 autoUpdater.on('update-downloaded', () => {
   // 手動ダウンロードの場合は設定画面に通知
   if (isManualDownload && mainWindow && !mainWindow.isDestroyed()) {

@@ -1,17 +1,10 @@
 !macro customInit
-  ; 起動中のSnipeeを検出して終了を促す
-  FindWindow $0 "" "Snipee"
-  StrCmp $0 0 notRunning
-    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-      "Snipeeが起動中です。$\n$\nインストールを続行するには、Snipeeを終了してください。$\n$\n[OK] を押すと自動的に終了します。" IDOK killApp IDCANCEL cancelInstall
-  killApp:
-    ; プロセスを終了
-    nsExec::ExecToLog 'taskkill /F /IM Snipee.exe'
-    Sleep 1000
-    Goto notRunning
-  cancelInstall:
-    Abort
-  notRunning:
+  ; Snipeeプロセスを強制終了（起動していなくてもエラーは無視される）
+  nsExec::ExecToLog 'taskkill /F /IM Snipee.exe'
+  Sleep 2000
+  ; 念のためもう一度（ファイルロック解除のため）
+  nsExec::ExecToLog 'taskkill /F /IM Snipee.exe'
+  Sleep 1000
 !macroend
 
 !macro customUnInstall
@@ -25,7 +18,6 @@
   keepSettings:
   done:
 !macroend
-
 
 !macro customInstall
   ; スタートアップ登録の確認

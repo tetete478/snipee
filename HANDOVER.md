@@ -1,6 +1,6 @@
 # Snipee 開発引き継ぎドキュメント
 
-**バージョン**: v1.5.17  
+**バージョン**: v1.5.18  
 **最終更新**: 2025-11-30  
 **GitHub**: https://github.com/tetete478/snipee
 
@@ -24,7 +24,8 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - マスタ編集モード（パスワード: `1108`）
 - XML エクスポート機能（Clipy 互換形式）
 - 履歴専用ウィンドウ
-- **初回ウェルカム画面（セットアップウィザード）** ← v1.5.17 NEW
+- 初回ウェルカム画面（セットアップウィザード）
+- **DMG ドラッグインストール対応** ← v1.5.18 NEW
 
 ### 配布方針（最重要）
 
@@ -56,15 +57,15 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 ```bash
 # 1. ソースコードをコミット＆プッシュ
 git add .
-git commit -m "v1.5.17: 変更内容"
+git commit -m "v1.5.18: 変更内容"
 git push
 
 # 2. package.json のバージョンを更新（手動 or npm version）
 # 手動の場合: package.json の "version" を編集
 
 # 3. タグを作成してプッシュ → GitHub Actions が自動ビルド
-git tag v1.5.17
-git push origin v1.5.17
+git tag v1.5.18
+git push origin v1.5.18
 ```
 
 ### 自動で実行されること
@@ -99,7 +100,7 @@ snipee/
 │   ├── history.html          # 履歴専用ウィンドウ
 │   ├── snippet-editor.html   # スニペット編集画面
 │   ├── settings.html         # 設定画面
-│   ├── welcome.html          # 初回ウェルカム画面 ← v1.5.17 NEW
+│   ├── welcome.html          # 初回ウェルカム画面
 │   ├── permission-guide.html # アクセシビリティ権限ガイド
 │   └── common/
 │       ├── variables.css     # CSS変数
@@ -107,10 +108,12 @@ snipee/
 │       ├── utils.js          # 共通JavaScript
 │       └── drag-drop.js      # ドラッグ&ドロップ
 ├── build/
-│   ├── installer.nsh         # NSISカスタムスクリプト ← v1.5.17 NEW
-│   ├── installerSidebar.bmp  # インストーラー画像 ← v1.5.17 NEW
+│   ├── installer.nsh         # NSISカスタムスクリプト
+│   ├── installerSidebar.bmp  # インストーラー画像
 │   ├── icon.ico              # Windowsアイコン
-│   └── icon.icns             # Macアイコン
+│   ├── icon.icns             # Macアイコン
+│   ├── icon.png              # トレイアイコン ← v1.5.18 NEW
+│   └── dmg-background.png    # DMG背景画像 ← v1.5.18 NEW
 ├── HANDOVER.md               # このファイル
 └── UPDATE_LOG.md             # 更新履歴（ユーザー向け）
 ```
@@ -145,7 +148,7 @@ snipee/
 
 ---
 
-## 🎯 現在の状態（v1.5.17）
+## 🎯 現在の状態（v1.5.18）
 
 ### 変数機能
 
@@ -203,6 +206,24 @@ snipee/
 ---
 
 ## ✅ 完了した作業
+
+### v1.5.18（2025-11-30）
+
+**アイコン刷新:**
+
+- 新デザイン: 青 → 紫 → ピンクの斜めグラデーション（Instagram 風）
+- クリップボード + ハサミのモチーフ
+- Mac/Windows/トレイ用アイコン一新
+
+**DMG インストーラー改善（Mac）:**
+
+- ドラッグ&ドロップで Applications フォルダへインストール
+- グラデーション背景画像追加
+- 矢印でドラッグ方向を示す UI
+
+**ウェルカム画面改善:**
+
+- ウィンドウ全体をドラッグ可能に
 
 ### v1.5.17（2025-11-30）
 
@@ -310,4 +331,4 @@ xattr -cr /Applications/Snipee.app
 
 **開発者**: てるや  
 **最終更新**: 2025-11-30  
-**現在のバージョン**: v1.5.17
+**現在のバージョン**: v1.5.18
