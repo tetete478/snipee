@@ -6,15 +6,14 @@
   <link rel="stylesheet" href="common/variables.css">
   <link rel="stylesheet" href="common/common.css">
   <script src="common/utils.js"></script>
+  <script src="common/theme.js"></script>
   <style>
-    /* settings.html 固有のスタイルのみ */
     body {
       background: #ffffff;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
-
     .container {
       width: 500px;
       min-height: 400px;
@@ -23,22 +22,18 @@
       display: flex;
       flex-direction: column;
     }
-
     .header {
       background: var(--bg-color);
       padding: 5px 20px;
       border-bottom: 1px solid var(--border-color);
       -webkit-app-region: drag;
     }
-    
     .header h1 {
       font-size: var(--font-size-normal);
       font-weight: 600;
       color: var(--text-color);
       margin: 0;
     }
-
-    /* タブナビゲーション */
     .tabs {
       display: flex;
       background: #f5f5f5;
@@ -46,13 +41,12 @@
       padding: 0;
       -webkit-app-region: drag;
     }
-
     .tab {
       padding: 8px 10px 4px 10px;
       cursor: pointer;
       border: none;
       background: transparent;
-      font-size: var(--font-size-small); 
+      font-size: var(--font-size-small);
       color: #666;
       border-bottom: 3px solid transparent;
       transition: all 0.2s;
@@ -64,623 +58,218 @@
       justify-content: center;
       -webkit-app-region: no-drag;
     }
-
-    .tab span:first-child {
-      font-size: 18px;
-    }
-
-    .tab span:last-child {
-      font-size: var(--font-size-small);
-      font-weight: 600;
-    }
-
-    .tab:hover {
-      background: rgba(0,0,0,0.05);
-      color: var(--text-color);
-    }
-
-    .tab.active {
-      color: var(--primary-color);
-      border-bottom-color: var(--primary-color);
-      background: var(--bg-color);
-    }
-
-    /* タブコンテンツ */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-app-region: no-drag;
-    }
-
-    .tab-content {
-      display: none;
-      padding: 12px;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .section {
-      background: transparent;
-      padding: 10px;
-      border-radius: 0;
-      margin-bottom: 10px;
-      border: none;
-    }
-
-    .section:last-child {
-      margin-bottom: 0;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .section-header h2 {
-      font-size: var(--font-size-medium);
-      font-weight: 600;
-      color: var(--text-color);
-    }
-
-    .section-description {
-      font-size: var(--font-size-small);
-      color: #777;
-      margin-bottom: 10px;
-      line-height: 1.4;
-    }
-
-    .form-group {
-      margin-bottom: 10px;
-      -webkit-app-region: no-drag;
-    }
-
-    .form-group:last-child {
-      margin-bottom: 0;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 4px;
-      color: #444;
-      font-size: 12px;
-      font-weight: 500;
-      -webkit-app-region: no-drag;
-    }
-
-    input[type="text"],
-    input[type="url"] {
-      width: 100%;
-      padding: 7px 10px;
-      border: 1px solid #ddd;
-      border-radius: var(--border-radius);
-      font-size: 12px;
-      font-family: var(--font-family);
-      transition: all 0.2s;
-      background: var(--bg-color);
-      -webkit-app-region: no-drag;
-    }
-
-    input[type="text"]:focus,
-    input[type="url"]:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-    }
-
-    input[readonly] {
-      background: #f5f5f5;
-      cursor: not-allowed;
-      color: #666;
-    }
-
-    .help-text {
-      font-size: 10px;
-      color: #888;
-      margin-top: 3px;
-      line-height: 1.3;
-    }
-
-    .btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: var(--border-radius);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      -webkit-app-region: no-drag;
-    }
-
-    .btn:active {
-      transform: translateY(1px);
-    }
-
-    .btn-primary {
-      background: var(--primary-color);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #0051d5;
-    }
-
-    .btn-success {
-      background: #34c759;
-      color: white;
-    }
-
-    .btn-success:hover {
-      background: #2da64a;
-    }
-
-    .btn-secondary {
-      background: #f0f0f0;
-      color: var(--text-color);
-      border: 1px solid #ddd;
-    }
-
-    .btn-secondary:hover {
-      background: #e5e5e5;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .alert {
-      padding: 8px 10px;
-      border-radius: var(--border-radius);
-      margin-bottom: 8px;
-      font-size: var(--font-size-small);
-      display: none;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .alert.show {
-      display: flex;
-    }
-
-    .alert-success {
-      background: #e8f5e9;
-      border: 1px solid #a5d6a7;
-      color: #2e7d32;
-    }
-
-    .alert-error {
-      background: #ffebee;
-      border: 1px solid #ef9a9a;
-      color: #c62828;
-    }
-
-    .alert-info {
-      background: #e3f2fd;
-      border: 1px solid #90caf9;
-      color: #1565c0;
-    }
-
-    .link-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .link-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius);
-      font-size: 12px;
-      transition: all 0.2s;
-      -webkit-app-region: no-drag;
-    }
-
-    .link-item:hover {
-      background: #f8f9fa;
-      border-color: var(--primary-color);
-    }
-
-    .link-item a {
-      color: var(--primary-color);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      flex: 1;
-    }
-
-    .link-item a:hover {
-      text-decoration: underline;
-    }
-
-    .hotkey-display {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    .hotkey-display label {
-      margin-bottom: 0;
-      min-width: 100px;
-    }
-
-    .hotkey-display input {
-      flex: 1;
-    }
-
-    .hotkey-display .btn {
-      flex-shrink: 0;
-    }
-
-    .sync-status {
-      background: var(--bg-color);
-      padding: 8px 10px;
-      border-radius: var(--border-radius);
-      border: 1px solid var(--border-color);
-      font-size: var(--font-size-small);
-      color: #666;
-      margin-top: 8px;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.4);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      -webkit-app-region: no-drag;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-      -webkit-app-region: no-drag;
-    }
-
-    .modal-header {
-      margin-bottom: 12px;
-    }
-
-    .modal-header h3 {
-      font-size: var(--font-size-large);
-      font-weight: 600;
-      color: var(--text-color);
-    }
-
-    .modal-actions {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .keyboard-focus {
-      outline: 2px solid var(--primary-color);
-      outline-offset: 2px;
-    }
+    .tab span:first-child { font-size: 18px; }
+    .tab span:last-child { font-size: var(--font-size-small); font-weight: 600; }
+    .tab:hover { background: rgba(0,0,0,0.05); color: var(--text-color); }
+    .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); background: var(--bg-color); }
+    .content { flex: 1; overflow-y: auto; -webkit-app-region: no-drag; }
+    .tab-content { display: none; padding: 12px; }
+    .tab-content.active { display: block; }
+    .section { background: transparent; padding: 10px; border-radius: 0; margin-bottom: 10px; border: none; }
+    .section:last-child { margin-bottom: 0; }
+    .section-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+    .section-header h2 { font-size: var(--font-size-medium); font-weight: 600; color: var(--text-color); }
+    .section-description { font-size: var(--font-size-small); color: #777; margin-bottom: 10px; line-height: 1.4; }
+    .form-group { margin-bottom: 10px; -webkit-app-region: no-drag; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; margin-bottom: 4px; color: #444; font-size: 12px; font-weight: 500; -webkit-app-region: no-drag; }
+    input[type="text"], input[type="url"] { width: 100%; padding: 7px 10px; border: 1px solid #ddd; border-radius: var(--border-radius); font-size: 12px; font-family: var(--font-family); transition: all 0.2s; background: var(--bg-color); -webkit-app-region: no-drag; }
+    input[type="text"]:focus, input[type="url"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1); }
+    input[readonly] { background: #f5f5f5; cursor: not-allowed; color: #666; }
+    .help-text { font-size: 10px; color: #888; margin-top: 3px; line-height: 1.3; }
+    .btn { padding: 6px 12px; border: none; border-radius: var(--border-radius); cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px; -webkit-app-region: no-drag; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--primary-color); color: white; }
+    .btn-primary:hover { background: #0051d5; }
+    .btn-success { background: #34c759; color: white; }
+    .btn-success:hover { background: #2da64a; }
+    .btn-secondary { background: #f0f0f0; color: var(--text-color); border: 1px solid #ddd; }
+    .btn-secondary:hover { background: #e5e5e5; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .alert { padding: 8px 10px; border-radius: var(--border-radius); margin-bottom: 8px; font-size: var(--font-size-small); display: none; align-items: center; gap: 6px; }
+    .alert.show { display: flex; }
+    .alert-success { background: #e8f5e9; border: 1px solid #a5d6a7; color: #2e7d32; }
+    .alert-error { background: #ffebee; border: 1px solid #ef9a9a; color: #c62828; }
+    .alert-info { background: #e3f2fd; border: 1px solid #90caf9; color: #1565c0; }
+    .link-list { display: flex; flex-direction: column; gap: 6px; }
+    .link-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius); font-size: 12px; transition: all 0.2s; -webkit-app-region: no-drag; }
+    .link-item:hover { background: #f8f9fa; border-color: var(--primary-color); }
+    .link-item a { color: var(--primary-color); text-decoration: none; display: flex; align-items: center; gap: 5px; flex: 1; }
+    .link-item a:hover { text-decoration: underline; }
+    .hotkey-display { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .hotkey-display label { margin-bottom: 0; min-width: 100px; }
+    .hotkey-display input { flex: 1; }
+    .hotkey-display .btn { flex-shrink: 0; }
+    .sync-status { background: var(--bg-color); padding: 8px 10px; border-radius: var(--border-radius); border: 1px solid var(--border-color); font-size: var(--font-size-small); color: #666; margin-top: 8px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 1000; -webkit-app-region: no-drag; }
+    .modal.show { display: flex; }
+    .modal-content { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); -webkit-app-region: no-drag; }
+    .modal-header { margin-bottom: 12px; }
+    .modal-header h3 { font-size: var(--font-size-large); font-weight: 600; color: var(--text-color); }
+    .modal-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+    .keyboard-focus { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+    .theme-grid-compact { display: flex; gap: 8px; flex-wrap: wrap; }
+    .theme-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); cursor: pointer; transition: all 0.15s; }
+    .theme-dot:hover { transform: scale(1.15); border-color: rgba(0,0,0,0.3); }
+    .theme-dot.active { border-color: #666; box-shadow: 0 0 0 2px #666; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>📋 Snipee 設定</h1>
-    </div>
-
-    <!-- タブナビゲーション -->
+    <div class="header"><h1>📋 Snipee 設定</h1></div>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab(event, 'general')">
-        <span>📖</span>
-        <span>一般</span>
-      </button>
-      <button class="tab" onclick="switchTab(event, 'shortcuts')">
-        <span>⌨️</span>
-        <span>ショートカット</span>
-      </button>
-      <button class="tab" onclick="switchTab(event, 'sync')">
-        <span>🔄</span>
-        <span>同期</span>
-      </button>
-      <button class="tab" onclick="switchTab(event, 'display')">
-        <span>⚙️</span>
-        <span>表示</span>
-      </button>
-      <button class="tab" onclick="switchTab(event, 'update')">
-        <span>🔄</span>
-        <span>更新</span>
-      </button>
+      <button class="tab active" onclick="switchTab(event, 'general')"><span>📖</span><span>一般</span></button>
+      <button class="tab" onclick="switchTab(event, 'shortcuts')"><span>⌨️</span><span>ショートカット</span></button>
+      <button class="tab" onclick="switchTab(event, 'sync')"><span>🔄</span><span>同期</span></button>
+      <button class="tab" onclick="switchTab(event, 'display')"><span>⚙️</span><span>表示</span></button>
+      <button class="tab" onclick="switchTab(event, 'update')"><span>🔄</span><span>更新</span></button>
     </div>
-
     <div class="content">
-      <!-- 一般タブ -->
       <div class="tab-content active" id="general-tab">
         <div class="section">
-          <div class="section-header">
-            <h2>📖 マニュアル</h2>
-          </div>
-          <div class="section-description">
-            Snipeeの使い方や詳細情報はこちらをご覧ください。
-          </div>
-          
+          <div class="section-header"><h2>📖 マニュアル</h2></div>
+          <div class="section-description">Snipeeの使い方や詳細情報はこちらをご覧ください。</div>
           <div class="link-list">
-            <div class="link-item">
-              <a href="#" onclick="openExternal('https://docs.google.com/document/d/19ozUsoWsoq7Vt9lC2hH7ZmRQaU_HPOed/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
-                📥 インストールガイド
-              </a>
-            </div>
-            <div class="link-item">
-              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1ShxU1i7eDGGHDAsq24cwn5cl6F0i8X-_/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
-                📋 スニペットを貼り付ける
-              </a>
-            </div>
-            <div class="link-item">
-              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1HA-y_kQaQ6zoLpXR4bylGP1DBGP6US-f/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
-                📎 クリップボード履歴を使う
-              </a>
-            </div>
-            <div class="link-item">
-              <a href="#" onclick="openExternal('https://docs.google.com/document/d/1xHKgNhkBlOJk8HnpK5qap6MYMhquqOxc/edit?usp=sharing&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">
-                ❓ 困ったとき（FAQ）
-              </a>
-            </div>
+            <div class="link-item"><a href="#" onclick="openExternal('https://docs.google.com/document/d/19ozUsoWsoq7Vt9lC2hH7ZmRQaU_HPOed/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">📥 インストールガイド</a></div>
+            <div class="link-item"><a href="#" onclick="openExternal('https://docs.google.com/document/d/1ShxU1i7eDGGHDAsq24cwn5cl6F0i8X-_/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">📋 スニペットを貼り付ける</a></div>
+            <div class="link-item"><a href="#" onclick="openExternal('https://docs.google.com/document/d/1HA-y_kQaQ6zoLpXR4bylGP1DBGP6US-f/edit?usp=drive_link&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">📎 クリップボード履歴を使う</a></div>
+            <div class="link-item"><a href="#" onclick="openExternal('https://docs.google.com/document/d/1xHKgNhkBlOJk8HnpK5qap6MYMhquqOxc/edit?usp=sharing&ouid=100169480111493407616&rtpof=true&sd=true'); return false;">❓ 困ったとき（FAQ）</a></div>
           </div>
         </div>
-
-        <!-- 🆕 ユーザー情報セクション -->
         <div class="section">
-          <div class="section-header">
-            <h2>👤 ユーザー情報</h2>
-          </div>
-          <div class="section-description">
-            スニペット内の変数に使用される情報を設定します。
-          </div>
-          
+          <div class="section-header"><h2>👤 ユーザー情報</h2></div>
+          <div class="section-description">スニペット内の変数に使用される情報を設定します。</div>
           <div class="form-group">
             <label>名前</label>
-            <input 
-              type="text" 
-              id="user-name" 
-              placeholder="山田太郎"
-            />
-            <div class="help-text">
-              スニペット内の {名前} 変数に使用されます
-            </div>
+            <input type="text" id="user-name" placeholder="山田太郎"/>
+            <div class="help-text">スニペット内の {名前} 変数に使用されます</div>
           </div>
         </div>
       </div>
-
-      <!-- ショートカットタブ -->
       <div class="tab-content" id="shortcuts-tab">
         <div class="section">
-          <div class="section-header">
-            <h2>⌨️ ホットキー設定</h2>
-          </div>
-          <div class="section-description">
-            クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。
-          </div>
-          
+          <div class="section-header"><h2>⌨️ ホットキー設定</h2></div>
+          <div class="section-description">クリップボード履歴とスニペット専用ウィンドウを開くホットキーをカスタマイズできます。</div>
           <div class="form-group">
             <div class="hotkey-display">
               <label>簡易ホーム</label>
               <input type="text" id="hotkey-main" readonly>
               <button class="btn btn-secondary" onclick="showHotkeyModal('main')">変更</button>
             </div>
-            <div class="help-text">
-              クリップボード履歴を開きます（デフォルト: <span id="default-main">Command+Control+C</span>）
-            </div>
+            <div class="help-text">クリップボード履歴を開きます（デフォルト: <span id="default-main">Command+Control+C</span>）</div>
           </div>
-
           <div class="form-group">
             <div class="hotkey-display">
               <label>スニペット専用</label>
               <input type="text" id="hotkey-snippet" readonly>
               <button class="btn btn-secondary" onclick="showHotkeyModal('snippet')">変更</button>
             </div>
-            <div class="help-text">
-              スニペット一覧を開きます（デフォルト: <span id="default-snippet">Command+Control+V</span>）
-            </div>
+            <div class="help-text">スニペットのみを開きます（デフォルト: <span id="default-snippet">Command+Control+V</span>）</div>
           </div>
-
-          <div class="btn-group">
-            <button class="btn btn-secondary" onclick="resetAllHotkeys()">🔄 すべてデフォルトに戻す</button>
-          </div>
+          <div id="shortcut-alert" class="alert"></div>
+          <div class="btn-group"><button class="btn btn-secondary" onclick="resetAllHotkeys()">🔄 デフォルトに戻す</button></div>
         </div>
-
-        <div id="shortcut-alert" class="alert"></div>
       </div>
-
-      <!-- 同期タブ -->
       <div class="tab-content" id="sync-tab">
         <div class="section">
-          <div class="section-header">
-            <h2>🔄 共有スニペット同期</h2>
-          </div>
-          <div class="section-description">
-            Google Driveでチーム全体のスニペットを共有できます。XML形式のファイルを作成し、共有リンクを設定してください。
-          </div>
-          
+          <div class="section-header"><h2>☁️ Google Drive 同期</h2></div>
+          <div class="section-description">マスタースニペット（チーム共有）を同期するためのGoogle Drive URLを設定します。</div>
           <div id="sync-alert" class="alert"></div>
-
           <div class="form-group">
-            <label>Google Drive共有リンクURL</label>
-            <input type="url" id="master-url" placeholder="https://drive.google.com/file/d/...">
-            <div class="help-text">
-              ファイル → 共有 → リンクを知っている全員 → リンクをコピー
-            </div>
+            <label>マスタースニペットURL</label>
+            <input type="url" id="master-url" placeholder="https://drive.google.com/file/d/..."/>
+            <div class="help-text">Clipyからエクスポートした.xmlファイルをGoogle Driveにアップロードし、共有リンクを貼り付けてください</div>
           </div>
-          
           <div class="btn-group">
             <button class="btn btn-primary" onclick="saveMasterUrl()">💾 保存して同期</button>
-            <button class="btn btn-success" onclick="manualSync()">🔄 手動同期</button>
+            <button class="btn btn-secondary" onclick="manualSync()">🔄 今すぐ同期</button>
             <button class="btn btn-secondary" onclick="removeMasterUrl()">🗑️ 同期解除</button>
           </div>
-
-          <div class="sync-status" id="sync-status">
-            最終同期: 未同期
-          </div>
+          <div class="sync-status" id="sync-status">最終同期: 未同期</div>
         </div>
       </div>
-
-      <!-- 表示タブ -->
       <div class="tab-content" id="display-tab">
         <div class="section">
-          <div class="section-header">
-            <h2>👁️ フォルダの表示設定</h2>
-          </div>
-          <div class="section-description">
-            表示したくないフォルダのチェックを外してください。チェックを外したフォルダは簡易ホームとスニペット専用ウィンドウに表示されなくなります。
-          </div>
-          
+          <div class="section-header"><h2>👁️ フォルダの表示設定</h2></div>
+          <div class="section-description">表示したくないフォルダのチェックを外してください。</div>
           <div id="folder-alert" class="alert"></div>
-
-          <div id="folder-list" style="max-height: 300px; overflow-y: auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
-            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-              フォルダを読み込んでいます...
-            </div>
+          <div id="folder-list" style="max-height: 200px; overflow-y: auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px;">
+            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">フォルダを読み込んでいます...</div>
           </div>
-
           <div class="btn-group" style="margin-top: 8px;">
             <button class="btn btn-primary" onclick="saveFolderSettings()">💾 設定を保存</button>
             <button class="btn btn-secondary" onclick="selectAllFolders()">☑️ すべて表示</button>
             <button class="btn btn-secondary" onclick="deselectAllFolders()">☐ すべて非表示</button>
           </div>
         </div>
-
         <div class="section">
-          <div class="section-header">
-            <h2>📍 ウィンドウ位置設定</h2>
-          </div>
-          <div class="section-description">
-            ウィンドウの表示位置を設定できます。
-          </div>
-          
+          <div class="section-header"><h2>📍 ウィンドウ位置設定</h2></div>
+          <div class="section-description">ウィンドウの表示位置を設定できます。</div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="radio" name="windowPosition" value="cursor" style="margin-right: 8px;">
-              <span>マウスカーソル位置に表示</span>
-            </label>
-            <label style="display: flex; align-items: center; cursor: pointer;">
-              <input type="radio" name="windowPosition" value="previous" style="margin-right: 8px;">
-              <span>前回の位置に表示</span>
-            </label>
+            <label style="display: flex; align-items: center; cursor: pointer;"><input type="radio" name="windowPosition" value="cursor" style="margin-right: 8px;"><span>マウスカーソル位置に表示</span></label>
+            <label style="display: flex; align-items: center; cursor: pointer;"><input type="radio" name="windowPosition" value="previous" style="margin-right: 8px;"><span>前回の位置に表示</span></label>
           </div>
-          <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">
-            「前回の位置」を選ぶと、ウィンドウを移動した位置を記憶します
-          </p>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #666;">「前回の位置」を選ぶと、ウィンドウを移動した位置を記憶します</p>
+        </div>
+        <div class="section">
+          <div class="section-header"><h2>🎨 カラーテーマ</h2></div>
+          <div class="theme-grid-compact">
+            <div class="theme-dot" data-theme="silver" title="Silver" onclick="selectTheme('silver')" style="background: #f5f5f7;"></div>
+            <div class="theme-dot" data-theme="pearl" title="Pearl" onclick="selectTheme('pearl')" style="background: #f0eeeb;"></div>
+            <div class="theme-dot" data-theme="blush" title="Blush" onclick="selectTheme('blush')" style="background: #fce8e8;"></div>
+            <div class="theme-dot" data-theme="peach" title="Peach" onclick="selectTheme('peach')" style="background: #fde8d8;"></div>
+            <div class="theme-dot" data-theme="cream" title="Cream" onclick="selectTheme('cream')" style="background: #fcf4d9;"></div>
+            <div class="theme-dot" data-theme="pistachio" title="Pistachio" onclick="selectTheme('pistachio')" style="background: #e4f5e8;"></div>
+            <div class="theme-dot" data-theme="aqua" title="Aqua" onclick="selectTheme('aqua')" style="background: #ddf2f5;"></div>
+            <div class="theme-dot" data-theme="periwinkle" title="Periwinkle" onclick="selectTheme('periwinkle')" style="background: #e4e8fc;"></div>
+            <div class="theme-dot" data-theme="wisteria" title="Wisteria" onclick="selectTheme('wisteria')" style="background: #ede4f5;"></div>
+          </div>
         </div>
       </div>
-
-      <!-- アップデートタブ -->
-      <!-- アップデートタブ -->
       <div class="tab-content" id="update-tab">
         <div class="section">
-          <div class="section-header">
-            <h2>🔄 アップデート</h2>
-          </div>
-          
+          <div class="section-header"><h2>🔄 アップデート</h2></div>
           <div id="update-alert" class="alert"></div>
-
           <div style="text-align: center; padding: 8px 0;">
-            <div id="current-version" style="font-size: 18px; font-weight: 600; color: #333;">
-              v--
-            </div>
-            <div style="font-size: 11px; color: #666; margin-bottom: 12px;">
-              現在のバージョン
-            </div>
-            
-            <button class="btn btn-primary" onclick="checkForUpdates()" id="check-update-btn" style="font-size: 12px; padding: 8px 16px;">
-              🔍 今すぐチェック
-            </button>
-            
-            <!-- アップデートボタン（新バージョン検出時に表示） -->
-            <button class="btn btn-success" onclick="downloadUpdate()" id="download-update-btn" style="display: none; font-size: 12px; padding: 8px 16px; margin-left: 8px;">
-              ⬇️ 今すぐアップデート
-            </button>
-            
-            <!-- ダウンロード進捗 -->
+            <div id="current-version" style="font-size: 18px; font-weight: 600; color: #333;">v--</div>
+            <div style="font-size: 11px; color: #666; margin-bottom: 12px;">現在のバージョン</div>
+            <button class="btn btn-primary" onclick="checkForUpdates()" id="check-update-btn" style="font-size: 12px; padding: 8px 16px;">🔍 今すぐチェック</button>
+            <button class="btn btn-success" onclick="downloadUpdate()" id="download-update-btn" style="display: none; font-size: 12px; padding: 8px 16px; margin-left: 8px;">⬇️ 今すぐアップデート</button>
             <div id="download-progress" style="display: none; margin-top: 12px;">
               <div style="font-size: 11px; color: #666; margin-bottom: 4px;">ダウンロード中...</div>
-              <div style="background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden;">
-                <div id="progress-bar" style="background: #34c759; height: 100%; width: 0%; transition: width 0.3s;"></div>
-              </div>
+              <div style="background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden;"><div id="progress-bar" style="background: #34c759; height: 100%; width: 0%; transition: width 0.3s;"></div></div>
               <div id="progress-text" style="font-size: 10px; color: #888; margin-top: 2px;">0%</div>
             </div>
-            
-            <div id="update-status" style="margin-top: 10px; font-size: 11px; color: #666;">
-            </div>
-            
-            <div id="last-check" style="margin-top: 4px; font-size: 10px; color: #999;">
-            </div>
+            <div id="update-status" style="margin-top: 10px; font-size: 11px; color: #666;"></div>
+            <div id="last-check" style="margin-top: 4px; font-size: 10px; color: #999;"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- ホットキー変更モーダル -->
   <div class="modal" id="hotkey-modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modal-title">ホットキーを変更</h3>
-      </div>
-      
+      <div class="modal-header"><h3 id="modal-title">ホットキーを変更</h3></div>
       <div class="form-group">
         <label>新しいホットキーを押してください</label>
-        <input type="text" id="hotkey-input" readonly placeholder="キーを押してください..." 
-              style="font-size: 16px; text-align: center; padding: 16px; background: #f8f9fa;">
-        <div class="help-text">
-          Modifierキー（Command, Control, Alt, Shift）とキーの組み合わせを押してください
-        </div>
+        <input type="text" id="hotkey-input" readonly placeholder="キーを押してください..." style="font-size: 16px; text-align: center; padding: 16px; background: #f8f9fa;">
+        <div class="help-text">Modifierキー（Command, Control, Alt, Shift）とキーの組み合わせを押してください</div>
       </div>
-
-      <div id="hotkey-error" style="display: none; color: #dc3545; font-size: 12px; margin-top: 8px; padding: 8px; background: #ffebee; border-radius: 4px;">
-      </div>
-      
+      <div id="hotkey-error" style="display: none; color: #dc3545; font-size: 12px; margin-top: 8px; padding: 8px; background: #ffebee; border-radius: 4px;"></div>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="closeHotkeyModal()">キャンセル</button>
         <button class="btn btn-primary" id="save-hotkey-btn" onclick="saveHotkey()" disabled>保存</button>
       </div>
     </div>
   </div>
-
   <script>
     const { ipcRenderer, shell } = require('electron');
     const Store = require('electron-store');
     const store = new Store();
-
-    // キーボードナビゲーション
     const tabNames = ['general', 'shortcuts', 'sync', 'display', 'update'];
     let currentTabIndex = 0;
-    let nav; // KeyboardNavigator
-    
     let capturedHotkey = null;
     let currentEditingType = null;
-
     const isMac = process.platform === 'darwin';
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -688,197 +277,117 @@
         document.getElementById('default-main').textContent = 'Ctrl+Alt+C';
         document.getElementById('default-snippet').textContent = 'Ctrl+Alt+V';
       }
-
       await loadHotkeys();
       await loadSyncStatus();
-
       const defaultUrl = 'https://drive.google.com/file/d/1MIHYx_GUjfqv591h6rzIbcxm_FQZwAXY/view?usp=sharing';
       const masterUrl = store.get('masterSnippetUrl', defaultUrl);
       document.getElementById('master-url').value = masterUrl;
-
       await loadFolders();
       loadWindowPositionSetting();
       loadUpdateInfo();
-
-      // 🆕 名前を読み込み
+      loadThemeSetting();
       const userName = store.get('userName', '');
       document.getElementById('user-name').value = userName;
-
-      // モーダル背景クリックで閉じる
-      document.getElementById('hotkey-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'hotkey-modal') {
-          closeHotkeyModal();
-        }
+      document.getElementById('user-name').addEventListener('blur', () => {
+        const name = document.getElementById('user-name').value.trim();
+        store.set('userName', name);
       });
-
-      // ホットキー入力
+      document.getElementById('hotkey-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'hotkey-modal') closeHotkeyModal();
+      });
       document.getElementById('hotkey-input').addEventListener('keydown', (e) => {
         if (!document.getElementById('hotkey-modal').classList.contains('show')) return;
-        
         e.preventDefault();
         e.stopPropagation();
-        
         let key = e.code;
-
-        if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'].includes(key)) {
-          return;
-        }
-
-        if (key.startsWith('Key')) {
-          key = key.replace('Key', '');
-        } else if (key.startsWith('Digit')) {
-          key = key.replace('Digit', '');
-        } else {
-          key = e.key;
-        }
-        
+        if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight'].includes(key)) return;
+        if (key.startsWith('Key')) key = key.replace('Key', '');
+        else if (key.startsWith('Digit')) key = key.replace('Digit', '');
+        else key = e.key;
         const modifiers = [];
         if (e.metaKey) modifiers.push('Command');
         if (e.ctrlKey && !e.metaKey) modifiers.push('Control');
-        if (e.altKey) modifiers.push('Alt');  
+        if (e.altKey) modifiers.push('Alt');
         if (e.shiftKey) modifiers.push('Shift');
-        
         if (modifiers.length === 0) {
-          document.getElementById('hotkey-error').textContent = '⚠️ Modifierキー（Command, Control, Alt, Shift）と組み合わせてください';
+          document.getElementById('hotkey-error').textContent = '⚠️ Modifierキーと組み合わせてください';
           document.getElementById('hotkey-error').style.display = 'block';
           document.getElementById('save-hotkey-btn').disabled = true;
           return;
         }
-        
         const hotkeyStr = [...modifiers, key].join('+');
-        
         document.getElementById('hotkey-input').value = hotkeyStr;
-        capturedHotkey = hotkeyStr;
-        
         document.getElementById('hotkey-error').style.display = 'none';
         document.getElementById('save-hotkey-btn').disabled = false;
+        capturedHotkey = hotkeyStr;
       });
 
-      // Escキー処理
       // キーボードナビゲーション
-      // KeyboardNavigator初期化
-      nav = new KeyboardNavigator({
-        selectedClass: 'keyboard-focus',
-        onEscape: () => {
-          console.log('onEscape called');
-          ipcRenderer.send('log', 'settings: onEscape called');
-          const modal = document.getElementById('hotkey-modal');
-          if (modal.classList.contains('show')) {
-            closeHotkeyModal();
-          } else {
-            const isInputFocused = document.activeElement.tagName === 'INPUT' && 
-                                   !document.activeElement.readOnly;
-            if (isInputFocused) {
-              document.activeElement.blur();
-            } else {
-              ipcRenderer.send('log', 'settings: hiding window');
-              ipcRenderer.invoke('hide-settings-window');
-            }
-          }
-        },
-        onEnter: (item) => {
-          if (item) {
-            if (item.type === 'checkbox') {
-              item.checked = !item.checked;
-            } else {
-              item.click();
-            }
-          }
-        },
-        onLeft: () => {
-          currentTabIndex = (currentTabIndex - 1 + tabNames.length) % tabNames.length;
-          switchTabByIndex(currentTabIndex);
-        },
-        onRight: () => {
-          currentTabIndex = (currentTabIndex + 1) % tabNames.length;
-          switchTabByIndex(currentTabIndex);
-        }
-      });
-      
-      // モーダル・入力中の特殊処理をラップ
       document.addEventListener('keydown', (e) => {
-        const modal = document.getElementById('hotkey-modal');
-        if (modal.classList.contains('show') && e.key !== 'Escape') {
-          return; // モーダル中はEsc以外無視
-        }
+        // モーダルが開いている場合は無視
+        if (document.getElementById('hotkey-modal').classList.contains('show')) return;
         
-        const isInputFocused = document.activeElement.tagName === 'INPUT' && 
-                               !document.activeElement.readOnly;
-        if (isInputFocused && e.key !== 'Escape') {
-          return; // 入力中はEsc以外無視
-        }
+        // 入力フィールドにフォーカス中は無視
+        if (document.activeElement.tagName === 'INPUT' && !document.activeElement.readOnly) return;
         
-        nav.handleKeyDown(e);
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          currentTabIndex = (currentTabIndex - 1 + tabNames.length) % tabNames.length;
+          document.querySelectorAll('.tab')[currentTabIndex].click();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          currentTabIndex = (currentTabIndex + 1) % tabNames.length;
+          document.querySelectorAll('.tab')[currentTabIndex].click();
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const activeTab = document.getElementById(`${tabNames[currentTabIndex]}-tab`);
+          const focusables = activeTab.querySelectorAll('button, a, input:not([readonly]), .theme-dot');
+          if (focusables.length === 0) return;
+          
+          const currentFocus = document.activeElement;
+          let index = Array.from(focusables).indexOf(currentFocus);
+          
+          if (e.key === 'ArrowDown') {
+            index = index < focusables.length - 1 ? index + 1 : 0;
+          } else {
+            index = index > 0 ? index - 1 : focusables.length - 1;
+          }
+          focusables[index].focus();
+        } else if (e.key === 'Escape') {
+          ipcRenderer.invoke('close-settings-window');
+        }
       });
-      
-      // 初期化時にアイテム更新
-      updateSelectableItems();
     });
 
-    // タブ切り替え
+    function loadThemeSetting() {
+      const currentTheme = ThemeManager.getCurrent();
+      updateThemeUI(currentTheme);
+    }
+    function selectTheme(themeName) {
+      ThemeManager.apply(themeName);
+      updateThemeUI(themeName);
+    }
+    function updateThemeUI(themeName) {
+      document.querySelectorAll('.theme-dot').forEach(item => item.classList.remove('active'));
+      const activeItem = document.querySelector(`.theme-dot[data-theme="${themeName}"]`);
+      if (activeItem) activeItem.classList.add('active');
+    }
     function switchTab(event, tabName) {
-      // すべてのタブを非アクティブに
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      
-      // すべてのタブコンテンツを非表示に
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      
-      // 選択されたタブをアクティブに
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       event.currentTarget.classList.add('active');
       document.getElementById(`${tabName}-tab`).classList.add('active');
+      currentTabIndex = tabNames.indexOf(tabName);
     }
-
-    // インデックスでタブ切り替え
-    function switchTabByIndex(index) {
-      currentTabIndex = index;
-      const tabs = document.querySelectorAll('.tab');
-      const tabName = tabNames[index];
-      
-      // タブを非アクティブに
-      tabs.forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      
-      // 選択したタブをアクティブに
-      tabs[index].classList.add('active');
-      document.getElementById(`${tabName}-tab`).classList.add('active');
-      
-      // タブ内のアイテムを更新
-      updateSelectableItems();
-    }
-
-    // 選択可能アイテムを更新
-    function updateSelectableItems() {
-      const activeTab = document.querySelector('.tab-content.active');
-      const selector = '.link-item, .btn, input:not([readonly]), input[type="checkbox"]';
-      nav.selectableItems = Array.from(activeTab.querySelectorAll(selector));
-      nav.selectedIndex = 0;
-      nav.updateVisual();
-    }
-
-    // 🆕 名前の保存
-    document.getElementById('user-name').addEventListener('change', (e) => {
-      store.set('userName', e.target.value);
-      showAlert('✅ 名前を保存しました', 'success', 'sync-alert');
-    });
-
     async function loadHotkeys() {
       const mainHotkey = await ipcRenderer.invoke('get-current-hotkey', 'main');
       const snippetHotkey = await ipcRenderer.invoke('get-current-hotkey', 'snippet');
-      
-      document.getElementById('hotkey-main').value = mainHotkey || (isMac ? 'Command+Control+C' : 'Ctrl+Alt+C');
-      document.getElementById('hotkey-snippet').value = snippetHotkey || (isMac ? 'Command+Control+V' : 'Ctrl+Alt+V');
+      document.getElementById('hotkey-main').value = mainHotkey;
+      document.getElementById('hotkey-snippet').value = snippetHotkey;
     }
-
     async function loadSyncStatus() {
-      const lastSync = store.get('lastSync');
+      const lastSync = store.get('lastSync', null);
       const statusDiv = document.getElementById('sync-status');
-      
       if (lastSync) {
         const date = new Date(lastSync);
         statusDiv.textContent = `最終同期: ${date.toLocaleString('ja-JP')}`;
@@ -886,38 +395,27 @@
         statusDiv.textContent = '最終同期: 未同期';
       }
     }
-
-    function openExternal(url) {
-      shell.openExternal(url);
-    }
-
+    function escapeAttr(text) { return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    function openExternal(url) { shell.openExternal(url); }
     function showHotkeyModal(type) {
       currentEditingType = type;
       capturedHotkey = null;
-      
       const title = type === 'main' ? '簡易ホームのホットキーを変更' : 'スニペット専用のホットキーを変更';
       document.getElementById('modal-title').textContent = title;
       document.getElementById('hotkey-input').value = '';
       document.getElementById('hotkey-error').style.display = 'none';
       document.getElementById('save-hotkey-btn').disabled = true;
       document.getElementById('hotkey-modal').classList.add('show');
-      
-      setTimeout(() => {
-        document.getElementById('hotkey-input').focus();
-      }, 100);
+      setTimeout(() => document.getElementById('hotkey-input').focus(), 100);
     }
-
     function closeHotkeyModal() {
       document.getElementById('hotkey-modal').classList.remove('show');
       capturedHotkey = null;
       currentEditingType = null;
     }
-
     async function saveHotkey() {
       if (!capturedHotkey || !currentEditingType) return;
-      
       const result = await ipcRenderer.invoke('set-hotkey', currentEditingType, capturedHotkey);
-      
       if (result.success) {
         closeHotkeyModal();
         await loadHotkeys();
@@ -927,22 +425,15 @@
         document.getElementById('hotkey-error').style.display = 'block';
       }
     }
-
     async function resetAllHotkeys() {
       if (!confirm('すべてのホットキーをデフォルトに戻しますか?')) return;
-      
       await ipcRenderer.invoke('reset-all-hotkeys');
       await loadHotkeys();
       showAlert('✅ すべてのホットキーをデフォルトに戻しました。', 'success', 'shortcut-alert');
     }
-
     async function saveMasterUrl() {
       const url = document.getElementById('master-url').value.trim();
-      if (!url) {
-        showAlert('URLを入力してください', 'error', 'sync-alert');
-        return;
-      }
-
+      if (!url) { showAlert('URLを入力してください', 'error', 'sync-alert'); return; }
       const result = await ipcRenderer.invoke('set-master-url', url);
       if (result.success) {
         showAlert('✅ マスターURLを保存し、同期しました', 'success', 'sync-alert');
@@ -952,7 +443,6 @@
         showAlert(`❌ ${result.error || '同期に失敗しました'}`, 'error', 'sync-alert');
       }
     }
-
     async function manualSync() {
       const result = await ipcRenderer.invoke('manual-sync');
       if (result.success) {
@@ -963,117 +453,54 @@
         showAlert(`❌ ${result.error || '同期に失敗しました'}`, 'error', 'sync-alert');
       }
     }
-
     function showAlert(message, type = 'info', elementId = 'sync-alert') {
       const alert = document.getElementById(elementId);
       alert.className = `alert alert-${type} show`;
       alert.textContent = message;
-      
-      // エラーの場合は10秒、それ以外は5秒で消える
       const duration = type === 'error' ? 10000 : 5000;
-      
-      setTimeout(() => {
-        alert.classList.remove('show');
-      }, duration);
+      setTimeout(() => alert.classList.remove('show'), duration);
     }
-
     async function loadFolders() {
       const data = await ipcRenderer.invoke('get-all-items');
       const masterSnippets = data.masterSnippets || [];
-      
-      // マスタスニペットのフォルダ
       const masterFolders = [...new Set(masterSnippets.map(s => s.folder || '未分類'))];
-      
-      // 個別スニペットのフォルダ
       const personalData = await ipcRenderer.invoke('get-personal-snippets');
       const personalFolders = personalData.folders || [];
-      
-      // すべてのフォルダを統合（重複排除）
       const allFolders = [...new Set([...masterFolders, ...personalFolders])];
-      
       const hiddenFolders = store.get('hiddenFolders', []);
-      
       const folderListDiv = document.getElementById('folder-list');
-      
       if (allFolders.length === 0) {
         folderListDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">フォルダがありません</div>';
         return;
       }
-      
       folderListDiv.innerHTML = allFolders.map(folder => {
         const isMaster = masterFolders.includes(folder);
         const isPersonal = personalFolders.includes(folder);
-        
         let badge = '';
-        if (isMaster && isPersonal) {
-          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #007aff; color: white; border-radius: 3px; margin-left: 6px;">マスタ・個別</span>';
-        } else if (isMaster) {
-          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #34c759; color: white; border-radius: 3px; margin-left: 6px;">マスタ</span>';
-        } else if (isPersonal) {
-          badge = '<span style="font-size: 10px; padding: 2px 6px; background: #ff9500; color: white; border-radius: 3px; margin-left: 6px;">個別</span>';
-        }
-        
-        return `
-        <div style="padding: 5px 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" 
-                id="folder-${escapeAttr(folder)}" 
-                value="${escapeAttr(folder)}" 
-                ${!hiddenFolders.includes(folder) ? 'checked' : ''}
-                style="width: 16px; height: 16px; cursor: pointer;">
-          <label for="folder-${escapeAttr(folder)}" 
-                style="flex: 1; cursor: pointer; font-size: 11px; color: #333; margin-bottom: 0; display: flex; align-items: center; line-height: 1.2;">
-            ${escapeHtml(folder)}${badge}
-          </label>
-        </div>
-      `;
+        if (isMaster && isPersonal) badge = '<span style="font-size: 10px; padding: 2px 6px; background: #007aff; color: white; border-radius: 3px; margin-left: 6px;">マスタ・個別</span>';
+        else if (isMaster) badge = '<span style="font-size: 10px; padding: 2px 6px; background: #34c759; color: white; border-radius: 3px; margin-left: 6px;">マスタ</span>';
+        else if (isPersonal) badge = '<span style="font-size: 10px; padding: 2px 6px; background: #ff9500; color: white; border-radius: 3px; margin-left: 6px;">個別</span>';
+        return `<div style="padding: 5px 8px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;"><input type="checkbox" id="folder-${escapeAttr(folder)}" value="${escapeAttr(folder)}" ${!hiddenFolders.includes(folder) ? 'checked' : ''} style="width: 16px; height: 16px; cursor: pointer;"><label for="folder-${escapeAttr(folder)}" style="flex: 1; cursor: pointer; font-size: 11px; color: #333; margin-bottom: 0; display: flex; align-items: center; line-height: 1.2;">${escapeHtml(folder)}${badge}</label></div>`;
       }).join('');
     }
-
     async function loadWindowPositionSetting() {
       const positionMode = store.get('windowPositionMode', 'cursor');
-      
       const radioButtons = document.querySelectorAll('input[name="windowPosition"]');
-      radioButtons.forEach(radio => {
-        if (radio.value === positionMode) {
-          radio.checked = true;
-        }
-      });
+      radioButtons.forEach(radio => { if (radio.value === positionMode) radio.checked = true; });
     }
-
     async function saveFolderSettings() {
       const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
       const hiddenFolders = [];
-      
-      checkboxes.forEach(checkbox => {
-        if (!checkbox.checked) {
-          hiddenFolders.push(checkbox.value);
-        }
-      });
-      
+      checkboxes.forEach(checkbox => { if (!checkbox.checked) hiddenFolders.push(checkbox.value); });
       store.set('hiddenFolders', hiddenFolders);
       showAlert(`✅ フォルダ設定を保存しました（${hiddenFolders.length}個のフォルダを非表示）`, 'success', 'folder-alert');
-
       const selectedPosition = document.querySelector('input[name="windowPosition"]:checked');
-      if (selectedPosition) {
-        store.set('windowPositionMode', selectedPosition.value);
-      }
+      if (selectedPosition) store.set('windowPositionMode', selectedPosition.value);
     }
-
-    function selectAllFolders() {
-      const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
-      checkboxes.forEach(checkbox => checkbox.checked = true);
-    }
-
-    function deselectAllFolders() {
-      const checkboxes = document.querySelectorAll('#folder-list input[type="checkbox"]');
-      checkboxes.forEach(checkbox => checkbox.checked = false);
-    }
-
+    function selectAllFolders() { document.querySelectorAll('#folder-list input[type="checkbox"]').forEach(checkbox => checkbox.checked = true); }
+    function deselectAllFolders() { document.querySelectorAll('#folder-list input[type="checkbox"]').forEach(checkbox => checkbox.checked = false); }
     async function removeMasterUrl() {
-      if (!confirm('Google Drive同期を解除しますか？\n\nマスタスニペットはすべて削除されます。\n個別スニペットは残ります。')) {
-        return;
-      }
-
+      if (!confirm('Google Drive同期を解除しますか？\n\nマスタスニペットはすべて削除されます。\n個別スニペットは残ります。')) return;
       const result = await ipcRenderer.invoke('remove-master-url');
       if (result) {
         document.getElementById('master-url').value = '';
@@ -1084,85 +511,57 @@
         showAlert('❌ 同期解除に失敗しました', 'error', 'sync-alert');
       }
     }
-
     async function checkForUpdates() {
       const btn = document.getElementById('check-update-btn');
       const statusDiv = document.getElementById('update-status');
       const downloadBtn = document.getElementById('download-update-btn');
-      
       btn.disabled = true;
       btn.textContent = '🔄 確認中...';
       statusDiv.textContent = '';
       downloadBtn.style.display = 'none';
-      
       try {
         const result = await ipcRenderer.invoke('check-for-updates');
-        
-        if (result.error) {
-          statusDiv.innerHTML = `<span style="color: #ff3b30;">❌ ${result.message}</span>`;
-        } else if (result.updateAvailable) {
+        if (result.error) statusDiv.innerHTML = `<span style="color: #ff3b30;">❌ ${result.message}</span>`;
+        else if (result.updateAvailable) {
           statusDiv.innerHTML = `<span style="color: #34c759;">✅ 新しいバージョン v${result.latestVersion} が利用可能です！</span>`;
           downloadBtn.style.display = 'inline-flex';
-        } else {
-          statusDiv.innerHTML = `<span style="color: #34c759;">✅ ${result.message}</span>`;
-        }
-        
+        } else statusDiv.innerHTML = `<span style="color: #34c759;">✅ ${result.message}</span>`;
         const now = new Date().toLocaleString('ja-JP');
         store.set('lastUpdateCheck', now);
         document.getElementById('last-check').textContent = `最終チェック: ${now}`;
-        
       } catch (error) {
         statusDiv.innerHTML = `<span style="color: #ff3b30;">❌ 確認に失敗しました</span>`;
       }
-      
       btn.disabled = false;
       btn.textContent = '🔍 今すぐチェック';
     }
-
     async function downloadUpdate() {
       const downloadBtn = document.getElementById('download-update-btn');
       const progressDiv = document.getElementById('download-progress');
-      const progressBar = document.getElementById('progress-bar');
-      const progressText = document.getElementById('progress-text');
-      
       downloadBtn.disabled = true;
       downloadBtn.textContent = '⬇️ 準備中...';
       progressDiv.style.display = 'block';
-      
       ipcRenderer.send('download-update');
     }
-
-    // ダウンロード進捗を受信
     ipcRenderer.on('download-progress', (event, percent) => {
-      const progressBar = document.getElementById('progress-bar');
-      const progressText = document.getElementById('progress-text');
-      progressBar.style.width = `${percent}%`;
-      progressText.textContent = `${Math.round(percent)}%`;
+      document.getElementById('progress-bar').style.width = `${percent}%`;
+      document.getElementById('progress-text').textContent = `${Math.round(percent)}%`;
     });
-
-    // ダウンロード完了を受信
     ipcRenderer.on('update-downloaded', () => {
       const downloadBtn = document.getElementById('download-update-btn');
       const progressDiv = document.getElementById('download-progress');
       const statusDiv = document.getElementById('update-status');
-      
       progressDiv.style.display = 'none';
       downloadBtn.textContent = '🔄 再起動してインストール';
       downloadBtn.disabled = false;
       downloadBtn.onclick = () => ipcRenderer.send('quit-and-install');
       statusDiv.innerHTML = `<span style="color: #34c759;">✅ ダウンロード完了！ボタンを押して再起動</span>`;
     });
-
     async function loadUpdateInfo() {
-      // 現在のバージョンを表示
       const version = await ipcRenderer.invoke('get-app-version');
       document.getElementById('current-version').textContent = `v${version}`;
-      
-      // 最終チェック日時を表示
       const lastCheck = store.get('lastUpdateCheck');
-      if (lastCheck) {
-        document.getElementById('last-check').textContent = `最終チェック: ${lastCheck}`;
-      }
+      if (lastCheck) document.getElementById('last-check').textContent = `最終チェック: ${lastCheck}`;
     }
   </script>
 </body>

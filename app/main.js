@@ -38,6 +38,9 @@ const robot = require('robotjs');
 // ストアの初期化
 const store = new Store();
 
+// 個別スニペット専用ストア（別ファイルに保存 - アンインストールで消えない）
+const personalStore = new Store({ name: 'personal-snippets' });
+
 // デフォルトホットキー設定
 const DEFAULT_CLIPBOARD_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+C' : 'Ctrl+Alt+C';
 const DEFAULT_SNIPPET_SHORTCUT = process.platform === 'darwin' ? 'Command+Control+V' : 'Ctrl+Alt+V';
@@ -326,7 +329,7 @@ function createPermissionWindow() {
 function createTray() {
   const iconPath = process.platform === 'win32' 
     ? path.join(__dirname, '../build/icon.ico')
-    : path.join(__dirname, '../build/icon.png');
+    : path.join(__dirname, '../build/tray_icon_16.png');
   
   try {
     tray = new Tray(iconPath);
@@ -680,8 +683,9 @@ app.whenReady().then(() => {
     createWelcomeWindow();
   }
 
-  // 初回起動時のデフォルトスニペット設定
-  if (!store.get('initialSnippetsCreated', false)) {
+  // 個別スニペットが既に存在する場合はスキップ（再インストール対応）
+    const existingSnippets = personalStore.get('snippets', []);
+    if (!store.get('initialSnippetsCreated', false) && existingSnippets.length === 0) {
     const defaultFolders = ['Sample1', 'Sample2', 'Sample3'];
     const defaultSnippets = [
       { id: Date.now().toString() + '-1', title: 'Sample1-1', content: 'Sample1-1\nSample1-1\nSample1-1', folder: 'Sample1' },
@@ -695,8 +699,9 @@ app.whenReady().then(() => {
       { id: Date.now().toString() + '-9', title: 'Sample3-3', content: 'Sample3-3の内容', folder: 'Sample3' },
     ];
 
-    store.set('personalFolders', defaultFolders);
-    store.set('personalSnippets', defaultSnippets);
+    // 個別スニペットは専用ストアに保存（アンインストールで消えない）
+    personalStore.set('folders', defaultFolders);
+    personalStore.set('snippets', defaultSnippets);
     store.set('initialSnippetsCreated', true);
   }
 
@@ -1023,19 +1028,36 @@ ipcMain.handle('paste-text', async (event, text) => {
 
 // 個別スニペット管理
 ipcMain.handle('get-personal-snippets', () => {
+  // 旧データの移行チェック（一度だけ実行）
+  if (!store.get('personalDataMigrated', false)) {
+    const oldFolders = store.get('personalFolders', null);
+    const oldSnippets = store.get('personalSnippets', null);
+    
+    if (oldFolders !== null || oldSnippets !== null) {
+      // 旧データがあれば移行
+      if (oldFolders) personalStore.set('folders', oldFolders);
+      if (oldSnippets) personalStore.set('snippets', oldSnippets);
+      
+      // 旧データを削除
+      store.delete('personalFolders');
+      store.delete('personalSnippets');
+    }
+    store.set('personalDataMigrated', true);
+  }
+  
   return {
-    folders: store.get('personalFolders', []),
-    snippets: store.get('personalSnippets', [])
+    folders: personalStore.get('folders', []),
+    snippets: personalStore.get('snippets', [])
   };
 });
 
 ipcMain.handle('save-personal-folders', (event, folders) => {
-  store.set('personalFolders', folders);
+  personalStore.set('folders', folders);
   return true;
 });
 
 ipcMain.handle('save-personal-snippets', (event, snippets) => {
-  store.set('personalSnippets', snippets);
+  personalStore.set('snippets', snippets);
   
   if (clipboardWindow && !clipboardWindow.isDestroyed()) {
     clipboardWindow.webContents.send('personal-snippets-updated');

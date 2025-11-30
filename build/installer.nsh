@@ -8,15 +8,10 @@
 !macroend
 
 !macro customUnInstall
-  ; 設定ファイルを削除するか確認
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-    "設定ファイルも削除しますか？$\n$\n[はい] クリップボード履歴やスニペット設定も削除$\n[いいえ] 設定を残す（再インストール時に復元）" IDYES deleteSettings IDNO keepSettings
-  deleteSettings:
-    ; 設定フォルダを削除
-    RMDir /r "$APPDATA\snipee"
-    Goto done
-  keepSettings:
-  done:
+  ; 設定ファイルを削除（個別スニペットは残す）
+  ; config.json を削除
+  Delete "$APPDATA\snipee\config.json"
+  ; personal-snippets.json は残す（ユーザーの大切なデータ）
 !macroend
 
 !macro customInstall

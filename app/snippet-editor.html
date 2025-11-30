@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="common/common.css">
   <script src="common/utils.js"></script>
   <script src="common/drag-drop.js"></script>
+  <script src="common/theme.js"></script>
   <style>
     /* snippet-editor.html 固有のスタイルのみ */
     body {
@@ -271,12 +272,17 @@
       align-items: center;
       gap: 8px;
       background: #fafafa;
+      flex-wrap: nowrap;
     }
 
     .editor-title {
-      font-size: var(--font-size-large);
+      font-size: var(--font-size-medium);
       font-weight: 600;
       color: #1d1d1f;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .dragging {
@@ -399,6 +405,13 @@
 
     .folder-header.selected .folder-badge {
       background: rgba(255,255,255,0.3) !important;
+    }
+
+    .editor-header .label-badge {
+      flex-shrink: 0;
+      white-space: nowrap;
+      font-size: 10px;
+      padding: 2px 6px;
     }
   </style>
 </head>

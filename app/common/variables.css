@@ -2,14 +2,20 @@
   /* フォント */
   --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'Hiragino Sans', sans-serif;
   
-  /* カラー（グレー系に統一） */
-  --primary-color: #8a8a8a;
+  /* デフォルトテーマ（Silver） */
+  --theme-bg: #f5f5f7;
+  --theme-text: #1d1d1f;
+  --theme-border: #d2d2d7;
+  --theme-accent: #86868b;
+  
+  /* カラー（テーマ変数を使用） */
+  --primary-color: var(--theme-accent);
   --primary-hover: #555555;
-  --bg-color: #f0f0f0;
-  --bg-color-light: #f5f5f5;
-  --text-color: #2c2c2c;
-  --text-muted: #7a7a7a;
-  --border-color: #d0d0d0;
+  --bg-color: var(--theme-bg);
+  --bg-color-light: var(--theme-bg);
+  --text-color: var(--theme-text);
+  --text-muted: var(--theme-accent);
+  --border-color: var(--theme-border);
   --hover-bg: #ebebeb;
   --selected-bg: #d4d4d4;
   --section-header-bg: #e0e0e0;
@@ -35,11 +41,103 @@
   --transition-speed: 0.15s;
   --shadow-default: none;
 
-
-  /* ラベル色（ブルーグレー系） */
-  --label-master: #6b7b8a;
-  --label-personal: #9aa5b0;
-  --label-readonly: #7a8a9a;
-  --label-editable: #5a7a7a;
+  /* ラベル色（テーマアクセントベース） */
+  --label-master: var(--theme-accent);
+  --label-personal: var(--theme-accent);
+  --label-readonly: var(--theme-accent);
+  --label-editable: var(--theme-accent);
 }
 
+/* ========================================
+   カラーテーマ定義（9種類）
+   ======================================== */
+
+/* Silver（デフォルト） */
+[data-theme="silver"] {
+  --theme-bg: #f5f5f7;
+  --theme-text: #1d1d1f;
+  --theme-border: #d2d2d7;
+  --theme-accent: #86868b;
+  --hover-bg: #ebebeb;
+  --selected-bg: #d4d4d4;
+}
+
+/* Pearl（ウォームグレー） */
+[data-theme="pearl"] {
+  --theme-bg: #f0eeeb;
+  --theme-text: #1d1d1f;
+  --theme-border: #d8d5d0;
+  --theme-accent: #a8a5a0;
+  --hover-bg: #e5e2de;
+  --selected-bg: #d5d2cd;
+}
+
+/* Blush（ピンク） */
+[data-theme="blush"] {
+  --theme-bg: #fce8e8;
+  --theme-text: #1d1d1f;
+  --theme-border: #e8c8c8;
+  --theme-accent: #c48888;
+  --hover-bg: #f5d8d8;
+  --selected-bg: #e8c0c0;
+}
+
+/* Peach（オレンジ） */
+[data-theme="peach"] {
+  --theme-bg: #fde8d8;
+  --theme-text: #1d1d1f;
+  --theme-border: #e8d0b8;
+  --theme-accent: #c89868;
+  --hover-bg: #f5dcc8;
+  --selected-bg: #e8c8a8;
+}
+
+/* Cream（イエロー） */
+[data-theme="cream"] {
+  --theme-bg: #fcf4d9;
+  --theme-text: #1d1d1f;
+  --theme-border: #e8ddb8;
+  --theme-accent: #b8a868;
+  --hover-bg: #f5ecc8;
+  --selected-bg: #e8dca0;
+}
+
+/* Pistachio（グリーン） */
+[data-theme="pistachio"] {
+  --theme-bg: #e4f5e8;
+  --theme-text: #1d1d1f;
+  --theme-border: #c0e0c8;
+  --theme-accent: #70b080;
+  --hover-bg: #d5ecd8;
+  --selected-bg: #b8d8c0;
+}
+
+/* Aqua（シアン） */
+[data-theme="aqua"] {
+  --theme-bg: #ddf2f5;
+  --theme-text: #1d1d1f;
+  --theme-border: #b8dce2;
+  --theme-accent: #58a8b8;
+  --hover-bg: #cce8ec;
+  --selected-bg: #a8d0d8;
+}
+
+/* Periwinkle（ブルー） */
+[data-theme="periwinkle"] {
+  --theme-bg: #e4e8fc;
+  --theme-text: #1d1d1f;
+  --theme-border: #c0c8e8;
+  --theme-accent: #7888c8;
+  --hover-bg: #d5d8f0;
+  --selected-bg: #b8c0e0;
+}
+
+/* Wisteria（パープル） */
+[data-theme="wisteria"] {
+  --theme-bg: #ede4f5;
+  --theme-text: #1d1d1f;
+  --theme-border: #d0c0e0;
+  --theme-accent: #9878b8;
+  --hover-bg: #e0d5ec;
+  --selected-bg: #c8b8d8;
+}

@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="common/variables.css">
   <link rel="stylesheet" href="common/common.css">
   <script src="common/utils.js"></script>
+  <script src="common/theme.js"></script>
   <style>
     /* history.html 固有のスタイルのみ */
     .popup-container {
@@ -43,6 +44,7 @@
       const data = await ipcRenderer.invoke('get-all-items');
       
       historyItems = data.history || [];
+      
       pinnedItems = await ipcRenderer.invoke('get-pinned-items') || [];
 
       render();
@@ -119,7 +121,7 @@
       container.innerHTML = groups.map((group, index) => `
         <div class="menu-item" 
             data-group-id="history-${index}"
-            data-history-group='${JSON.stringify(group.items).replace(/'/g, "&apos;")}'>
+            data-history-group="${btoa(encodeURIComponent(JSON.stringify(group.items)))}">
           <div class="menu-item-left">
             <span class="menu-item-icon">${group.isPinned ? '📌' : '📄'}</span>
             <span class="menu-item-text">${group.label}</span>
@@ -197,7 +199,7 @@
       if (item.classList.contains('menu-item') && item.hasAttribute('data-history-group')) {
         try {
           const rawData = item.getAttribute('data-history-group');
-          const historyData = JSON.parse(rawData);
+          const historyData = JSON.parse(decodeURIComponent(atob(rawData)));
           const items = historyData.map(h => ({
             id: h.id,
             type: 'history',
@@ -209,6 +211,7 @@
             showInlineSubmenu(item, items, focusSubmenu);
           }
         } catch (error) {
+          ipcRenderer.send('log', `JSON parse error: ${error.message}`);
           // エラーは無視
         }
       }

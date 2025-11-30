@@ -1,6 +1,6 @@
 # Snipee 開発引き継ぎドキュメント
 
-**バージョン**: v1.5.18  
+**バージョン**: v1.5.21  
 **最終更新**: 2025-11-30  
 **GitHub**: https://github.com/tetete478/snipee
 
@@ -25,13 +25,14 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 - XML エクスポート機能（Clipy 互換形式）
 - 履歴専用ウィンドウ
 - 初回ウェルカム画面（セットアップウィザード）
-- **DMG ドラッグインストール対応** ← v1.5.18 NEW
+- DMG ドラッグインストール対応
+- カラーテーマ機能（9 種類）
 
 ### 配布方針（最重要）
 
 - **ダブルクリックで起動**（Node.js 不要）
 - 非エンジニアでも簡単に使える
-- 自動アップデートでユーザーは何もしなくて OK
+- 自動アップデートでユーザーは何もしなくて OK（※Windows のみ。Mac は署名対応後）
 
 ---
 
@@ -57,15 +58,15 @@ Clipy の代替として、チーム 20 人で使えるクロスプラットフ�
 ```bash
 # 1. ソースコードをコミット＆プッシュ
 git add .
-git commit -m "v1.5.18: 変更内容"
+git commit -m "v1.5.21: 変更内容"
 git push
 
 # 2. package.json のバージョンを更新（手動 or npm version）
 # 手動の場合: package.json の "version" を編集
 
 # 3. タグを作成してプッシュ → GitHub Actions が自動ビルド
-git tag v1.5.18
-git push origin v1.5.18
+git tag v1.5.21
+git push origin v1.5.21
 ```
 
 ### 自動で実行されること
@@ -79,6 +80,13 @@ git push origin v1.5.18
 1. GitHub → Actions タブで両方のジョブが成功しているか確認
 2. https://github.com/tetete478/snipee/releases にアクセス
 3. Draft 状態なら「Edit」→「Publish release」をクリック
+
+### リリース前のセキュリティチェック
+
+```bash
+npm audit          # 脆弱性チェック
+npm audit fix      # 安全な範囲で自動修正
+```
 
 ### ローカル開発
 
@@ -103,17 +111,21 @@ snipee/
 │   ├── welcome.html          # 初回ウェルカム画面
 │   ├── permission-guide.html # アクセシビリティ権限ガイド
 │   └── common/
-│       ├── variables.css     # CSS変数
+│       ├── variables.css     # CSS変数・テーマ定義
 │       ├── common.css        # 共通スタイル
 │       ├── utils.js          # 共通JavaScript
+│       ├── theme.js          # テーマ管理
 │       └── drag-drop.js      # ドラッグ&ドロップ
 ├── build/
 │   ├── installer.nsh         # NSISカスタムスクリプト
 │   ├── installerSidebar.bmp  # インストーラー画像
 │   ├── icon.ico              # Windowsアイコン
 │   ├── icon.icns             # Macアイコン
-│   ├── icon.png              # トレイアイコン ← v1.5.18 NEW
-│   └── dmg-background.png    # DMG背景画像 ← v1.5.18 NEW
+│   ├── icon.png              # アプリアイコン（512x512）
+│   ├── tray_icon_16.png      # Macトレイ用（16x16）
+│   ├── tray_icon_22.png      # Macトレイ用（22x22）
+│   ├── tray_icon_32.png      # Macトレイ用（32x32）
+│   └── dmg-background.png    # DMG背景画像
 ├── HANDOVER.md               # このファイル
 └── UPDATE_LOG.md             # 更新履歴（ユーザー向け）
 ```
@@ -146,9 +158,36 @@ snipee/
 **解決**: UI 更新を先に実行、保存は非同期  
 **教訓**: `await` は必ず UI 更新の後に
 
+### 5. ❌ data 属性に JSON 直接格納
+
+**失敗**: `data-history-group='${JSON.stringify(items)}'` → 特殊文字でパースエラー  
+**解決**: Base64 エンコード `btoa(encodeURIComponent(JSON.stringify(items)))`  
+**教訓**: HTML データ属性に JSON を入れる時は必ずエンコード
+
 ---
 
-## 🎯 現在の状態（v1.5.18）
+## 🎯 現在の状態（v1.5.21）
+
+### 自動アップデート
+
+| OS      | 状態                                              |
+| ------- | ------------------------------------------------- |
+| Windows | ✅ 動作する（署名不要）                           |
+| Mac     | ❌ 署名が必要（Apple Developer Program 審査待ち） |
+
+### カラーテーマ（9 種類）
+
+| テーマ名   | 背景色    | 特徴           |
+| ---------- | --------- | -------------- |
+| Silver     | `#f5f5f7` | デフォルト     |
+| Pearl      | `#f0eeeb` | ウォームグレー |
+| Blush      | `#fce8e8` | ピンク         |
+| Peach      | `#fde8d8` | オレンジ       |
+| Cream      | `#fcf4d9` | イエロー       |
+| Pistachio  | `#e4f5e8` | グリーン       |
+| Aqua       | `#ddf2f5` | シアン         |
+| Periwinkle | `#e4e8fc` | ブルー         |
+| Wisteria   | `#ede4f5` | パープル       |
 
 ### 変数機能
 
@@ -172,40 +211,171 @@ snipee/
 ### 既知の制限
 
 - IME 有効時のホットキー不安定
+- Mac 自動アップデートは署名が必要（Apple Developer Program 審査待ち）
 
 ---
 
 ## 🗓️ TODO
 
-### Phase 3: 新機能追加
+### 🔴 最優先
 
-#### 1. タグ機能
+- **Mac 署名対応** - Apple Developer Program 審査通過後、自動アップデートを有効化
 
-- マスタスニペットタグ: XML に含まれる、全員共有
-- 個別スニペットタグ: 個人が自由に設定、ローカル保存
+### 🟡 Phase 3: 機能追加
 
-#### 2. Windows 署名（優先度低）
+- タグ機能（マスタ/個別スニペットにタグ付け、フィルタリング）
+- 検索機能強化（スニペット内容の全文検索）
+- お気に入り機能（よく使うスニペットをピン留め）
+- 変数機能拡張（カスタム変数: `{会社名}` など）
 
-- 「不明な発行元」警告を減らす
-- 料金: Certum 約$200/年、DigiCert $400〜$500/年
-- 判断: 20 人のチーム用なら今は不要
+### 🟢 UI/UX 改善
 
-#### 3. リリース前のバグ探し
+- snippet-editor.html タイトル・タグ表示改善
+- フォントサイズ設定（ユーザーが調整可能）
+- キーボードショートカット拡充
 
-手動テストシナリオ:
+### 🔵 安定性・パフォーマンス
 
-1. 初回インストール → 起動 → ウェルカム画面
-2. クリップボード履歴の追加/削除
-3. スニペットの追加/編集/削除
-4. ドラッグ&ドロップ
-5. ホットキーの変更
-6. Google Drive 同期
-7. 仮想ディスプレイ切り替え
-8. アプリ終了 → 再起動
+- Windows 自動ペースト改善（フォーカス管理の安定化）
+- IME ホットキー問題（日本語入力時の不安定さ解消）
+- エラーハンドリング（Google Drive 同期失敗時のリトライ）
+
+### ⚪ v1.6 セキュリティ強化
+
+以下は v1.6 で対応予定のセキュリティ改善項目:
+
+#### contextIsolation / preload.js 移行
+
+**現状**:
+
+```javascript
+nodeIntegration: true,
+contextIsolation: false
+```
+
+**推奨設定**:
+
+```javascript
+nodeIntegration: false,
+contextIsolation: true,
+preload: path.join(__dirname, 'preload.js')
+```
+
+**影響範囲**:
+
+- 全 HTML ファイルの `require('electron')` が使えなくなる
+- preload.js 経由で API を公開する必要がある
+- 対象ファイル: index.html, snippets.html, history.html, settings.html, snippet-editor.html, welcome.html, permission-guide.html
+
+**作業内容**:
+
+1. preload.js 新規作成（IPC API を exposeInMainWorld）
+2. 各 HTML ファイルの `require()` を `window.api.xxx` に置換
+3. main.js の BrowserWindow 設定を変更
+
+#### CSP (Content-Security-Policy) 設定
+
+**現状**: 未設定
+
+**対応内容**:
+
+- main.js で BrowserWindow 作成時に CSP ヘッダーを設定
+- 外部スクリプト実行を制限
+- XSS 攻撃を防止
+
+#### Electron アップデート
+
+**現状**: Electron 35.x（中程度の脆弱性あり）
+
+**対応内容**:
+
+- Electron 39.x へアップグレード
+- 破壊的変更の確認・対応
+- 全機能の動作検証
+
+#### コード署名
+
+**Windows**: 有料証明書が必要（$200〜/年）
+**Mac**: Apple Developer Program（審査通過後）
+
+### 🔘 コード最適化（v1.6 以降）
+
+#### 重複コード共通化
+
+以下の関数が複数ファイルに重複している:
+
+| 関数名              | 存在するファイル                        | 対応            |
+| ------------------- | --------------------------------------- | --------------- |
+| `groupHistoryItems` | index.html, history.html                | utils.js へ移動 |
+| `showInlineSubmenu` | index.html, history.html, snippets.html | utils.js へ移動 |
+
+**作業内容**:
+
+1. 各ファイルの関数を比較し、差分を確認
+2. 共通化可能な部分を utils.js へ移動
+3. 各ファイルから重複コードを削除
+4. 全画面で動作確認
 
 ---
 
 ## ✅ 完了した作業
+
+### v1.5.21（2025-11-30）
+
+**カラーテーマ機能:**
+
+- 9 種類のテーマを実装（Silver, Pearl, Blush, Peach, Cream, Pistachio, Aqua, Periwinkle, Wisteria）
+- 設定画面「表示」タブにテーマ選択 UI 追加（カラードット形式）
+- theme.js 新規作成（ThemeManager オブジェクト）
+- variables.css にテーマ定義追加
+- 全画面（index.html, snippets.html, history.html, snippet-editor.html, settings.html）でテーマ適用
+
+**履歴ホーム バグ修正:**
+
+- 履歴グループ（16-30, 31-45）のサブメニューが開かない問題を修正
+- 原因: data-history-group 属性の JSON 解析エラー（特殊文字）
+- 解決: Base64 エンコード（btoa/atob + encodeURIComponent/decodeURIComponent）
+
+**セキュリティ対応:**
+
+- npm audit fix 実行（glob, js-yaml の脆弱性を修正）
+- shell.openExternal の安全性確認（固定 URL のみで問題なし）
+- エラーハンドリングの統一確認（問題なし）
+
+**コード最適化:**
+
+- settings.html の重複 escapeHtml 関数を削除（utils.js に既存）
+
+**設定画面改善:**
+
+- キーボードナビゲーション追加（←→: タブ切替、↑↓: 項目移動、Esc: 閉じる）
+
+### v1.5.20（2025-11-30）
+
+**Mac トレイアイコン修正:**
+
+- 専用トレイアイコン追加（tray_icon_16.png, tray_icon_22.png, tray_icon_32.png）
+- 背景透明、文字なし、白色アウトライン
+- メニューバーに最適なサイズ（16x16〜32x32）
+- main.js の createTray() で Mac 用に tray_icon_16.png を使用
+
+### v1.5.19（2025-11-30）
+
+**Mac 自動アップデート修正:**
+
+- ZIP ファイル生成を追加（Mac の自動アップデートに必要）
+- ※署名がないため現時点では動作しない。署名対応後に有効になる
+
+**Windows インストーラー改善:**
+
+- 起動中の Snipee を自動終了する機能を改善
+- 確認ダイアログなしで自動終了（シンプル版）
+- taskkill を 2 回実行 + 待機時間追加で確実に終了
+
+**デバッグログ追加:**
+
+- autoUpdater の各イベントにログ出力を追加
+- アップデート確認・ダウンロード状況が確認可能に
 
 ### v1.5.18（2025-11-30）
 
@@ -278,6 +448,13 @@ snipee/
 2. **場所を明示**: ファイル名、行番号、修正タイプを明記
 3. **共通化チェック**: 新しいコードを書く前に common/ に入れられないか確認
 
+### リリース前チェックリスト
+
+1. `npm audit` で脆弱性チェック
+2. 全画面の動作確認
+3. package.json のバージョン更新
+4. HANDOVER.md / UPDATE_LOG.md 更新
+
 ### デバッグ
 
 ```javascript
@@ -306,17 +483,34 @@ ipcRenderer.send("log", "message"); // VSCodeターミナルに出力
 
 ### 自動アップデートが動かない
 
-| 原因                 | 対処                          |
-| -------------------- | ----------------------------- |
-| 開発環境             | ビルドしたアプリでテスト      |
-| Release 下書き       | 「Publish release」をクリック |
-| リポジトリが Private | Public に変更                 |
+| 原因                 | 対処                                     |
+| -------------------- | ---------------------------------------- |
+| 開発環境             | ビルドしたアプリでテスト                 |
+| Release 下書き       | 「Publish release」をクリック            |
+| リポジトリが Private | Public に変更                            |
+| Mac で署名エラー     | Apple Developer Program 審査通過後に対応 |
 
 ### Mac「壊れているため開けません」
 
 ```bash
 xattr -cr /Applications/Snipee.app
 ```
+
+### Windows インストール時に「終了できません」
+
+v1.5.19 で修正済み。自動的に Snipee を終了してインストールが続行される。
+
+### Mac トレイアイコンが巨大/表示されない
+
+| 原因                 | 対処                                  |
+| -------------------- | ------------------------------------- |
+| icon.png を直接使用  | tray_icon_16.png を使用（16x16 専用） |
+| ファイルが存在しない | build/に tray*icon*\*.png を配置      |
+| main.js のパスが違う | `../build/tray_icon_16.png` を確認    |
+
+### 履歴グループのサブメニューが開かない
+
+v1.5.21 で修正済み。履歴データの Base64 エンコードで特殊文字問題を解決。
 
 ---
 
@@ -331,4 +525,4 @@ xattr -cr /Applications/Snipee.app
 
 **開発者**: てるや  
 **最終更新**: 2025-11-30  
-**現在のバージョン**: v1.5.18
+**現在のバージョン**: v1.5.21
