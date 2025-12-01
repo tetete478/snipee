@@ -67,17 +67,12 @@
       "icon": "build/icon.ico"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
+      "target": ["dmg", "zip"],
       "icon": "build/icon.icns",
       "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "notarize": {
-        "teamId": "F8KR53ZN3Y"
-      }
+      "notarize": false
     },
     "dmg": {
       "background": "build/dmg-background.png",
