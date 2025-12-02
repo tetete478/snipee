@@ -1,6 +1,6 @@
 {
   "name": "snipee",
-  "version": "1.5.21",
+  "version": "1.5.23",
   "description": "Mac/Windows対応のクリップボード管理ツール",
   "repository": {
     "type": "git",
@@ -35,11 +35,13 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.1.1",
     "electron": "^27.0.0",
     "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.snipee.app",
+    "afterSign": "notarize.js",
     "productName": "Snipee",
     "publish": {
       "provider": "github",
@@ -67,14 +69,15 @@
       "icon": "build/icon.ico"
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "build/icon.icns",
       "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "notarize": {
-        "teamId": "F8KR53ZN3Y"
-      }
+      "notarize": false
     },
     "dmg": {
       "background": "build/dmg-background.png",
