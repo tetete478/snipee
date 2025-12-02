@@ -72,9 +72,7 @@
       "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "notarize": {
-        "teamId": "F8KR53ZN3Y"
-      }
+      "notarize": true
     },
     "dmg": {
       "background": "build/dmg-background.png",
