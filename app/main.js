@@ -1469,7 +1469,8 @@ ipcMain.on('download-update', () => {
 
 // 再起動してインストール
 ipcMain.on('quit-and-install', () => {
-  autoUpdater.quitAndInstall();
+  app.isQuitting = true;
+  autoUpdater.quitAndInstall(false, true);
 });
 
 // =====================================

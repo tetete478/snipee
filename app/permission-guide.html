@@ -10,19 +10,21 @@
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       min-height: 100vh;
       padding: 20px;
+      overflow-y: auto;
     }
 
     .container {
       background: white;
       border-radius: 20px;
-      padding: 40px;
-      max-width: 600px;
+      padding: 24px 32px;
+      max-width: 560px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       animation: slideUp 0.5s ease-out;
+      margin: 20px 0;
     }
 
     @keyframes slideUp {
@@ -38,8 +40,8 @@
 
     .icon {
       text-align: center;
-      font-size: 64px;
-      margin-bottom: 20px;
+      font-size: 48px;
+      margin-bottom: 12px;
       animation: bounce 2s infinite;
     }
 
@@ -51,29 +53,29 @@
     h1 {
       text-align: center;
       color: #333;
-      font-size: 28px;
-      margin-bottom: 16px;
+      font-size: 22px;
+      margin-bottom: 12px;
     }
 
     .subtitle {
       text-align: center;
       color: #666;
-      font-size: 15px;
-      margin-bottom: 30px;
-      line-height: 1.6;
+      font-size: 13px;
+      margin-bottom: 20px;
+      line-height: 1.5;
     }
 
     .steps {
       background: #f8f9fa;
       border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
+      padding: 16px;
+      margin-bottom: 16px;
     }
 
     .step {
       display: flex;
       align-items: flex-start;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
 
     .step:last-child {
@@ -260,9 +262,9 @@
       <div class="step">
         <div class="step-number">3</div>
         <div class="step-content">
-          <div class="step-title">ClipyWindowsをONにする</div>
+          <div class="step-title">SnipeeをONにする</div>
           <div class="step-description">
-            一覧から<span class="code">ClipyWindows</span>または<span class="code">Electron</span>を探して、チェックを入れる
+            一覧から<span class="code">Snipee</span>または<span class="code">Electron</span>を探して、チェックを入れる
           </div>
         </div>
       </div>
