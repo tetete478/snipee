@@ -1,0 +1,11 @@
+
+> snipee@1.5.23 start
+> electron .
+
+
+[21212:1207/155755.841:ERROR:cache_util_win.cc(20)] Unable to move the cache: アクセスが拒否されました。 (0x5)
+[21212:1207/155755.843:ERROR:cache_util_win.cc(20)] Unable to move the cache: アクセスが拒否されました。 (0x5)
+[21212:1207/155755.857:ERROR:disk_cache.cc(205)] Unable to create cache
+[21212:1207/155755.857:ERROR:gpu_disk_cache.cc(676)] Gpu Cache Creation failed: -2
+[21212:1207/155755.857:ERROR:disk_cache.cc(205)] Unable to create cache
+[21212:1207/155755.857:ERROR:gpu_disk_cache.cc(676)] Gpu Cache Creation failed: -2

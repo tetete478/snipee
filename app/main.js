@@ -32,8 +32,29 @@ const { autoUpdater } = require('electron-updater');
 // Windows自動ペースト用
 const { exec, execSync } = require('child_process');
 
-// robotjs（キー入力用 - Mac/Windows共通）
-const robot = require('robotjs');
+// koffi（Windows用 - 高速なWindows API呼び出し）
+let user32 = null;
+let GetForegroundWindow = null;
+let SetForegroundWindow = null;
+let keybd_event = null;
+
+if (process.platform === 'win32') {
+  try {
+    const koffi = require('koffi');
+    user32 = koffi.load('user32.dll');
+    GetForegroundWindow = user32.func('GetForegroundWindow', 'void*', []);
+    SetForegroundWindow = user32.func('SetForegroundWindow', 'bool', ['void*']);
+    keybd_event = user32.func('keybd_event', 'void', ['uint8', 'uint8', 'uint32', 'void*']);
+  } catch (error) {
+    // koffi読み込み失敗時は自動ペースト無効
+  }
+}
+
+// キー定数（Windows用）
+const VK_CONTROL = 0x11;
+const VK_V = 0x56;
+const VK_MENU = 0x12; // Alt
+const KEYEVENTF_KEYUP = 0x0002;
 
 // ストアの初期化
 const store = new Store();
@@ -69,11 +90,11 @@ function captureActiveApp() {
     }
   } else if (process.platform === 'win32') {
     try {
-      const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-      const hwnd = execSync(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "(Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern IntPtr GetForegroundWindow();' -Name Win32 -Namespace Native -PassThru)::GetForegroundWindow()"`, { encoding: 'utf8' }).trim();
-      previousActiveApp = hwnd;
+      if (GetForegroundWindow) {
+        previousActiveApp = GetForegroundWindow();
+      }
     } catch (error) {
-      console.log('Windows: HWND取得スキップ:', error.message);
+      // HWND取得失敗時はスキップ
     }
   }
 }
@@ -269,7 +290,6 @@ function registerGlobalShortcuts() {
     const attempt = (remaining) => {
       try {
         const success = globalShortcut.register(accelerator, callback);
-        console.log(`ホットキー登録: ${accelerator} -> ${success ? '成功' : '失敗'}`);
         if (!success && remaining > 0) {
           setTimeout(() => attempt(remaining - 1), 500);
         }
@@ -1008,20 +1028,24 @@ ipcMain.handle('paste-text', async (event, text) => {
     await new Promise(resolve => setTimeout(resolve, 30));
   }
 
-  // Windows: フォーカスを戻す（PowerShell）
+  // Windows: フォーカスを戻してペースト（koffi使用）
   if (process.platform === 'win32' && previousActiveApp) {
-    const psPath = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-    const focusScript = `Add-Type -MemberDefinition '[DllImport(\\\"user32.dll\\\")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport(\\\"user32.dll\\\")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);' -Name WinAPI -Namespace Win32 -PassThru; [Win32.WinAPI]::keybd_event(0x12, 0, 0, 0); [Win32.WinAPI]::SetForegroundWindow([IntPtr]${previousActiveApp}); [Win32.WinAPI]::keybd_event(0x12, 0, 2, 0)`;
+    keybd_event(VK_MENU, 0, 0, null);
+    SetForegroundWindow(previousActiveApp);
+    keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, null);
     
-    await new Promise((resolve) => {
-      exec(`"${psPath}" -NoProfile -ExecutionPolicy Bypass -Command "${focusScript}"`, () => resolve());
-    });
-    await new Promise(resolve => setTimeout(resolve, 30));
+    await new Promise(resolve => setTimeout(resolve, 20));
+    
+    keybd_event(VK_CONTROL, 0, 0, null);
+    keybd_event(VK_V, 0, 0, null);
+    keybd_event(VK_V, 0, KEYEVENTF_KEYUP, null);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, null);
   }
 
-  // ペースト（Mac/Windows共通 - robotjs使用）
-  const modifier = process.platform === 'darwin' ? 'command' : 'control';
-  robot.keyTap('v', modifier);
+  // Mac: ペースト（osascript使用）
+  if (process.platform === 'darwin') {
+    exec('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
+  }
 
   return { success: true };
 });
@@ -1397,24 +1421,6 @@ function replaceVariables(text) {
 // =====================================
 // 設定画面からの手動ダウンロード用フラグ
 let isManualDownload = false;
-
-// ========== デバッグ用ログ ==========
-autoUpdater.on('checking-for-update', () => {
-  console.log('🔍 アップデートを確認中...');
-});
-
-autoUpdater.on('update-available', (info) => {
-  console.log('✅ アップデートあり:', info.version);
-});
-
-autoUpdater.on('update-not-available', () => {
-  console.log('❌ アップデートなし（最新版です）');
-});
-
-autoUpdater.on('error', (err) => {
-  console.error('⚠️ AutoUpdaterエラー:', err);
-});
-// ====================================
 
 autoUpdater.on('update-downloaded', () => {
   // 手動ダウンロードの場合は設定画面に通知
