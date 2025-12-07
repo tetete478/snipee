@@ -1438,7 +1438,8 @@ autoUpdater.on('update-downloaded', () => {
     buttons: ['再起動', '後で']
   }).then((result) => {
     if (result.response === 0) {
-      autoUpdater.quitAndInstall();
+      app.isQuitting = true;
+      autoUpdater.quitAndInstall(false, true);
     }
   });
 });
