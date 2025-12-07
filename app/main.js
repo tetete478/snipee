@@ -1011,6 +1011,16 @@ ipcMain.handle('paste-text', async (event, text) => {
   const processedText = replaceVariables(text);
   
   clipboard.writeText(processedText);
+
+  // 使用した履歴を最新に移動
+  const existingIndex = clipboardHistory.findIndex(item => item.content === processedText);
+  if (existingIndex > 0) {
+    const [usedItem] = clipboardHistory.splice(existingIndex, 1);
+    usedItem.timestamp = new Date().toISOString();
+    clipboardHistory.unshift(usedItem);
+    store.set('clipboardHistory', clipboardHistory);
+  }
+
   lastClipboardText = processedText;
 
   if (clipboardWindow) clipboardWindow.hide();
