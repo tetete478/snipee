@@ -376,9 +376,9 @@
           後から設定画面で変更できます。
         </p>
         <div class="form-group">
-          <label class="form-label">お名前</label>
-          <input type="text" class="form-input" id="user-name" placeholder="例: 山田太郎">
-          <p class="form-hint">空白のままでもOKです</p>
+          <label class="form-label">お名前（苗字推奨）</label>
+          <input type="text" class="form-input" id="user-name" placeholder="例: 山田">
+          <p class="form-hint">チーム内での表示に使われます</p>
         </div>
       </div>
 
@@ -450,6 +450,12 @@
     // 初期化
     async function init() {
       await loadHotkeys();
+
+      // 既存の名前があれば読み込む
+      const existingName = ipcRenderer.sendSync('get-config', 'userName');
+      if (existingName) {
+        document.getElementById('user-name').value = existingName;
+      }
 
       // 閉じるショートカットのTips表示
       const isMac = process.platform === 'darwin';
