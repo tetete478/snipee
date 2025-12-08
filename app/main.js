@@ -740,6 +740,16 @@ app.whenReady().then(() => {
 
   // Google Drive同期(非同期実行)
   syncSnippets();
+
+  // 2時間ごとにマスタスニペットを自動同期
+  setInterval(async () => {
+    const url = store.get('masterSnippetUrl', '');
+    if (url) {
+      console.log('マスタスニペット自動同期開始...');
+      const result = await syncSnippets();
+      console.log('マスタスニペット自動同期:', result.success ? '完了' : result.error);
+    }
+  }, 2 * 60 * 60 * 1000); // 2時間
 });
 
 // IPCハンドラー
