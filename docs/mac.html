@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snipee Mac版 マニュアル</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.8;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 5px; }
+    .header .subtitle { opacity: 0.9; font-size: 14px; }
+    .header .back { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: white; text-decoration: none; font-size: 14px; }
+    .header .back:hover { text-decoration: underline; }
+    
+    .container { max-width: 800px; margin: 0 auto; padding: 30px 20px; }
+    
+    .toc {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .toc h2 { font-size: 18px; margin-bottom: 15px; color: #667eea; }
+    .toc ul { list-style: none; }
+    .toc li { margin: 8px 0; }
+    .toc a { color: #555; text-decoration: none; }
+    .toc a:hover { color: #667eea; text-decoration: underline; }
+    
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    h2 {
+      font-size: 24px;
+      color: #2B579A;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #667eea;
+    }
+    h3 { font-size: 20px; color: #404040; margin: 25px 0 15px; }
+    h4 { font-size: 17px; color: #505050; margin: 20px 0 10px; }
+    p { margin-bottom: 15px; }
+    
+    .highlight {
+      background: #FFF3CD;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .highlight::before { content: "💡 "; }
+    .warning {
+      background: #F8D7DA;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .warning::before { content: "⚠️ "; }
+    .success {
+      background: #D4EDDA;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .success::before { content: "✅ "; }
+    .info {
+      background: #E7F3FF;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .info::before { content: "ℹ️ "; }
+    
+    .hotkey {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+    .hotkey-box {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+    th { background: #E7F3FF; font-weight: bold; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    
+    ol, ul { margin: 15px 0 15px 25px; }
+    li { margin: 8px 0; }
+    
+    .url-box {
+      background: #f0f0f0;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 13px;
+      word-break: break-all;
+      margin: 10px 0;
+    }
+    .url-box a { color: #0066CC; text-decoration: none; }
+    .url-box a:hover { text-decoration: underline; }
+    
+    .hotkey-table { margin: 20px 0; }
+    .hotkey-table td { text-align: center; padding: 15px; }
+    .hotkey-table .key { font-weight: bold; font-size: 18px; }
+    .hotkey-table .blue { background: #E7F3FF; }
+    .hotkey-table .green { background: #D4EDDA; }
+    .hotkey-table .yellow { background: #FFF3CD; }
+    
+    .footer {
+      text-align: center;
+      padding: 30px;
+      color: #888;
+      font-size: 14px;
+    }
+    
+    @media (max-width: 600px) {
+      .header h1 { font-size: 22px; }
+      .hotkey { font-size: 18px; padding: 12px 20px; }
+      .section { padding: 20px; }
+      h2 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back">← OS選択に戻る</a>
+    <h1>📋 Snipee Mac版</h1>
+    <p class="subtitle">完全マニュアル</p>
+  </div>
+
+  <div class="container">
+    <!-- 目次 -->
+    <div class="toc">
+      <h2>📖 目次</h2>
+      <ul>
+        <li><a href="#about">1. Snipeeとは？</a></li>
+        <li><a href="#install">2. インストール方法</a></li>
+        <li><a href="#permission">3. アクセシビリティ権限の設定【必須】</a></li>
+        <li><a href="#setup">4. 初期設定</a></li>
+        <li><a href="#basic">5. 基本の使い方</a></li>
+        <li><a href="#master">6. マスタスニペットについて</a></li>
+        <li><a href="#edit">7. スニペット編集画面の使い方</a></li>
+        <li><a href="#variables">8. 便利な変数機能</a></li>
+        <li><a href="#settings">9. 環境設定（全機能解説）</a></li>
+        <li><a href="#trouble">10. 困ったときは</a></li>
+      </ul>
+    </div>
+
+    <!-- 1. Snipeeとは？ -->
+    <div class="section" id="about">
+      <h2>1. Snipeeとは？</h2>
+      <p>Snipee（スナイピー）は、仕事を効率化するためのツールです。</p>
+      
+      <h3>🎯 Snipeeでできること</h3>
+      <table>
+        <tr><th style="width:50px">機能</th><th>説明</th></tr>
+        <tr><td>📋</td><td><strong>クリップボード履歴</strong><br><span style="color:#666">過去にコピーした内容を100件まで保存。いつでも呼び出せます。</span></td></tr>
+        <tr><td>📝</td><td><strong>スニペット（定型文）</strong><br><span style="color:#666">よく使う文章を登録しておいて、ワンクリックで貼り付け。</span></td></tr>
+        <tr><td>☁️</td><td><strong>チーム共有（マスタスニペット）</strong><br><span style="color:#666">Google Driveを使って、チーム全員で同じスニペットを共有。</span></td></tr>
+        <tr><td>🔄</td><td><strong>自動アップデート</strong><br><span style="color:#666">新しいバージョンがあれば自動で通知。再起動するだけ。</span></td></tr>
+      </table>
+      <div class="highlight">毎回「お世話になっております」と打つ手間から解放されます！</div>
+    </div>
+
+    <!-- 2. インストール方法 -->
+    <div class="section" id="install">
+      <h2>2. インストール方法</h2>
+      <p>Snipeeをパソコンにインストールしましょう。</p>
+      
+      <h3>🖥️ お使いのMacを確認</h3>
+      <p>まず、お使いのMacの種類を確認してください。</p>
+      <ol>
+        <li>画面左上の「  」（Appleメニュー）をクリック</li>
+        <li>「このMacについて」をクリック</li>
+        <li>「チップ」または「プロセッサ」を確認</li>
+      </ol>
+      
+      <table>
+        <tr><th>表示内容</th><th>ダウンロードするファイル</th></tr>
+        <tr><td>Apple M1 / M2 / M3 / M4</td><td><strong style="color:#0066CC">Snipee-arm64.dmg</strong></td></tr>
+        <tr><td>Intel Core i5 / i7 / i9</td><td><strong style="color:#0066CC">Snipee.dmg</strong></td></tr>
+      </table>
+      <div class="highlight">2020年以降のMacはほとんどApple Mシリーズです</div>
+      
+      <h3>📥 インストール手順</h3>
+      
+      <h4>【Apple Mシリーズの場合】</h4>
+      <div class="url-box"><a href="https://drive.google.com/file/d/1OvOASXg_f6FEkznrb__AUES9j_yj6e8L/view" target="_blank">https://drive.google.com/file/d/1OvOASXg_f6FEkznrb__AUES9j_yj6e8L/view</a></div>
+      
+      <h4>【Intel Macの場合】</h4>
+      <div class="url-box"><a href="https://drive.google.com/file/d/1KitMz47uj3SVJ_QFxhT_iE4u-m1y5GGE/view" target="_blank">https://drive.google.com/file/d/1KitMz47uj3SVJ_QFxhT_iE4u-m1y5GGE/view</a></div>
+      
+      <ol>
+        <li><strong>上記のURLから.dmgファイルをダウンロード</strong></li>
+        <li><strong>ダウンロードした.dmgファイルをダブルクリック</strong></li>
+        <li><strong>開いたウィンドウで「Snipee」を「Applications」フォルダにドラッグ</strong></li>
+        <li><strong>Launchpadまたはアプリケーションフォルダから「Snipee」を起動</strong></li>
+      </ol>
+      
+      <div class="warning">「開発元を検証できないため開けません」と表示された場合<br>
+        → 「キャンセル」をクリック<br>
+        → Snipeeを右クリック →「開く」をクリック<br>
+        → 「開く」ボタンをクリック</div>
+      <div class="success">画面右上のメニューバーに「📋」アイコンが表示されたら成功です！</div>
+      
+      <h4>💡 メニューバーとは？</h4>
+      <p>画面右上の時計やWi-Fiアイコンが並んでいる場所です。Snipeeは常にここに常駐しています。</p>
+    </div>
+
+    <!-- 3. アクセシビリティ権限 -->
+    <div class="section" id="permission">
+      <h2>3. アクセシビリティ権限の設定【必須】</h2>
+      
+      <div class="warning" style="font-weight:bold;font-size:16px">重要：この設定をしないと自動ペーストが動作しません！</div>
+      
+      <p>Snipeeがキーボード操作（⌘+V）を自動で送信するために、macOSの「アクセシビリティ」権限が必要です。</p>
+      
+      <h3>🔐 権限の設定手順</h3>
+      <ol>
+        <li><strong>画面左上の「  」→「システム設定」をクリック</strong></li>
+        <li><strong>左メニューから「プライバシーとセキュリティ」をクリック</strong></li>
+        <li><strong>右側の一覧から「アクセシビリティ」をクリック</strong></li>
+        <li><strong>「Snipee」を見つけてスイッチをON（青色）にする</strong><br>
+          → Snipeeが一覧にない場合は「＋」ボタンで追加<br>
+          → アプリケーションフォルダから「Snipee」を選択</li>
+        <li><strong>パスワードを入力して確認</strong></li>
+      </ol>
+      
+      <div class="success">これで自動ペースト機能が使えるようになりました！</div>
+      
+      <h4>💡 権限設定後にSnipeeを再起動</h4>
+      <p>権限を設定した後は、Snipeeを一度終了して再起動してください。</p>
+      <ul>
+        <li>メニューバーの「📋」をクリック</li>
+        <li>「終了」をクリック</li>
+        <li>Launchpadから「Snipee」を再度起動</li>
+      </ul>
+      
+      <h3>❓ 権限が設定できない場合</h3>
+      
+      <h4>「Snipeeが一覧に表示されない」</h4>
+      <ul>
+        <li>「＋」ボタンをクリック</li>
+        <li>アプリケーション → Snipee を選択</li>
+        <li>「開く」をクリック</li>
+      </ul>
+      
+      <h4>「スイッチがグレーアウトしている」</h4>
+      <ul>
+        <li>画面下部の鍵アイコン「🔒」をクリック</li>
+        <li>パスワードを入力してロック解除</li>
+        <li>再度スイッチをONにする</li>
+      </ul>
+      
+      <div class="info">会社支給のMacで設定できない場合は、IT担当者にご相談ください</div>
+    </div>
+
+    <!-- 4. 初期設定 -->
+    <div class="section" id="setup">
+      <h2>4. 初期設定</h2>
+      <p>チームで共有しているスニペットを使えるように設定しましょう。</p>
+      
+      <h3>⚙️ 設定手順</h3>
+      <ol>
+        <li><strong>メニューバーの「📋」アイコンをクリック</strong></li>
+        <li><strong>メニューから「環境設定」をクリック</strong></li>
+        <li><strong>「一般」タブで自分の名前を入力【必須】</strong><br>
+          → スニペット内の「{名前}」が自動で置き換わるようになります<br>
+          → 例：「{名前}です。」→「山田です。」</li>
+        <li><strong>「同期」タブをクリック</strong></li>
+        <li><strong>「Google Drive URL」に以下のURLを貼り付け</strong>
+          <div class="url-box">https://drive.google.com/file/d/1MIHYx_GUjfqv591h6rzIbcxm_FQZwAXY/view</div>
+        </li>
+        <li><strong>「保存」ボタンをクリック</strong></li>
+        <li><strong>「今すぐ同期」ボタンをクリック</strong></li>
+      </ol>
+      <div class="success">「同期成功」と表示されたら完了です！</div>
+    </div>
+
+    <!-- 5. 基本の使い方 -->
+    <div class="section" id="basic">
+      <h2>5. 基本の使い方</h2>
+      
+      <h3>5-1. 簡易ホーム（全体メニュー）</h3>
+      <p>Snipeeの全機能にアクセスできるメインメニューです。最もよく使う画面なので、まずはこれを覚えましょう！</p>
+      
+      <h4>🔑 呼び出し方</h4>
+      <div class="hotkey-box"><span class="hotkey">⌘ ＋ Option ＋ C</span></div>
+      <p>または、メニューバーの「📋」アイコンをクリックでも開けます。</p>
+      
+      <h4>📋 簡易ホームでできること</h4>
+      <table>
+        <tr><th>項目</th><th>説明</th></tr>
+        <tr><td><strong>📋 クリップボード履歴</strong></td><td>最近コピーした内容が表示されます。クリックで貼り付け。</td></tr>
+        <tr><td><strong>📁 スニペットフォルダ</strong></td><td>登録済みのスニペットにアクセス。フォルダをクリックで展開。</td></tr>
+        <tr><td><strong>🗑️ 履歴をクリア</strong></td><td>クリップボード履歴を一括削除（ピン留めは残ります）</td></tr>
+        <tr><td><strong>⚙️ 環境設定</strong></td><td>各種設定画面を開く</td></tr>
+        <tr><td><strong>✏️ スニペット編集</strong></td><td>個別スニペットの追加・編集画面を開く</td></tr>
+      </table>
+      
+      <h4>💡 使い方のコツ</h4>
+      <ul>
+        <li>上下キー（↑↓）で項目を選択、Returnキーで実行</li>
+        <li>フォルダは右矢印キー（→）で展開、左矢印キー（←）で閉じる</li>
+        <li>ESCキーで閉じる</li>
+      </ul>
+      <div class="highlight">迷ったらとりあえず ⌘+Option+C！すべての機能にアクセスできます</div>
+      
+      <h3>5-2. スニペット簡易ホーム</h3>
+      <p>スニペット（定型文）だけを表示するシンプルな画面です。スニペットをすぐに使いたいときはこちらが便利！</p>
+      
+      <h4>🔑 呼び出し方</h4>
+      <div class="hotkey-box"><span class="hotkey" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">⌘ ＋ Option ＋ V</span></div>
+      
+      <h4>📝 スニペットの使い方</h4>
+      <ol>
+        <li>フォルダをクリックして開く</li>
+        <li>使いたいスニペットをクリック</li>
+        <li>自動で貼り付けされます！</li>
+      </ol>
+      
+      <h4>🎨 スニペットの種類</h4>
+      <table>
+        <tr><td style="background:#6B7B8A;color:white;text-align:center"><strong>🔒 マスタ</strong></td><td>チーム全員で共有しているスニペット（変更不可）</td></tr>
+        <tr><td style="background:#9AA5B0;color:white;text-align:center"><strong>📄 個別</strong></td><td>自分だけのスニペット（自由に追加・編集可能）</td></tr>
+      </table>
+      <div class="highlight">スニペットだけ使いたいなら ⌘+Option+V が最速！</div>
+      
+      <h3>5-3. 履歴ホーム</h3>
+      <p>クリップボード履歴だけを表示する専用画面です。過去にコピーした内容を素早く呼び出せます。</p>
+      
+      <h4>🔑 呼び出し方</h4>
+      <div class="hotkey-box"><span class="hotkey" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">⌘ ＋ Option ＋ X</span></div>
+      
+      <h4>📋 履歴の使い方</h4>
+      <ol>
+        <li>履歴一覧から貼り付けたい項目をクリック</li>
+        <li>自動で貼り付けされます！</li>
+      </ol>
+      <div class="highlight">キーボードの上下キー（↑↓）で選択して、Returnキーで貼り付けもできます</div>
+      
+      <h4>📌 ピン留め機能</h4>
+      <p>よく使う履歴は「ピン留め」できます。</p>
+      <ul>
+        <li>項目にカーソルを合わせる → 右側に「○」が表示される</li>
+        <li>「○」をクリックすると「●」に変わり、ピン留め完了</li>
+        <li>ピン留めした項目は削除されず、一覧の上部に固定されます</li>
+      </ul>
+      
+      <h4>📊 3つのホットキーまとめ</h4>
+      <table class="hotkey-table">
+        <tr>
+          <td class="blue"><span class="key">⌘+Option+C</span></td>
+          <td class="green"><span class="key">⌘+Option+V</span></td>
+          <td class="yellow"><span class="key">⌘+Option+X</span></td>
+        </tr>
+        <tr>
+          <td>簡易ホーム</td>
+          <td>スニペット</td>
+          <td>履歴</td>
+        </tr>
+        <tr>
+          <td style="color:#666">全部入り</td>
+          <td style="color:#666">定型文だけ</td>
+          <td style="color:#666">コピー履歴だけ</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 6. マスタスニペット -->
+    <div class="section" id="master">
+      <h2>6. マスタスニペットについて</h2>
+      
+      <h3>⭐ マスタスニペットとは</h3>
+      <p>小松が普段から使っている「最強のメッセ対応テンプレート」です。チーム全員で同じスニペットを使えるよう、Google Driveで共有しています。</p>
+      
+      <div class="warning" style="font-weight:bold;font-size:16px">重要：使う前に必ず「説明」を読んでください！</div>
+      <p>マスタスニペットは小松が作成したものです。各スニペットには「どんな場面で使うか」「注意点」などの説明があります。間違った使い方を防ぐため、必ず説明を確認してから使いましょう。</p>
+      
+      <h4>📖 説明の確認方法</h4>
+      <ol>
+        <li>簡易ホーム（⌘+Option+C）または スニペット編集 を開く</li>
+        <li>マスタフォルダ内のスニペットをクリック</li>
+        <li>右側に「説明」と「内容」が表示される</li>
+        <li>説明をよく読んでから使用する</li>
+      </ol>
+      
+      <h3>✨ マスタスニペットの特徴</h3>
+      <table>
+        <tr><th>📱 スマホ最適化</th><td>スマホ閲覧に最適な改行設定済み。お客様がスマホで見ても読みやすい！</td></tr>
+        <tr><th>🎯 場面対応</th><td>挨拶・お礼・謝罪・案内など、多数の場面に対応したテンプレートを用意</td></tr>
+        <tr><th>🔄 自動更新</th><td>小松がテンプレを更新すると、全員のSnipeeに自動で反映</td></tr>
+        <tr><th>⚡ 変数対応</th><td>「{名前}」「{今日}」などが自動で置き換わる</td></tr>
+      </table>
+      
+      <h4>📁 フォルダ構成の例</h4>
+      <ul>
+        <li>挨拶：お世話になっております、はじめまして、など</li>
+        <li>お礼：ご連絡ありがとうございます、お問い合わせありがとうございます、など</li>
+        <li>案内：お支払い方法、配送について、など</li>
+        <li>謝罪：お待たせして申し訳ございません、など</li>
+        <li>締め：よろしくお願いいたします、など</li>
+      </ul>
+      <div class="highlight">フォルダ構成は小松が随時更新します。新しいテンプレが追加されることも！</div>
+      
+      <h3>🔒 マスタスニペットは変更できません</h3>
+      <p>マスタスニペットはチーム共有のため、個人での変更はできません。これは、チーム全員が同じ高品質なテンプレートを使うための仕組みです。</p>
+      <div class="info">自分用にアレンジしたい場合は、個別スニペットとして作成できます。詳しくは次の「7. スニペット編集画面の使い方」をご覧ください。</div>
+    </div>
+
+    <!-- 7. スニペット編集 -->
+    <div class="section" id="edit">
+      <h2>7. スニペット編集画面の使い方</h2>
+      <p>自分だけの「個別スニペット」を追加・編集できる画面です。</p>
+      
+      <h3>📝 開き方</h3>
+      <ul>
+        <li>簡易ホーム（⌘+Option+C）→ 「スニペット編集」をクリック</li>
+        <li>または、メニューバー「📋」クリック → 「スニペット編集」</li>
+      </ul>
+      
+      <h3>🖥️ 画面の構成</h3>
+      <table>
+        <tr><th>場所</th><th>内容</th></tr>
+        <tr><td><strong>左側</strong></td><td>フォルダ一覧（マスタ / 個別）</td></tr>
+        <tr><td><strong>右側</strong></td><td>選択したスニペットの詳細（タイトル・説明・内容）</td></tr>
+      </table>
+      
+      <h3>➕ 新しいスニペットを追加する</h3>
+      <ol>
+        <li>左側の「個別」フォルダをクリックして選択</li>
+        <li>画面上部の「＋スニペット追加」ボタンをクリック</li>
+        <li>右側に入力欄が表示される</li>
+        <li>「タイトル」「説明」「内容」を入力</li>
+        <li>「保存」ボタンをクリック</li>
+      </ol>
+      <div class="success">これで新しいスニペットが追加されました！</div>
+      
+      <h3>✏️ 既存のスニペットを編集する</h3>
+      <ol>
+        <li>編集したいスニペットをクリック</li>
+        <li>右側の内容を修正</li>
+        <li>「保存」ボタンをクリック</li>
+      </ol>
+      <div class="warning">マスタスニペットは編集できません（閲覧のみ）</div>
+      
+      <h3>🗑️ スニペットを削除する</h3>
+      <ol>
+        <li>削除したいスニペットをクリック</li>
+        <li>「削除」ボタンをクリック</li>
+        <li>確認メッセージで「OK」をクリック</li>
+      </ol>
+      <div class="warning">削除したスニペットは元に戻せません。ご注意ください。</div>
+      
+      <h3>📁 フォルダを追加する</h3>
+      <p>スニペットを整理するためのフォルダを追加できます。</p>
+      <ul>
+        <li>「個別」を右クリック → 「フォルダ追加」</li>
+        <li>フォルダ名を入力 → 「OK」</li>
+      </ul>
+      
+      <h3>💡 マスタスニペットを参考にする</h3>
+      <p>マスタスニペットをベースに自分用のスニペットを作る方法：</p>
+      <ol>
+        <li>マスタスニペットをクリックして内容を確認</li>
+        <li>「内容」欄のテキストをコピー（⌘+C）</li>
+        <li>個別フォルダで「＋スニペット追加」</li>
+        <li>コピーした内容を貼り付けてアレンジ</li>
+        <li>「保存」で完成！</li>
+      </ol>
+      <div class="highlight">変数（{名前}など）も自分のスニペットで使えます！</div>
+    </div>
+
+    <!-- 8. 変数機能 -->
+    <div class="section" id="variables">
+      <h2>8. 便利な変数機能</h2>
+      <p>スニペット内に特別な文字を入れると、貼り付け時に自動で置き換わります。</p>
+      
+      <h3>📅 使える変数一覧</h3>
+      <table>
+        <tr><th>スニペットに書く内容</th><th>貼り付け時の結果</th></tr>
+        <tr><td>{名前}</td><td>設定した名前（例：山田）</td></tr>
+        <tr><td>{今日:MM/DD}</td><td>今日の日付（例：12/07）</td></tr>
+        <tr><td>{明日:MM/DD}</td><td>明日の日付（例：12/08）</td></tr>
+        <tr><td>{今日:M月D日}</td><td>今日の日付（例：12月7日）</td></tr>
+        <tr><td>{タイムスタンプ}</td><td>例：2024/12/07 14:30:45</td></tr>
+      </table>
+      
+      <h3>💡 使用例</h3>
+      <p><strong>スニペットに登録する内容：</strong></p>
+      <div class="url-box" style="background:#f5f5f5">お世話になっております。{名前}です。<br>{明日:M月D日}までにご連絡いただけますと幸いです。</div>
+      <p><strong>貼り付け時に置き換わった結果：</strong></p>
+      <div class="url-box" style="background:#D4EDDA">お世話になっております。山田です。<br>12月8日までにご連絡いただけますと幸いです。</div>
+    </div>
+
+    <!-- 9. 環境設定 -->
+    <div class="section" id="settings">
+      <h2>9. 環境設定（全機能解説）</h2>
+      <p>メニューバーの「📋」アイコンをクリック → 「環境設定」で設定画面を開けます。</p>
+      
+      <h3>📌 一般タブ</h3>
+      <table>
+        <tr><th style="width:150px">名前</th><td>スニペット内の「{名前}」に置き換わる文字を設定【必須】</td></tr>
+        <tr><th>スタートアップ</th><td>Macログイン時にSnipeeを自動起動するかどうか</td></tr>
+        <tr><th>マニュアル</th><td>このマニュアルを開くリンク</td></tr>
+      </table>
+      
+      <h3>⌨️ ホットキータブ</h3>
+      <table>
+        <tr><th style="width:150px">簡易ホーム</th><td>全体メニューを開く（初期値：⌘+Option+C）<br><span style="color:#666">履歴・スニペット・環境設定などにアクセス可能</span></td></tr>
+        <tr><th>スニペット</th><td>スニペット専用画面を開く（初期値：⌘+Option+V）</td></tr>
+        <tr><th>履歴専用</th><td>クリップボード履歴専用画面を開く（初期値：⌘+Option+X）</td></tr>
+      </table>
+      <div class="highlight">ホットキーが他のアプリと競合する場合は変更できます</div>
+      
+      <h3>☁️ 同期タブ</h3>
+      <table>
+        <tr><th style="width:150px">Google Drive URL</th><td>マスタスニペットのXMLファイルのURL</td></tr>
+        <tr><th>今すぐ同期</th><td>手動でマスタスニペットを最新状態に更新</td></tr>
+      </table>
+      <div class="info">同期はアプリ起動時にも自動で行われます</div>
+      
+      <h3>👁️ 表示タブ</h3>
+      <table>
+        <tr><th style="width:150px">ウィンドウ位置</th><td>ポップアップの表示位置（マウス位置 / 画面中央 など）</td></tr>
+        <tr><th>フォルダ表示/非表示</th><td>使わないフォルダを非表示にできます</td></tr>
+      </table>
+      <div class="highlight">使わないフォルダを非表示にすると、一覧がスッキリして使いやすくなります</div>
+      
+      <h3>🔄 更新タブ</h3>
+      <table>
+        <tr><th style="width:150px">現在のバージョン</th><td>インストールされているSnipeeのバージョン</td></tr>
+        <tr><th>アップデート確認</th><td>新しいバージョンがあるか手動でチェック</td></tr>
+      </table>
+      <div class="info">通常は自動でアップデート通知が届くので、この画面を開く必要はありません</div>
+    </div>
+
+    <!-- 10. 困ったときは -->
+    <div class="section" id="trouble">
+      <h2>10. 困ったときは</h2>
+      
+      <h3>❓ よくある質問</h3>
+      
+      <h4>Q1. ショートカットキーが効かない</h4>
+      <ul>
+        <li>日本語入力（IME）がONになっていませんか？→ 英数モードにしてください</li>
+        <li>メニューバーにSnipeeのアイコンがありますか？→ なければ再起動してください</li>
+        <li>他のアプリとショートカットが競合していませんか？→ 環境設定で変更できます</li>
+      </ul>
+      
+      <h4>Q2. 自動ペーストが動作しない</h4>
+      <ul>
+        <li>アクセシビリティ権限は設定しましたか？（3章を参照）</li>
+        <li>権限設定後にSnipeeを再起動しましたか？</li>
+        <li>システム設定でSnipeeのスイッチがONになっていますか？</li>
+      </ul>
+      
+      <h4>Q3. スニペットが表示されない</h4>
+      <ul>
+        <li>環境設定 → 「同期」タブ → 「今すぐ同期」をクリック</li>
+        <li>Google Drive URLが正しく設定されているか確認</li>
+        <li>インターネット接続を確認</li>
+      </ul>
+      
+      <h4>Q4. {名前}が置き換わらない</h4>
+      <p>環境設定 → 「一般」タブで名前が登録されているか確認してください。</p>
+      
+      <h4>Q5. アップデートの通知が来た</h4>
+      <p>「再起動」ボタンをクリックするだけでOK！自動で最新版になります。</p>
+      
+      <h4>Q6. 特定のフォルダを非表示にしたい</h4>
+      <p>環境設定 → 「表示」タブで、使わないフォルダのチェックを外してください。</p>
+      
+      <h3>📞 それでも解決しない場合</h3>
+      <p>小松またはIT担当者にご連絡ください。</p>
+      
+      <div style="text-align:center;margin-top:40px;padding:20px;background:#E7F3FF;border-radius:10px">
+        <span style="font-size:24px;font-weight:bold;color:#2B579A">🎉 Snipeeで仕事を効率化しましょう！ 🎉</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2024 Snipee | <a href="https://github.com/tetete478/snipee" target="_blank">GitHub</a>
+    </div>
+  </div>
+</body>
+</html>
