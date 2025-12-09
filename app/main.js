@@ -755,7 +755,7 @@ app.whenReady().then(() => {
 // IPCハンドラー
 ipcMain.handle('get-all-items', () => {
   const masterSnippets = store.get('masterSnippets', { snippets: [] });
-  const personalSnippets = store.get('personalSnippets', []);
+  const personalSnippets = personalStore.get('snippets', []);
   
   return {
     history: clipboardHistory,
